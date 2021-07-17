@@ -17,7 +17,7 @@ gTitleBar::gTitleBar() :
     m_main_button(*this, "MAIN",  JUST_CENTER, FONT_BIG,  0,                    0, UI_MAIN_BUTTON_WIDTH,                                      UI_TOP_MARGIN, COLOR_BLUE,     COLOR_WHITE),
         // sheesh, FONT_BIG has descenders, but no ascenders, so it does not center vertically correctly,
         // so, what? what a fucking mess
-    m_title      (*this, "title", JUST_CENTER, FONT_NORMAL, UI_MAIN_BUTTON_WIDTH, 0, UI_SCREEN_WIDTH-UI_MAIN_BUTTON_WIDTH-2*UI_INDICATOR_WIDTH, UI_TOP_MARGIN, COLOR_DARKBLUE, COLOR_WHITE)
+    m_title      (*this, "a very long title to test clipping just in case", JUST_CENTER, FONT_NORMAL, UI_MAIN_BUTTON_WIDTH, 0, UI_SCREEN_WIDTH-UI_MAIN_BUTTON_WIDTH-2*UI_INDICATOR_WIDTH, UI_TOP_MARGIN, COLOR_DARKBLUE, COLOR_WHITE)
 {
 }
 

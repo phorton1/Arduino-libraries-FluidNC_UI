@@ -23,15 +23,3 @@
 #define IND_STATE_ACTIVE       0x0004
 #define IND_STATE_ERROR        0x0008
 #define IND_STATE_ALL          0x000f
-
-// include TFT_eSPI for everybody
-
-#include <TFT_eSPI.h>
-
-extern TFT_eSPI tft;    // in grblTouchUI.cpp
-
-extern const GFXfont Dialog_plain_14;
-extern const GFXfont Dialog_plain_16;
-extern const GFXfont Dialog_plain_18;
-extern const GFXfont Dialog_plain_22;
-extern const GFXfont Roboto_Mono_Bold_14;

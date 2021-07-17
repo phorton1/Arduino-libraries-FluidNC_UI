@@ -37,12 +37,6 @@
 // we include the fonts for everybody
 // didn't work as sesparate cpp file ...
 
-#include "fonts/Dialog_plain_14.h"
-#include "fonts/Dialog_plain_16.h"
-#include "fonts/Dialog_plain_18.h"
-#include "fonts/Dialog_plain_22.h"
-#include "fonts/Roboto_Mono_Bold_14.h"
-
 
 
 #define WITH_APPLICATION 1
@@ -52,9 +46,7 @@
 	#include "gApp.h"
 #endif
 
-
-TFT_eSPI tft = TFT_eSPI();
-
+#include "myTFT.h"
 
 
 //---------------------------------------------------------------
@@ -111,17 +103,12 @@ void Grbl_MinUI_init()
 
     tft.setTouch(cal_data);
     tft.fillScreen(TFT_BLACK);
-
-	#if 1
-		tft.setFreeFont(&Dialog_plain_22);
-		tft.setTextColor(TFT_BLUE,TFT_BLACK);
-		tft.setTextPadding(320);
-		tft.setTextDatum(TC_DATUM);
-		tft.drawString("ESP32_GRBL",160,80);
-		tft.setFreeFont(&Roboto_Mono_Bold_14);
-		tft.drawString(UI_VERSION,160,115);
-		tft.drawString(UI_VERSION_DATE,160,140);
-	#endif
+	drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
+		0,70,320,30,COLOR_BLUE,COLOR_BLACK);
+	drawText(UI_VERSION, JUST_CENTER,FONT_MONO,
+		0,105,320,20,COLOR_BLUE,COLOR_BLACK);
+	drawText(UI_VERSION_DATE, JUST_CENTER,FONT_MONO,
+		0,130,320,20,COLOR_BLUE,COLOR_BLACK);
 
 	// delay(5000);  // to see splash screen
 
@@ -139,7 +126,5 @@ void Grbl_MinUI_init()
 	debug_serial("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
 	vTaskDelay(300 / portTICK_PERIOD_MS);
 		// another delay to allow the task to start
-
-
 
 }   // display_init()
