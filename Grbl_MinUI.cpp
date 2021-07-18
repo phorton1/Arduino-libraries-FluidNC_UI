@@ -66,10 +66,7 @@ void gDisplayTask(void* pvParameters)
     {
 		vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
 		#if WITH_APPLICATION
-			static bool one_time = true;
-			// if (one_time)
-				the_app.update();
-			one_time = false;
+			appUpdate();
 		#endif
     }
 }

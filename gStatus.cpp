@@ -23,34 +23,8 @@
 gStatus g_status;
 
 
-const char *uiMainModeName(ui_main_mode_t mode)
-{
-    switch (mode)
-    {
-        case MAIN_MODE_NONE   : return "NONE";
-        case MAIN_MODE_IDLE   : return "IDLE";
-        case MAIN_MODE_BUSY   : return "BUSY";
-        case MAIN_MODE_ALARM  : return "ALARM";
-    }
-    return "UNKNOWN_MODE";
-}
 
-
-const char *uiJobStateName(ui_job_state_t state)
-{
-	switch (state)
-	{
-		case JOB_STATE_NONE		: return "NONE";
-		case JOB_STATE_STARTED	: return "STARTED";
-		case JOB_STATE_COMPLETE : return "COMPLETE";
-		case JOB_STATE_ABORTED  : return "ABORTED";
-		case JOB_STATE_ERROR	: return "ERROR";
-	}
-	return "UNKNOWN_JOB";
-}
-
-
-const char *uiSystemStateName(grbl_State_t state)
+const char *sysStateName(grbl_State_t state)
 {
     switch (state)
     {
@@ -68,7 +42,7 @@ const char *uiSystemStateName(grbl_State_t state)
 }
 
 
-const char *uiSDCardStateName(grbl_SDState_t state)
+const char *sdStateName(grbl_SDState_t state)
 	//  grbl BusyPrinting is same as Busy
 {
     switch (state)
@@ -81,6 +55,20 @@ const char *uiSDCardStateName(grbl_SDState_t state)
     }
     return "UNKNOWN_SD_STATE";
 }
+
+// const char *programFlowName(grbl_ProgramFlow_t flow)
+// {
+//     switch (flow)
+//     {
+//         case grbl_ProgramFlow_t::Running       : return "Running";
+//         case grbl_ProgramFlow_t::Paused        : return "Paused";
+//         case grbl_ProgramFlow_t::OptionalStop  : return "OptionalStop";
+//         case grbl_ProgramFlow_t::CompletedM2   : return "CompletedM2";
+//         case grbl_ProgramFlow_t::CompletedM30  : return "CompletedM30";
+//     }
+//     return "UNKNOWN_PROGRAM_FLOW";
+// }
+
 
 
 #if DEBUG_WIFI
@@ -152,7 +140,6 @@ void gStatus::gWifiEvent(uint16_t event)
             m_wifi_state = IND_STATE_ERROR;
             break;
 
-
         // case SYSTEM_EVENT_STA_AUTHMODE_CHANGE      :    // the auth mode of AP connected by ESP32 station changed
         // case SYSTEM_EVENT_AP_STAIPASSIGNED         :    // ESP32 soft-AP assign an IP to a connected station
         // case SYSTEM_EVENT_AP_PROBEREQRECVED        :    // Receive probe request packet in soft-AP interface
@@ -200,10 +187,6 @@ void gStatus::updateStatus()
 		if (!m_started && m_sys_state != grbl_State_t::Sleep)
 		{
 			m_started = true;
-			delay(100);
-				// so my serial doesnt come out in the middle of
-				// a line from Grbl_Esp32 ... lines should be atomic
-
 			debug_serial("gStatus started ..");
 		}
 		if (!m_started)
@@ -219,57 +202,45 @@ void gStatus::updateStatus()
 			SDCard::State sd_state = sdCard->get_state(false);
 				// from Grbl_Esp32/SDCard.h
 
-			m_sd_card_timer = now;
-			if (sd_state == SDCard::State::NotPresent ||
-				sd_state == SDCard::State::Idle)
-			{
-				if (now > m_sd_card_timer + SD_CARD_CHECK_TIME)
-				{
-					m_sd_card_timer = now;
+			// 	m_sd_card_timer = now;
+			// 	if (sd_state == SDCard::State::NotPresent ||
+			// 		sd_state == SDCard::State::Idle)
+			// 	{
+			// 		if (now > m_sd_card_timer + SD_CARD_CHECK_TIME)
+			// 		{
+			// 			m_sd_card_timer = now;
+            //
+			// 			#if 0
+			// 				if (sd_state == SDCard::State::NotPresent ||
+			// 					sd_state == SDCard::State::Idle)
+			// 					sd_state = sdCard->get_state(true);
+			// 			#endif
+            //
+			// 			#if 0
+			// 				SD.end();
+			// 				SD.begin(GPIO_NUM_21);   // V_SDCARD_CS);
+			// 				uint8_t cardType = SD.cardType();
+			// 				if (cardType == CARD_NONE)
+			// 				{
+			// 					sd_state == sdCard->set_state(SDCard::State::NotPresent);
+			// 				}
+			// 				else
+			// 				{
+			// 					sd_state == sdCard->set_state(SDCard::State::Idle);
+			// 				}
+			// 			#endif
+			// 		}
+			// 	}
 
-					#if 0
-						if (sd_state == SDCard::State::NotPresent ||
-							sd_state == SDCard::State::Idle)
-							sd_state = sdCard->get_state(true);
-					#endif
-
-					#if 0
-						SD.end();
-						SD.begin(GPIO_NUM_21);   // V_SDCARD_CS);
-						uint8_t cardType = SD.cardType();
-						if (cardType == CARD_NONE)
-						{
-							sd_state == sdCard->set_state(SDCard::State::NotPresent);
-						}
-						else
-						{
-							sd_state == sdCard->set_state(SDCard::State::Idle);
-						}
-					#endif
-				}
-			}
 			m_sdcard_state = static_cast<grbl_SDState_t>(sd_state);
-			static grbl_SDState_t m_last_sdcard_state = grbl_SDState_t::NotPresent;
-			if (m_last_sdcard_state != m_sdcard_state)
+			if (m_sdcard_state == grbl_SDState_t::Busy)
 			{
-				debug_serial("SD Changed from %s to %s",
-					uiSDCardStateName(m_last_sdcard_state),
-					uiSDCardStateName(m_sdcard_state));
-					m_last_sdcard_state = m_sdcard_state;
+				m_active_filename = sdCard->filename();
+				m_file_pct = sdCard->report_perc_complete();
 			}
-
 		}
 
-		// APPLICATION MODE
-
-		if (m_sys_state == grbl_State_t::Alarm)
-			m_main_mode = MAIN_MODE_ALARM;
-		else if (m_sdcard_state == grbl_SDState_t::Busy)
-			m_main_mode = MAIN_MODE_ALARM;
-		else
-			m_main_mode = MAIN_MODE_IDLE;
-
-
+		// m_program_flow = static_cast<grbl_ProgramFlow_t>(gc_state.modal.program_flow);
 
 		// POSITIONS
 
@@ -287,46 +258,6 @@ void gStatus::updateStatus()
 			// DEPENDS on Yaml number of axes agreeing with our constant!!!!
 			// or BAD THINGS will happen
 
-
-		// JOB STATE
-
-		if (m_main_mode == MAIN_MODE_BUSY &&
-			m_job_state == JOB_STATE_NONE)
-		{
-			m_job_state = JOB_STATE_STARTED;
-			debug_serial("JOB_STATE_STARTED");
-			m_active_filename = sdCard->filename();
-		}
-		if (m_sys_state == grbl_State_t::Hold)
-			m_job_state = JOB_STATE_PAUSED;
-
-		// hmmm ...
-
-		switch (gc_state.modal.program_flow)
-		{
-			case ProgramFlow::Running:
-				m_job_state = JOB_STATE_STARTED;
-				m_file_pct = sdCard->report_perc_complete();
-				break;
-			case ProgramFlow::Paused:
-				m_job_state = JOB_STATE_PAUSED;
-				m_file_pct = sdCard->report_perc_complete();
-				break;
-			case ProgramFlow::OptionalStop:
-				m_job_state = JOB_STATE_ABORTED;
-				m_file_pct = sdCard->report_perc_complete();
-				break;
-			case ProgramFlow::CompletedM2:
-			case ProgramFlow::CompletedM30:
-				m_job_state = JOB_STATE_COMPLETE;
-				m_file_pct = 100.00;
-				break;
-		}
-
-		if (m_sdcard_state == grbl_SDState_t::Busy)
-		{
-			m_file_pct = sdCard->report_perc_complete();
-		}
 	#endif
 
 }   // gStatus::updateStatus()
