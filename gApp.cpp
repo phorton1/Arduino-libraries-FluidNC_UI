@@ -5,8 +5,22 @@
 
 
 #include "gApp.h"
+#include "gStatus.h"
 #include "Grbl_MinUI.h"
 #include "myTFT.h"
+
+
+//  enum jobState_t
+//  {
+//      JOB_STATE_NONE = 0,
+//      JOB_STATE_STARTED,
+//      JOB_STATE_PAUSED,
+//      JOB_STATE_COMPLETE,
+//      JOB_STATE_ABORTED,
+//      JOB_STATE_ERROR
+//  };
+
+
 
 #define MAX_TITLE  30
 #define MAX_BUTTON 7
@@ -77,11 +91,14 @@ static struct frameLast_t
     uint8_t        wifi_state;
     grbl_State_t   sys_state;
     grbl_SDState_t sd_state;
-    jobState_t     job_state;
+    // jobState_t     job_state;
     float          pct;
     float          pos[UI_NUM_AXES * 2];
     uint32_t       mem_avail;
     uint32_t       min_avail;
+
+    int16_t        prog_w;
+    uint16_t       prog_color;
 } frame_last;
 
 
@@ -89,25 +106,33 @@ static struct frameLast_t
 static bool app_inited = false;
 static char app_title[MAX_TITLE + 1] = "app title";
 static char app_button[MAX_BUTTON + 1] = "MAIN";
-static jobState_t job_state = JOB_STATE_NONE;
+
+static grbl_SDState_t sd_state;
+static grbl_State_t sys_state;
+// static jobState_t job_state = JOB_STATE_NONE;
+
+int16_t  prog_x = 0;
+int16_t  prog_w = 0;
+uint16_t prog_color = 0;
+
 
 
 //------------------------
 // utilities
 //------------------------
-
-const char *jobStateName(jobState_t state)
-{
-	switch (state)
-	{
-		case JOB_STATE_NONE		: return "NONE";
-		case JOB_STATE_STARTED	: return "STARTED";
-		case JOB_STATE_COMPLETE : return "COMPLETE";
-		case JOB_STATE_ABORTED  : return "ABORTED";
-		case JOB_STATE_ERROR	: return "ERROR";
-	}
-	return "UNKNOWN_JOB";
-}
+//
+//  const char *jobStateName(jobState_t state)
+//  {
+//  	switch (state)
+//  	{
+//  		case JOB_STATE_NONE		: return "NONE";
+//  		case JOB_STATE_STARTED	: return "STARTED";
+//  		case JOB_STATE_COMPLETE : return "COMPLETE";
+//  		case JOB_STATE_ABORTED  : return "ABORTED";
+//  		case JOB_STATE_ERROR	: return "ERROR";
+//  	}
+//  	return "UNKNOWN_JOB";
+//  }
 
 
 uint16_t indColor(uint8_t ind_state)
@@ -132,6 +157,89 @@ void doText(const uiWin *win, const char *text)
         win->bg );
 }
 
+
+void doTextProgress(const uiWin *win, const char *text, bool changed)
+    // Called for fields that lie on the progress bar to draw the text.
+    // Called if the field has changed or frame_last.prog_w != prog_w,
+    // which implies that a new bar portion has been drawn.
+{
+    // develop s,e notation
+
+    int16_t win_s = win->x;
+    int16_t win_e = win->x + win->w - 1;
+    int16_t prog_s = prog_x + frame_last.prog_w;
+    int16_t prog_e = prog_x + prog_w - 1;
+
+    // win_s > prog_e implies that there is no progress bar or
+    // the field lays completely to the right of the progress bar
+    // so we only write the value if it changed using default background
+
+    if (win_s > prog_e)
+    {
+        if (changed)
+            doText(win,text);
+        return;
+    }
+
+    // At least part of the field overlays the progress bar.
+    // We will redraw if it has changed, or if the field
+    // is over the "new" bar portion.
+
+    // If it was changed, and the field is to the left
+    // of the progress bar, we stretch prog_s to the beginning
+    // of the field to draw fully 'changed' bar backgrounds
+
+    if (changed && prog_s > win_s)
+    {
+        prog_s = win_s;
+    }
+
+    // Constrain the new progress area to the field window.
+    // bar will always start from the left.
+
+    if (prog_s < win_s)
+        prog_s = win_s;
+    if (prog_e > win_e)
+        prog_e = win_e;
+
+    // So now we can just compare and see if the window
+    // falls into the extended region, and leave if not.
+
+    if (!changed && (win_e < prog_s || win_s > prog_e))
+    {
+        return;
+    }
+
+    // Calculate the "blue" portion if any
+
+    int16_t normal_s = win_s;
+    int16_t normal_w = 0;
+    if (prog_e < win_e)
+    {
+        normal_s = prog_e + 1;
+        normal_w = win_e - prog_e;
+    }
+
+    // Change bsrt back to x,w format and
+    // draw the bar and normal bg portions, if any.
+
+    int16_t bar_w = prog_e - prog_s + 1;
+
+    if (bar_w > 0)
+        tft.fillRect(prog_s,win->y,bar_w,win->h,prog_color);
+    if (normal_w > 0)
+        tft.fillRect(normal_s,win->y,normal_w,win->h,win->bg);
+
+    // Finally ... draw the text with no background color
+
+    drawText(
+        text,
+        win->just,
+        win->font,
+        win->x, win->y, win->w, win->h,
+        win->fg,
+        win->fg );      // bg <= fg implies no background
+}
 
 
 //--------------------------------
@@ -158,11 +266,9 @@ void doAppButton(const uiWin *win)
             COLOR_BLUE);
     }
 
-    grbl_SDState_t sd_state = g_status.getSDState();
-    grbl_State_t sys_state = g_status.getSysState();
     float pct = g_status.filePct();
 
-     if (frame_last.job_state != job_state  ||
+     if (!app_inited ||
          frame_last.sd_state != sd_state ||
          frame_last.sys_state != sys_state ||
          frame_last.pct != pct)
@@ -187,16 +293,16 @@ void doAppButton(const uiWin *win)
     }
 }
 
+
 void doAppTitle(const uiWin *win)
 {
-    grbl_SDState_t sd_state = g_status.getSDState();
-    grbl_State_t sys_state = g_status.getSysState();
-
-    if (frame_last.job_state != job_state  ||
+    if (!app_inited ||
         frame_last.sd_state != sd_state ||
         frame_last.sys_state != sys_state)
     {
         uint16_t color = win->fg;
+
+        // this is where we start a "Job"
 
         if (frame_last.sd_state != sd_state &&
             sd_state == grbl_SDState_t::Busy)
@@ -212,10 +318,21 @@ void doAppTitle(const uiWin *win)
             app_title[MAX_TITLE] = 0;
         }
 
+        // and this is where we  potentially change from "Busy" to "Hold"
+
         if (sd_state == grbl_SDState_t::Busy)
         {
             color = sys_state == grbl_State_t::Hold ?
                 COLOR_CYAN : COLOR_YELLOW;
+            prog_color = sys_state == grbl_State_t::Hold ?
+                COLOR_DARKCYAN : COLOR_BROWN;
+
+            // invalidate the progress bar upon a color change
+
+            if (frame_last.prog_color != prog_color)
+            {
+                frame_last.prog_w = 0;
+            }
         }
         else
         {
@@ -235,9 +352,6 @@ void doAppTitle(const uiWin *win)
 
 void doSDIndicator(const uiWin *win)
 {
-    grbl_SDState_t sd_state = g_status.getSDState();
-    grbl_State_t sys_state = g_status.getSysState();
-
     if (!app_inited ||
         frame_last.sd_state != sd_state ||
         frame_last.sys_state != sys_state)
@@ -245,7 +359,7 @@ void doSDIndicator(const uiWin *win)
         uint8_t ind_state =
             sd_state == grbl_SDState_t::NotPresent ? IND_STATE_NONE :
             sd_state == grbl_SDState_t::Idle 	   ? IND_STATE_READY :
-            g_status.getSysState() == grbl_State_t::Hold ?
+            sys_state == grbl_State_t::Hold ?
                 IND_STATE_ENABLED : IND_STATE_ACTIVE;
 
         drawText(
@@ -281,12 +395,15 @@ void doMachinePosition(const uiWin *win)
     int idx = win->param;
     float *last_val = &frame_last.pos[idx];
     float val = g_status.m_machine_pos[idx];
-    if (!app_inited || *last_val != val)
+    bool changed = !app_inited || *last_val != val;
+
+    if (changed ||
+        frame_last.prog_w != prog_w)
     {
         *last_val = val;
         char buf[12];
         sprintf(buf,"%3.1f",val);
-        doText(win,buf);
+        doTextProgress(win,buf,changed);
     }
 }
 
@@ -296,22 +413,26 @@ void doWorkPosition(const uiWin *win)
     int idx = win->param;
     float *last_val = &frame_last.pos[UI_NUM_AXES + idx];
     float val = g_status.m_work_pos[idx];
-    if (!app_inited || *last_val != val)
+    bool changed = !app_inited || *last_val != val;
+
+    if (changed ||
+        frame_last.prog_w != prog_w)
     {
         *last_val = val;
         char buf[12];
         sprintf(buf,"%3.1f",val);
-        doText(win,buf);
+        doTextProgress(win,buf,changed);
     }
 }
 
 
 void doSysState(const uiWin *win)
 {
-    grbl_State_t state = g_status.getSysState();
-    if (frame_last.sys_state != state)
+    bool changed = !app_inited || (frame_last.sys_state != sys_state);
+    if (changed ||
+        frame_last.prog_w != prog_w)
     {
-        doText(win,sysStateName(state));
+        doTextProgress(win,sysStateName(sys_state),changed);
     }
 }
 
@@ -326,16 +447,46 @@ void doMemAvail(const uiWin *win)
     uint32_t *prev = id == ID_MEMAVAIL ?
         &frame_last.mem_avail :
         &frame_last.min_avail;
-
-    if (*prev != avail)
+    bool changed = !app_inited || *prev != avail;
+    if (changed ||
+        frame_last.prog_w != prog_w)
     {
         *prev = avail;
         char buf[12];
         sprintf(buf,"%dK",avail);
-        doText(win,buf);
+        doTextProgress(win,buf,changed);
     }
 }
 
+
+void doJobProgress(const uiWin *win)
+{
+    float pct = g_status.filePct();
+
+    if (!app_inited)        // implies pct=0, prog_x=0, prog_w=0, and frame_last.prog_w=0
+    {
+        tft.fillRect(
+            win->x, win->y, win->w, win->h,
+            win->bg);
+    }
+
+    // otherwise we fill the bar if the color has changed
+    //
+
+    else if (frame_last.prog_color != prog_color ||
+             (sd_state == grbl_SDState_t::Busy &&
+             frame_last.pct != pct))
+    {
+        prog_x = win->x;     // 0
+        prog_w = ((pct * win->w)/100.0);
+        if (frame_last.prog_w != prog_w)
+        {
+            tft.fillRect(
+                prog_x + frame_last.prog_w, win->y, prog_w - frame_last.prog_w, win->h,
+                prog_color);
+        }
+    }
+}
 
 //----------------------------------------------------------------------
 // FRAME DEFINITION
@@ -349,7 +500,7 @@ const uiWin app_frame[] = {
     { ID_APP_TITLE,      ID_TITLEBAR,   84,   0, 180,  35, doAppTitle,        0,          COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
     { ID_SD_INDICATOR,   ID_TITLEBAR,  264,   0,  28,  35, doSDIndicator,     0,          COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
     { ID_WIFI_INDICATOR, ID_TITLEBAR,  292,   0,  28,  35, doWifiIndicator,   0,          COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
-    { ID_STATUSBAR,      ID_APP,         0, 205, 320,  35, doWin,             0,          COLOR_DARKBLUE, COLOR_WHITE, },
+    { ID_STATUSBAR,      ID_APP,         0, 205, 320,  35, doJobProgress,     0,          COLOR_DARKBLUE, COLOR_WHITE, },
     { ID_MACHINE_X,      ID_STATUSBAR,  10, 205,  55,  16, doMachinePosition, UI_AXIS_X,  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
     { ID_MACHINE_Y,      ID_STATUSBAR,  75, 205,  55,  16, doMachinePosition, UI_AXIS_Y,  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
     { ID_MACHINE_Z,      ID_STATUSBAR, 140, 205,  50,  16, doMachinePosition, UI_AXIS_Z,  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
@@ -376,6 +527,9 @@ void appUpdate()
 
     g_status.updateStatus();
 
+    sys_state = g_status.getSysState();
+    sd_state = g_status.getSDState();
+
     for (int i=0; i<NUM_FRAME_WINS; i++)
     {
         const uiWin *win = &app_frame[i];
@@ -385,9 +539,22 @@ void appUpdate()
     app_inited = true;
 
     // update muliply used state change variables
+    // if we went from busy to not busy, redraw the whole screen
 
-    frame_last.job_state = job_state;
-    frame_last.sd_state = g_status.getSDState();
-    frame_last.sys_state = g_status.getSysState();
+    if (frame_last.sd_state != sd_state &&
+        frame_last.sd_state == grbl_SDState_t::Busy)
+    {
+        app_inited = false;
+        prog_x = 0;
+        prog_w = 0;
+        frame_last.prog_w = 0;
+        prog_color = COLOR_BROWN;
+    }
+
+    // frame_last.job_state = job_state;
+    frame_last.sd_state = sd_state;
+    frame_last.sys_state = sys_state;
     frame_last.pct = g_status.filePct();
+    frame_last.prog_w = prog_w;
+    frame_last.prog_color = prog_color;
 }

@@ -28,7 +28,8 @@ void drawText(                   // draw clipped and justified text
     // setTextPadding() tells TFT to "fill the bounding box with background color"
     // otherwise, TFT draws the  background color to the end of the screen width (weird)
 
-    tft.setTextPadding(w);
+    if (fg != bg)
+        tft.setTextPadding(w);
 
     // JUSTIFICATION
     // weird .. if we want to tell TFT to draw something centered we have to both tell
@@ -123,4 +124,3 @@ void drawText(                   // draw clipped and justified text
     tft.resetViewport();
 
 }
-
