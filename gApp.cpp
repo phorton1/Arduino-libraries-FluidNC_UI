@@ -7,6 +7,7 @@
 #include "winIdle.h"
 #include "winBusy.h"
 #include "winAlarm.h"
+#include "dlgConfirm.h"
 
 
 // IDS OF ANY PARENTS MUST BE GLOBALLY UNIQUE !!
@@ -34,6 +35,8 @@ gApplication    the_app;
 winIdle         idle_win;
 winBusy         busy_win;
 winAlarm        alarm_win;
+dlgConfirm      confirm_dlg;
+
 
 char app_button_buf[UI_MAX_BUTTON + 1] = "MAIN";
 char app_title_buf[UI_MAX_TITLE + 1] = "title";
@@ -86,6 +89,13 @@ gApplication::gApplication() :
 }
 
 
+void gApplication::begin()
+{
+    draw_needed = true;
+    g_status.initWifiEventHandler();
+}
+
+
 void gApplication::setTitle(const char *text)
 {
     int len = strlen(text);
@@ -95,6 +105,48 @@ void gApplication::setTitle(const char *text)
 }
 
 
+void gApplication::setCurWindow(uiWindow *win)
+{
+    tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT-UI_TOP_MARGIN-UI_BOTTOM_MARGIN,COLOR_BLACK);
+    cur_window = win;
+    cur_window->begin();
+}
+
+
+
+void gApplication::confirmCommand(uint16_t command)
+{
+        confirm_dlg.setMessage(
+            command == CONFIRM_COMMAND_RESET ? "reset the gMachine?" :
+            command == CONFIRM_COMMAND_REBOOT ? "reboot the computer?" :
+            "UNKNOWN CONFIRM COMMAND");
+
+        pending_command = command;
+        prev_window = cur_window;
+        setCurWindow(&confirm_dlg);
+}
+
+void gApplication::endConfirm(uint16_t rslt)
+{
+    if (rslt)
+    {
+        if (pending_command == CONFIRM_COMMAND_RESET)
+        {
+            #if !TEST_STANDALONE_UI
+                execute_realtime_command(Cmd::Reset,CLIENT_ALL);
+                    // CLIENT_TOUCH_UI);
+            #endif
+        }
+        else if (pending_command == CONFIRM_COMMAND_REBOOT)
+        {
+            debug_serial("gApplication estarting the ESP32!!");
+            delay(500);
+            ESP.restart();
+            while (1) {}
+        }
+    }
+    setCurWindow(prev_window);
+}
 
 
 //------------------------
@@ -424,26 +476,6 @@ void gApplication::doJobProgress(const uiElement *ele)
                 prog_color);
         }
     }
-}
-
-
-
-//------------------------
-// methods
-//------------------------
-
-void gApplication::begin()
-{
-    draw_needed = true;
-    g_status.initWifiEventHandler();
-}
-
-
-void gApplication::setCurWindow(uiWindow *win)
-{
-    tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT-UI_TOP_MARGIN-UI_BOTTOM_MARGIN,COLOR_BLACK);
-    cur_window = win;
-    cur_window->begin();
 }
 
 

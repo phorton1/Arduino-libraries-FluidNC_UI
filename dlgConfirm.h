@@ -1,5 +1,5 @@
 //--------------------------------------
-// The main Busy window
+// The confirm Yes/No window
 //--------------------------------------
 
 #pragma once
@@ -7,18 +7,18 @@
 #include "gApp.h"
 
 
-class winBusy : public uiWindow
+class dlgConfirm : public uiWindow
 {
     public:
 
-        winBusy();
+        dlgConfirm();
+
+        void setMessage(const char *msg);
+
 
     private:
 
-        bool m_busy = false;
-        bool m_paused = false;
-
-        virtual void update() override;
 
         virtual void onButton(const uiElement *ele, bool pressed) override;
+
 };

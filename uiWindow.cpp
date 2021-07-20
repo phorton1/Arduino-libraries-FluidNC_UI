@@ -23,7 +23,6 @@ uiWindow *uiWindow::g_window_pressed = NULL;
 
 
 
-
 bool uiWindow::hitTest()
 {
     if (g_pressed && !g_win_pressed)
@@ -37,11 +36,16 @@ bool uiWindow::hitTest()
                 g_press_y >= ele->y &&
                 g_press_y <  ele->y + ele->h)
             {
-                g_win_pressed = ele;
-                g_window_pressed = this;
-                // debug_serial("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
-                onButton(g_win_pressed,true);
-                drawTypedElement(g_win_pressed,true);
+                uint16_t bg = ele->id_type & ID_TYPE_MUTABLE ?
+                    ((uiMutable *) ele->param)->bg : ele->bg;
+                if (bg != COLOR_BUTTON_DISABLED)
+                {
+                    g_win_pressed = ele;
+                    g_window_pressed = this;
+                    // debug_serial("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
+                    onButton(g_win_pressed,true);
+                    drawTypedElement(g_win_pressed,true);
+                }
                 return true;
             }
         }
@@ -94,6 +98,24 @@ void uiWindow::updateTouch()
 
 
 
+void getMutableElementSettings(
+    const uiElement *ele,
+    const char **text,
+    uint16_t *bg,
+    uint16_t *fg,
+    FontType *font)
+    // abstracted in case I wanna call it somewhere else
+{
+    if (ele->id_type & ID_TYPE_MUTABLE)
+    {
+        uiMutable *mut = (uiMutable *) ele->param;
+        *text = mut->text;
+        *bg   = mut->bg;
+        *fg   = mut->fg;
+        *font = mut->font;
+    }
+}
+
 
 void uiWindow::drawTypedElement(const uiElement *ele, bool pressed)
 {
@@ -101,6 +123,7 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed)
     uint16_t bg = ele->bg;
     uint16_t fg = ele->fg;
     FontType font = ele->font;
+    getMutableElementSettings(ele,&text,&bg,&fg,&font);
 
     // if drawElement is called on the currently pressed button,
     // we force "pressed" to be true to prevent calls with false
@@ -109,19 +132,10 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed)
     if (ele == g_win_pressed)
         pressed = true;
 
-    if (ele->id_type & ID_TYPE_MUTABLE)
-    {
-        uiMutable *mut = (uiMutable *) ele->param;
-        text = mut->text;
-        bg   = mut->bg;
-        fg   = mut->fg;
-        font = mut->font;
-    }
-
     if (pressed)
     {
-        bg = COLOR_CYAN;
-        fg = COLOR_BLACK;
+        bg = COLOR_BUTTON_BG_PRESSED;
+        fg = COLOR_BUTTON_FG_PRESSED;
     }
 
     if (ele->id_type & ID_TYPE_BUTTON)
@@ -158,4 +172,3 @@ void uiWindow::drawTypedElements()
         }
     }
 }
-

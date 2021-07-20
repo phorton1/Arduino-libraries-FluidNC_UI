@@ -7,6 +7,9 @@
 #include "uiWindow.h"
 #include "gStatus.h"
 
+#define CONFIRM_COMMAND_RESET   0x0001
+#define CONFIRM_COMMAND_REBOOT  0x0002
+
 
 typedef struct appLast_t
     // A structure that holds previous state of
@@ -47,11 +50,16 @@ class gApplication : public uiWindow
         void setTitle(const char *text);
         void setCurWindow(uiWindow *ele);
 
+        void confirmCommand(uint16_t command);
+        void endConfirm(uint16_t rslt);
+
     private:
 
         bool draw_needed;
 
         uiWindow *cur_window;
+        uiWindow *prev_window;
+        uint16_t pending_command;
 
         // gStatus
 

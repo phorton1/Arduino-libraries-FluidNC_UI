@@ -10,10 +10,6 @@
         // have to modify Serial.h to directly include "Config.h" to get CLIENT_TOUCH_UI
 #endif
 
-#if TEST_STANDALONE_UI
-    blah
-#endif
-
 
 //----------------------------------------------------------------------
 // WINDOW DEFINITION
@@ -31,6 +27,9 @@ uiMutable pr_button = {
     COLOR_WHITE,
     FONT_BIG,
 };
+
+
+#define IDX_RESUME_BUTTON    0      // index to ID_PAUSE_RESUME_BUTTON in element array
 
 
 const uiElement busy_elements[] =
@@ -61,6 +60,9 @@ void winBusy::onButton(const uiElement *ele, bool pressed)
     {
         if (ele->id_type == ID_PAUSE_RESUME_BUTTON)
         {
+            // should NOT get this if the window is disabled
+            // via COLOR_BUTTON_DISABLED
+
             #if !TEST_STANDALONE_UI
                 execute_realtime_command(
                     m_paused ? Cmd::CycleStart : Cmd::FeedHold,
@@ -69,17 +71,11 @@ void winBusy::onButton(const uiElement *ele, bool pressed)
         }
         else if (ele->id_type == ID_RESET_BUTTON)
         {
-            #if !TEST_STANDALONE_UI
-                execute_realtime_command(Cmd::Reset,CLIENT_ALL);
-                    // CLIENT_TOUCH_UI);
-            #endif
+            the_app.confirmCommand(CONFIRM_COMMAND_RESET);
         }
         else if (ele->id_type == ID_REBOOT_BUTTON)
         {
-            debug_serial("winBusy::onButton(ID_REBOOT_BUTTON) restarting the ESP32!!");
-            delay(500);
-            ESP.restart();
-            while (1) {}
+            the_app.confirmCommand(CONFIRM_COMMAND_REBOOT);
         }
     }
 }
@@ -87,17 +83,20 @@ void winBusy::onButton(const uiElement *ele, bool pressed)
 
 void winBusy::update()
 {
+    bool busy = g_status.getSDState() == grbl_SDState_t::Busy;
     bool paused = g_status.getSysState() == grbl_State_t::Hold;
-    if (m_paused != paused)
+
+    if (m_busy != busy ||
+        m_paused != paused)
     {
+        m_busy = busy;
         m_paused = paused;
 
         pr_button.text = paused ? "RESUME" : "PAUSE";
-        pr_button.bg   = paused ? COLOR_DARKGREEN : COLOR_BLUE;
-        drawTypedElement(&m_elements[0]);
-            // the resume button just happens to be element 0 in this window
-            // will probably added a drawTypedElement(uint16_t, bool pressed)
-            // that takes an "id_type"
+        pr_button.bg   =
+            !busy ? COLOR_BUTTON_DISABLED :
+            paused ? COLOR_DARKGREEN : COLOR_BLUE;
+        drawTypedElement(&m_elements[IDX_RESUME_BUTTON]);
     }
 
 }

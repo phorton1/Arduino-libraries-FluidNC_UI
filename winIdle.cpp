@@ -28,6 +28,9 @@ uiMutable mutable_button = {
 //----------------------------------------------------------------------
 
 
+#define IDX_TEXT_FIELD   0
+
+
 const uiElement idle_elements[] = {
 
     { ID_TYPE_TEXT,       0,  40, 320, 20, V(some_text),           COLOR_BLACK,     COLOR_WHITE, FONT_NORMAL, JUST_CENTER },
@@ -71,9 +74,7 @@ void winIdle::onButton(const uiElement *ele, bool pressed)
             sprintf(button_text,"BLAH%d",counter++);
                 // drawElement will be called after onButton(false)
             sprintf(some_text, "counter = %d",counter);
-            drawTypedElement(&m_elements[0]);
-                // just happen to know the index of the text field
-                // that references some_text
+            drawTypedElement(&m_elements[IDX_TEXT_FIELD]);
         }
         else if (ele->id_type == ID_SOME_BUTTON2)
         {
