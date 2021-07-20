@@ -12,7 +12,7 @@
 #define COLOR_DARKBLUE    0x000F      //    0,   0, 128
 #define COLOR_DARKGREEN   0x03E0      //    0, 128,   0
 #define COLOR_DARKCYAN    0x03EF      //    0, 128, 128
-#define COLOR_MAROON      0x7800      //  128,   0,   0
+#define COLOR_DARKRED     0x7800      //  128,   0,   0
 #define COLOR_PURPLE      0x780F      //  128,   0, 128
 #define COLOR_OLIVE       0x7BE0      //  128, 128,   0
 #define COLOR_LIGHTGREY   0xD69A      //  211, 211, 211
@@ -35,8 +35,8 @@
 
 typedef enum JustifyType
 {
-    JUST_LEFT,           // mid
     JUST_CENTER,
+    JUST_LEFT,           // mid
     JUST_RIGHT,
     JUST_LEFT_TOP,
     JUST_CENTER_TOP,

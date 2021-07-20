@@ -18,12 +18,16 @@
 #define UI_MAIN_BUTTON_WIDTH    80
 #define UI_INDICATOR_WIDTH      28
 
+#define UI_MAX_TITLE            30          // maximum length of system title
+#define UI_MAX_BUTTON            7          // maximum length of a mutable button
+
 #define IND_STATE_NONE         0x00
 #define IND_STATE_ENABLED      0x01
 #define IND_STATE_READY        0x02
 #define IND_STATE_ACTIVE       0x04
 #define IND_STATE_ERROR        0x08
 #define IND_STATE_ALL          0x0f
+
 
 
 // the primary modes of the "main" window

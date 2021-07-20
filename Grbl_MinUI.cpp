@@ -26,33 +26,28 @@
 // Please see http://github.com/phorton1/Arduino-libraries-lvgl/README.md
 // information.
 
+#define WITH_APPLICATION 1
 
-#include "gDefs.h"		// for TFT_eSPI and version number/date
-#include "Grbl_MinUI.h"
+#include "gDefs.h"			// for version number/date
+#include "Grbl_MinUI.h"		// for TEST_STANDALONE_UI
+#include "myTFT.h"
+
+
 
 #if !TEST_STANDALONE_UI
 	#include <System.h>		// to initialize sys.state to Sleep
 #endif
 
-// we include the fonts for everybody
-// didn't work as sesparate cpp file ...
-
-
-
-#define WITH_APPLICATION 1
-
-
 #if WITH_APPLICATION
 	#include "gApp.h"
 #endif
 
-#include "myTFT.h"
+
 
 
 //---------------------------------------------------------------
 // gDisplayTask()
 //---------------------------------------------------------------
-
 
 #define TOUCHSCREEN_UPDATE_MS   33
 
@@ -62,11 +57,16 @@ void gDisplayTask(void* pvParameters)
 		// short delay to allow debug_serial from touchUI_init() to complete
 	debug_serial("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
 
+	#if WITH_APPLICATION
+		the_app.begin();
+	#endif
+
 	while (true)
     {
 		vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
+
 		#if WITH_APPLICATION
-			appUpdate();
+			the_app.update();
 		#endif
     }
 }
