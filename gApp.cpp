@@ -29,8 +29,6 @@
 #define ID_MEMAVAIL_MIN         (0x0039)
 
 
-
-
 gApplication    the_app;
 winIdle         idle_win;
 winBusy         busy_win;
@@ -117,8 +115,8 @@ void gApplication::setCurWindow(uiWindow *win)
 void gApplication::confirmCommand(uint16_t command)
 {
         confirm_dlg.setMessage(
-            command == CONFIRM_COMMAND_RESET ? "reset the gMachine?" :
-            command == CONFIRM_COMMAND_REBOOT ? "reboot the computer?" :
+            command == CONFIRM_COMMAND_RESET ? "reset the GRBL Machine?" :
+            command == CONFIRM_COMMAND_REBOOT ? "reboot the Controller?" :
             "UNKNOWN CONFIRM COMMAND");
 
         pending_command = command;
@@ -268,8 +266,10 @@ void gApplication::doTextProgress(const uiElement *ele, const char *text, bool c
 void gApplication::doAppButton(const uiElement *ele)
 {
     float pct = g_status.filePct();
+    grbl_State_t sys_state = g_status.getSysState();
+    grbl_SDState_t sd_state = g_status.getSDState();
 
-     if (last.sd_state != sd_state ||
+    if (last.sd_state != sd_state ||
          last.sys_state != sys_state ||
          last.pct != pct)
     {
@@ -292,9 +292,14 @@ void gApplication::doAppButton(const uiElement *ele)
 
 void gApplication::doAppTitle(const uiElement *ele)
 {
+    grbl_State_t sys_state = g_status.getSysState();
+    grbl_SDState_t sd_state = g_status.getSDState();
+
     if (last.sd_state != sd_state ||
-        last.sys_state != sys_state)
+        last.sys_state != sys_state ||
+        strcmp(app_title_buf,last.app_title))
     {
+        // PRELIMINARY WINDOW MANAGMENT - WIP
         // this is where we start a "Job"
 
         // debug_serial("doAppTitle sys(%d) sd(%d)",sd_state,sys_state);
@@ -313,6 +318,7 @@ void gApplication::doAppTitle(const uiElement *ele)
             setCurWindow(&busy_win);
         }
 
+        // PRELIMINARY WINDOW MANAGMENT - WIP
         // and this is where we  potentially change from "Busy" to "Hold"
 
         if (sd_state == grbl_SDState_t::Busy)
@@ -342,6 +348,9 @@ void gApplication::doAppTitle(const uiElement *ele)
 
 void gApplication::doSDIndicator(const uiElement *ele)
 {
+    grbl_State_t sys_state = g_status.getSysState();
+    grbl_SDState_t sd_state = g_status.getSDState();
+
     if (draw_needed ||
         last.sd_state != sd_state ||
         last.sys_state != sys_state)
@@ -418,6 +427,7 @@ void gApplication::doWorkPosition(const uiElement *ele)
 
 void gApplication::doSysState(const uiElement *ele)
 {
+    grbl_State_t sys_state = g_status.getSysState();
     bool changed = draw_needed || (last.sys_state != sys_state);
     if (changed ||
         last.prog_w != prog_w)
@@ -452,8 +462,9 @@ void gApplication::doMemAvail(const uiElement *ele)
 void gApplication::doJobProgress(const uiElement *ele)
 {
     float pct = g_status.filePct();
+    grbl_SDState_t sd_state = g_status.getSDState();
 
-    if (draw_needed)        // implies pct=0, prog_x=0, prog_w=0, and last.prog_w=0
+    if (draw_needed)  // implies pct=0, prog_x=0, prog_w=0, and last.prog_w=0
     {
         tft.fillRect(
             ele->x, ele->y, ele->w, ele->h,
@@ -461,7 +472,6 @@ void gApplication::doJobProgress(const uiElement *ele)
     }
 
     // otherwise we fill the bar if the color has changed
-
 
     else if (last.prog_color != prog_color ||
              (sd_state == grbl_SDState_t::Busy &&
@@ -487,8 +497,6 @@ void gApplication::doJobProgress(const uiElement *ele)
 void gApplication::update()
 {
     g_status.updateStatus();
-    sys_state = g_status.getSysState();
-    sd_state = g_status.getSDState();
 
     if (draw_needed)
     {
@@ -533,12 +541,18 @@ void gApplication::update()
         cur_window->update();
     }
 
-    // continuing ...
+    // PRELIMINARY WINDOW MANAGMENT - WIP
+    // we have drawn everything that needs to be drawn
+    // except for below we notice going "out" of "busy
+    // mode and will switch to the idle window and redraw
 
     draw_needed = false;
 
     // update muliply used state change variables
     // if we went from busy to not busy, redraw the whole screen
+
+    grbl_State_t sys_state = g_status.getSysState();
+    grbl_SDState_t sd_state = g_status.getSDState();
 
     if (last.sd_state != sd_state &&
         last.sd_state == grbl_SDState_t::Busy)
@@ -554,10 +568,10 @@ void gApplication::update()
         draw_needed = true;
     }
 
-    // last.job_state = job_state;
     last.sd_state = sd_state;
     last.sys_state = sys_state;
     last.pct = g_status.filePct();
     last.prog_w = prog_w;
     last.prog_color = prog_color;
+    strcpy(last.app_title,app_title_buf);
 }

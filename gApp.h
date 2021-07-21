@@ -61,11 +61,6 @@ class gApplication : public uiWindow
         uiWindow *prev_window;
         uint16_t pending_command;
 
-        // gStatus
-
-        grbl_SDState_t sd_state;
-        grbl_State_t sys_state;
-
         // progress bar
 
         int16_t  prog_x;
