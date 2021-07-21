@@ -1,5 +1,5 @@
 //--------------------------------------
-// The confirm Yes/No window
+// The msg, error, and warning windows
 //--------------------------------------
 
 #pragma once
@@ -8,18 +8,15 @@
 
 #ifdef WITH_APPLICATION
 
-    #define CONFIRM_COMMAND_RESET   0x0001
-    #define CONFIRM_COMMAND_REBOOT  0x0002
-
-    class dlgConfirm : public uiWindow
+    class dlgMsg : public uiWindow
     {
         public:
 
-            dlgConfirm();
+            dlgMsg();
 
             virtual bool isModal() const override { return true; }
 
-            void setConfirm(uint16_t command);
+            void setMsg(uint16_t color, const char *line1, const char *line2="");
 
         private:
 
@@ -28,6 +25,11 @@
     };
 
 
-    extern dlgConfirm confirm_dlg;
+    extern dlgMsg msg_dlg;
+
+    extern void okMsg(const char *line1, const char *line2="");
+    extern void errorMsg(const char *msg);
+    extern void warningMsg(const char *msg);
+
 
 #endif  // WITH_APPLICATION

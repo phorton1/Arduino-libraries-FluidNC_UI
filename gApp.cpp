@@ -6,10 +6,13 @@
 
 #ifdef WITH_APPLICATION
 
-    #include "winIdle.h"
+    #define MAX_WINDOW_STACK  5
+
+
+    #include "winMain.h"
     #include "winBusy.h"
     #include "winAlarm.h"
-    #include "dlgConfirm.h"
+    #include "dlgMainMenu.h"
 
 
     // IDS OF ANY PARENTS MUST BE GLOBALLY UNIQUE !!
@@ -30,43 +33,38 @@
     #define ID_MEMAVAIL             (0x0038)
     #define ID_MEMAVAIL_MIN         (0x0039)
 
+    gApplication the_app;
 
-    gApplication    the_app;
-    winIdle         idle_win;
-    winBusy         busy_win;
-    winAlarm        alarm_win;
-    dlgConfirm      confirm_dlg;
+    static uint8_t win_stack_ptr = 0;
+    static uiWindow *win_stack[MAX_WINDOW_STACK] = {0};
 
+    static char app_button_buf[UI_MAX_BUTTON + 1] = "MAIN";
+    static char app_title_buf[UI_MAX_TITLE + 1] = "title";
 
-    char app_button_buf[UI_MAX_BUTTON + 1] = "MAIN";
-    char app_title_buf[UI_MAX_TITLE + 1] = "title";
+    //----------------------------------------------------------------------
+    // FRAME DEFINITION
+    //----------------------------------------------------------------------
 
-
-    uiMutable app_button = {
+    static uiMutable app_button = {
         app_button_buf,
         COLOR_BLUE,
         COLOR_WHITE,
         FONT_BIG
     };
 
-    uiMutable app_title = {
+    static uiMutable app_title = {
         app_title_buf,
         COLOR_DARKBLUE,
         COLOR_WHITE,
         FONT_BIG
     };
 
-
-    //----------------------------------------------------------------------
-    // FRAME DEFINITION
-    //----------------------------------------------------------------------
-
-    const uiElement app_elements[] =
+    static const uiElement app_elements[] =
     {
-        { ID_APP_BUTTON,         0,   0,  80,  35,   V(&app_button) },
-        { ID_APP_TITLE,         84,   0, 180,  35,   V(&app_title) },
-        { ID_SD_INDICATOR,     264,   0,  28,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
-        { ID_WIFI_INDICATOR,   292,   0,  28,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
+        { ID_APP_BUTTON,         0,   0,  90,  35,   V(&app_button) },
+        { ID_APP_TITLE,         94,   0, 180,  35,   V(&app_title) },
+        { ID_SD_INDICATOR,     274,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
+        { ID_WIFI_INDICATOR,   297,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
         { ID_STATUSBAR,          0, 205, 320,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, },
         { ID_MACHINE_X,         10, 205,  55,  16,   V(UI_AXIS_X),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
         { ID_MACHINE_Y,         75, 205,  55,  16,   V(UI_AXIS_Y),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
@@ -80,6 +78,10 @@
     };
 
 
+    //----------------------------
+    // implementation
+    //----------------------------
+
 
     gApplication::gApplication() :
         uiWindow(app_elements,sizeof(app_elements)/sizeof(uiElement))
@@ -91,6 +93,74 @@
     {
         draw_needed = true;
         g_status.initWifiEventHandler();
+        setDefaultWindow();
+    }
+
+
+
+    void gApplication::openWindow(uiWindow *win)
+    {
+        if (win->isModal())
+            win_stack_ptr++;
+        win_stack[win_stack_ptr] = win;
+        win->begin();
+    }
+
+
+    void gApplication::endModal()
+    {
+        win_stack_ptr--;
+        openWindow(win_stack[win_stack_ptr]);
+
+    }
+
+    void gApplication::setBaseWindow(uiWindow *win)
+    {
+        win_stack_ptr = 0;
+        setAppButtonText(win->getMenuLabel());
+        openWindow(win);
+    }
+
+
+    void gApplication::setDefaultWindow()
+        // set window without doing openWindow
+        // which is deferred
+    {
+        win_stack_ptr = 0;
+        win_stack[0] =
+            job_state == JOB_ALARM ? (uiWindow *)&alarm_win :
+            job_state == JOB_BUSY  ? (uiWindow *)&busy_win :
+            (uiWindow *)&main_win;
+        setAppButtonText(win_stack[0]->getMenuLabel());
+    }
+
+
+    void gApplication::onButton(const uiElement *ele, bool pressed)
+    {
+        if (!pressed)
+        {
+            if (win_stack[win_stack_ptr]->isModal())
+                endModal();
+            else
+                openWindow(&main_menu);
+        }
+    }
+
+    //------------------------
+    // utilities
+    //------------------------
+
+    const char *gApplication::getAppButtonText()
+    {
+        return app_button_buf;
+    }
+
+    void gApplication::setAppButtonText(const char *text)
+    {
+        int len = strlen(text);
+        if (len > UI_MAX_BUTTON) len = UI_MAX_BUTTON;
+        memcpy(app_button_buf,text,len);
+        app_button_buf[len] = 0;
     }
 
 
@@ -102,54 +172,6 @@
         app_title_buf[len] = 0;
     }
 
-
-    void gApplication::setCurWindow(uiWindow *win)
-    {
-        tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT-UI_TOP_MARGIN-UI_BOTTOM_MARGIN,COLOR_BLACK);
-        cur_window = win;
-        cur_window->begin();
-    }
-
-
-
-    void gApplication::confirmCommand(uint16_t command)
-    {
-            confirm_dlg.setMessage(
-                command == CONFIRM_COMMAND_RESET ? "reset the GRBL Machine?" :
-                command == CONFIRM_COMMAND_REBOOT ? "reboot the Controller?" :
-                "UNKNOWN CONFIRM COMMAND");
-
-            pending_command = command;
-            prev_window = cur_window;
-            setCurWindow(&confirm_dlg);
-    }
-
-    void gApplication::endConfirm(uint16_t rslt)
-    {
-        if (rslt)
-        {
-            if (pending_command == CONFIRM_COMMAND_RESET)
-            {
-                 #ifdef WITH_GRBL
-                    execute_realtime_command(Cmd::Reset,CLIENT_ALL);
-                        // CLIENT_TOUCH_UI);
-                #endif
-            }
-            else if (pending_command == CONFIRM_COMMAND_REBOOT)
-            {
-                debug_serial("gApplication estarting the ESP32!!");
-                delay(500);
-                ESP.restart();
-                while (1) {}
-            }
-        }
-        setCurWindow(prev_window);
-    }
-
-
-    //------------------------
-    // utilities
-    //------------------------
 
     uint16_t gApplication::indColor(uint8_t ind_state)
     {
@@ -173,6 +195,18 @@
             ele->bg );
     }
 
+
+    //-------------------------
+    // progress bar
+    //-------------------------
+
+    void gApplication::initProgress()
+    {
+        prog_x = 0;
+        prog_w = 0;
+        last.prog_w = 0;
+        prog_color = COLOR_BROWN;
+    }
 
     void gApplication::doTextProgress(const uiElement *ele, const char *text, bool changed)
         // Called for fields that lie on the progress bar to draw the text.
@@ -266,24 +300,24 @@
     void gApplication::doAppButton(const uiElement *ele)
     {
         float pct = g_status.filePct();
-        grbl_State_t sys_state = g_status.getSysState();
-        grbl_SDState_t sd_state = g_status.getSDState();
+        bool pct_changed =
+            win_stack[0] &&
+            win_stack[0] == &busy_win &&
+            last.pct != pct &&
+            (job_state == JOB_BUSY || job_state == JOB_HOLD);
 
-        if (last.sd_state != sd_state ||
-             last.sys_state != sys_state ||
-             last.pct != pct)
+        if (draw_needed ||
+            pct_changed ||
+            strcmp(last.app_button,app_button_buf))
         {
-            if (sd_state == grbl_SDState_t::Busy)
-            {
+            if (pct_changed)
                 sprintf(app_button_buf,"%2.1f%%",pct);
-                app_button.fg = sys_state == grbl_State_t::Hold ?
-                    COLOR_CYAN : COLOR_YELLOW;
-            }
-            else
-            {
-                app_button.fg = COLOR_WHITE;
-                strcpy(app_button_buf,"MAIN");
-            }
+
+            app_button.fg =
+                job_state == JOB_ALARM ? COLOR_RED :
+                job_state == JOB_HOLD ? COLOR_CYAN :
+                job_state == JOB_BUSY ? COLOR_YELLOW :
+                COLOR_WHITE;
 
             drawTypedElement(ele,false);
         }
@@ -292,54 +326,32 @@
 
     void gApplication::doAppTitle(const uiElement *ele)
     {
-        grbl_State_t sys_state = g_status.getSysState();
-        grbl_SDState_t sd_state = g_status.getSDState();
-
-        if (last.sd_state != sd_state ||
-            last.sys_state != sys_state ||
+        if (draw_needed ||
             strcmp(app_title_buf,last.app_title))
         {
-            // PRELIMINARY WINDOW MANAGMENT - WIP
-            // this is where we start a "Job"
+            // the title, whatever it happens to be
+            // stays red when alarm, yellow when busy,
+            // cyan when hold, or white when idle
 
-            // debug_serial("doAppTitle sys(%d) sd(%d)",sd_state,sys_state);
+            app_title.fg =
+                job_state == JOB_ALARM ? COLOR_RED :
+                job_state == JOB_HOLD ? COLOR_CYAN :
+                job_state == JOB_BUSY ? COLOR_YELLOW :
+                COLOR_WHITE;
 
-            if (last.sd_state != sd_state &&
-                sd_state == grbl_SDState_t::Busy)
+            // and we always set the color of the progress bar
+            // even if it's not in progress
+;
+            prog_color = job_state == JOB_HOLD ?
+                COLOR_DARKCYAN : COLOR_BROWN;
+
+            // invalidate the progress bar upon a color change
+
+            if (last.prog_color != prog_color)
             {
-                const char *filename = g_status.getActiveFilename();
-                const char *p = filename;
-                while (*p)
-                {
-                    if (*p++ == '/')
-                    filename = p;
-                }
-                setTitle(filename);
-                setCurWindow(&busy_win);
+                last.prog_w = 0;
             }
 
-            // PRELIMINARY WINDOW MANAGMENT - WIP
-            // and this is where we  potentially change from "Busy" to "Hold"
-
-            if (sd_state == grbl_SDState_t::Busy)
-            {
-                app_title.fg = sys_state == grbl_State_t::Hold ?
-                    COLOR_CYAN : COLOR_YELLOW;
-                prog_color = sys_state == grbl_State_t::Hold ?
-                    COLOR_DARKCYAN : COLOR_BROWN;
-
-                // invalidate the progress bar upon a color change
-
-                if (last.prog_color != prog_color)
-                {
-                    last.prog_w = 0;
-                }
-            }
-            else
-            {
-                app_title.fg = COLOR_WHITE;
-                strcpy(app_title_buf,"NO JOB");
-            }
 
             drawTypedElement(ele,false);
         }
@@ -348,19 +360,14 @@
 
     void gApplication::doSDIndicator(const uiElement *ele)
     {
-        grbl_State_t sys_state = g_status.getSysState();
         grbl_SDState_t sd_state = g_status.getSDState();
 
-        if (draw_needed ||
-            last.sd_state != sd_state ||
-            last.sys_state != sys_state)
+        if (draw_needed || last.sd_state != sd_state)
         {
             uint8_t ind_state =
                 sd_state == grbl_SDState_t::NotPresent ? IND_STATE_NONE :
                 sd_state == grbl_SDState_t::Idle 	   ? IND_STATE_READY :
-                sys_state == grbl_State_t::Hold ?
-                    IND_STATE_ENABLED : IND_STATE_ACTIVE;
-
+                    IND_STATE_ACTIVE;
             drawText(
                 "S",
                 ele->just,
@@ -461,10 +468,10 @@
 
     void gApplication::doJobProgress(const uiElement *ele)
     {
-        float pct = g_status.filePct();
-        grbl_SDState_t sd_state = g_status.getSDState();
+        // if "draw needed" it means there is no progress bar
+        // implies pct=0, prog_x=0, prog_w=0, and last.prog_w=0
 
-        if (draw_needed)  // implies pct=0, prog_x=0, prog_w=0, and last.prog_w=0
+        if (draw_needed)
         {
             tft.fillRect(
                 ele->x, ele->y, ele->w, ele->h,
@@ -472,18 +479,22 @@
         }
 
         // otherwise we fill the bar if the color has changed
+        // or the percent has changed
 
-        else if (last.prog_color != prog_color ||
-                 (sd_state == grbl_SDState_t::Busy &&
-                 last.pct != pct))
+        else
         {
-            prog_x = ele->x;     // 0
-            prog_w = ((pct * ele->w)/100.0);
-            if (last.prog_w != prog_w)
+            float pct = g_status.filePct();
+            if (last.pct != pct ||
+                last.prog_color != prog_color)
             {
-                tft.fillRect(
-                    prog_x + last.prog_w, ele->y, prog_w - last.prog_w, ele->h,
-                    prog_color);
+                prog_x = ele->x;     // 0
+                prog_w = ((pct * ele->w)/100.0);
+                if (last.prog_w != prog_w)
+                {
+                    tft.fillRect(
+                        prog_x + last.prog_w, ele->y, prog_w - last.prog_w, ele->h,
+                        prog_color);
+                }
             }
         }
     }
@@ -491,23 +502,76 @@
 
 
     //----------------------------------
-    // appUpdate()
+    // udate()
     //----------------------------------
+
 
     void gApplication::update()
     {
         g_status.updateStatus();
+        grbl_State_t sys_state = g_status.getSysState();
+        grbl_SDState_t sd_state = g_status.getSDState();
+
+        // set the job_state, and possibly the title of the file
+
+        if (sys_state == grbl_State_t::Alarm)
+            job_state = JOB_ALARM;
+        else if (sd_state == grbl_SDState_t::Busy)
+            job_state = JOB_BUSY;
+        else
+            job_state = JOB_IDLE;
+
+        if (job_state != last.job_state)
+        {
+            draw_needed = true;
+            setDefaultWindow();
+            initProgress();
+            if (job_state == JOB_BUSY)
+            {
+                const char *filename = g_status.getActiveFilename();
+                const char *p = filename;
+                while (*p)
+                {
+                    if (*p++ == '/')
+                    filename = p;
+                }
+                setTitle(filename);
+            }
+        }
+
+        // redraw the whole window if necessary
 
         if (draw_needed)
         {
             tft.fillRect(0,0,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT,COLOR_BLACK);
             tft.fillRect(0,0,UI_SCREEN_WIDTH,UI_TOP_MARGIN,COLOR_DARKBLUE);
             drawTypedElements();
-            setCurWindow(&idle_win);
+            openWindow(win_stack[win_stack_ptr]);
         }
 
         uiWindow::updateTouch();
         hitTest();
+
+        // dispatch to child window if any
+
+        if (win_stack[win_stack_ptr])
+        {
+            win_stack[win_stack_ptr]->hitTest();
+
+            // press outside of main menu closes it
+
+            if (g_pressed &&
+                !g_win_pressed &&
+                win_stack[win_stack_ptr] == &main_menu)
+            {
+                    endModal();
+            }
+            else
+            {
+                win_stack[win_stack_ptr]->update();
+            }
+        }
+
 
         // dispatch to frame elements
 
@@ -533,47 +597,19 @@
             }
         }
 
-        // dispatch to child window if any
 
-        if (cur_window)
-        {
-            cur_window->hitTest();
-            cur_window->update();
-        }
 
-        // PRELIMINARY WINDOW MANAGMENT - WIP
-        // we have drawn everything that needs to be drawn
-        // except for below we notice going "out" of "busy
-        // mode and will switch to the idle window and redraw
+        // save state for next time through update()
 
         draw_needed = false;
-
-        // update muliply used state change variables
-        // if we went from busy to not busy, redraw the whole screen
-
-        grbl_State_t sys_state = g_status.getSysState();
-        grbl_SDState_t sd_state = g_status.getSDState();
-
-        if (last.sd_state != sd_state &&
-            last.sd_state == grbl_SDState_t::Busy)
-        {
-            prog_x = 0;
-            prog_w = 0;
-            last.prog_w = 0;
-            prog_color = COLOR_BROWN;
-
-            // re-draw the whole window
-            // and return to the idle window
-
-            draw_needed = true;
-        }
-
+        last.job_state = job_state;
         last.sd_state = sd_state;
         last.sys_state = sys_state;
         last.pct = g_status.filePct();
         last.prog_w = prog_w;
         last.prog_color = prog_color;
         strcpy(last.app_title,app_title_buf);
+        strcpy(last.app_button,app_button_buf);
     }
 
 

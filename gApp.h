@@ -10,14 +10,20 @@
 
     #include "gStatus.h"
 
-    #define CONFIRM_COMMAND_RESET   0x0001
-    #define CONFIRM_COMMAND_REBOOT  0x0002
-
+    typedef enum JobState
+    {
+        JOB_IDLE,
+        JOB_BUSY,
+        JOB_HOLD,
+        JOB_ALARM
+    };
 
     typedef struct appLast_t
         // A structure that holds previous state of
         // application for change detection.
     {
+        JobState       job_state;
+
         // system change detection
 
         uint32_t       mem_avail;
@@ -36,6 +42,7 @@
         int16_t        prog_w;
         uint16_t       prog_color;
         char           app_title[UI_MAX_TITLE + 1];
+        char           app_button[UI_MAX_BUTTON + 1];
 
     };
 
@@ -51,18 +58,22 @@
             virtual void update() override;
 
             void setTitle(const char *text);
-            void setCurWindow(uiWindow *ele);
+            void openWindow(uiWindow *win);
+            void endModal();
+            void setBaseWindow(uiWindow *win);
+                // the menu sets the base window directly
 
-            void confirmCommand(uint16_t command);
-            void endConfirm(uint16_t rslt);
+            JobState getJobState()  { return job_state; }
+
+            const char *getAppButtonText();
+            void setAppButtonText(const char *text);
+
 
         private:
 
-            bool draw_needed;
+            JobState job_state;
 
-            uiWindow *cur_window;
-            uiWindow *prev_window;
-            uint16_t pending_command;
+            bool draw_needed;
 
             // progress bar
 
@@ -78,9 +89,13 @@
             // methods
             //-----------------------------
 
+            void setDefaultWindow();
+
             uint16_t indColor(uint8_t ind_state);
             void doText(const uiElement *ele, const char *text);
+            void initProgress();
             void doTextProgress(const uiElement *ele, const char *text, bool changed);
+            virtual void onButton(const uiElement *ele, bool pressed) override;
 
             // dispatched functions
 

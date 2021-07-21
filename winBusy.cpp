@@ -6,6 +6,7 @@
 
 #ifdef WITH_APPLICATION
 
+    #include "dlgConfirm.h"
 
     #ifdef WITH_GRBL
         #include <Serial.h>     // for CLIENTS and execute_realtime_command() and Cmd types
@@ -13,28 +14,27 @@
     #endif
 
 
+    winBusy busy_win;
+
+
     //----------------------------------------------------------------------
     // WINDOW DEFINITION
     //----------------------------------------------------------------------
 
+    #define IDX_RESUME_BUTTON    0      // index to ID_PAUSE_RESUME_BUTTON in element array
 
     #define ID_PAUSE_RESUME_BUTTON      (0x0001 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
     #define ID_RESET_BUTTON             (0x0002 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
     #define ID_REBOOT_BUTTON            (0x0003 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 
-
-    uiMutable pr_button = {
+    static uiMutable pr_button = {
         "PAUSE",
         COLOR_BLUE,
         COLOR_WHITE,
         FONT_BIG,
     };
 
-
-    #define IDX_RESUME_BUTTON    0      // index to ID_PAUSE_RESUME_BUTTON in element array
-
-
-    const uiElement busy_elements[] =
+    static const uiElement busy_elements[] =
     {
         { ID_PAUSE_RESUME_BUTTON, 20,  70, 130,  90,    V(&pr_button),  },
         { ID_RESET_BUTTON,       170,  60, 130,  40,    V("RESET"),         COLOR_ORANGE,  COLOR_BLACK, FONT_BIG },
@@ -42,9 +42,8 @@
     };
 
 
-
     //----------------------------------------------------------------------
-    // methods
+    // implementation
     //----------------------------------------------------------------------
 
 
@@ -52,7 +51,21 @@
         uiWindow(busy_elements,(sizeof(busy_elements)/sizeof(uiElement)))
     {}
 
+    void winBusy::setElements()
+    {
+        pr_button.text = m_job_state == JOB_HOLD ? "RESUME" : "PAUSE";
+        pr_button.bg   =
+            m_job_state == JOB_HOLD ? COLOR_DARKGREEN :
+            m_job_state == JOB_BUSY ? COLOR_BLUE :
+            COLOR_BUTTON_DISABLED;
+    }
 
+    void winBusy::begin()
+    {
+        m_job_state = the_app.getJobState();
+        setElements();
+        uiWindow::begin();
+    }
 
 
     void winBusy::onButton(const uiElement *ele, bool pressed)
@@ -67,17 +80,20 @@
 
                  #ifdef WITH_GRBL
                     execute_realtime_command(
-                        m_paused ? Cmd::CycleStart : Cmd::FeedHold,
+                        m_job_state == JOB_HOLD ?
+                            Cmd::CycleStart : Cmd::FeedHold,
                         CLIENT_ALL);
                 #endif
             }
             else if (ele->id_type == ID_RESET_BUTTON)
             {
-                the_app.confirmCommand(CONFIRM_COMMAND_RESET);
+                confirm_dlg.setConfirm(CONFIRM_COMMAND_RESET);
+                the_app.openWindow(&confirm_dlg);
             }
             else if (ele->id_type == ID_REBOOT_BUTTON)
             {
-                the_app.confirmCommand(CONFIRM_COMMAND_REBOOT);
+                confirm_dlg.setConfirm(CONFIRM_COMMAND_REBOOT);
+                the_app.openWindow(&confirm_dlg);
             }
         }
     }
@@ -85,22 +101,12 @@
 
     void winBusy::update()
     {
-        bool busy = g_status.getSDState() == grbl_SDState_t::Busy;
-        bool paused = g_status.getSysState() == grbl_State_t::Hold;
-
-        if (m_busy != busy ||
-            m_paused != paused)
+        JobState job_state = the_app.getJobState();
+        if (m_job_state != job_state)
         {
-            m_busy = busy;
-            m_paused = paused;
-
-            pr_button.text = paused ? "RESUME" : "PAUSE";
-            pr_button.bg   =
-                !busy ? COLOR_BUTTON_DISABLED :
-                paused ? COLOR_DARKGREEN : COLOR_BLUE;
+            setElements();
             drawTypedElement(&m_elements[IDX_RESUME_BUTTON]);
         }
-
     }
 
 

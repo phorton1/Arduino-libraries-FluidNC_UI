@@ -115,7 +115,7 @@
     }
 
 
-    void uiWindow::drawTypedElement(const uiElement *ele, bool pressed)
+    void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
     {
         const char *text = (const char *) ele->param;
         uint16_t bg = ele->bg;
@@ -138,6 +138,17 @@
 
         if (ele->id_type & ID_TYPE_BUTTON)
         {
+            tft.fillRoundRect(
+                ele->x, ele->y, ele->w, ele->h,
+                5,
+                bg);
+            tft.drawRoundRect(
+                ele->x, ele->y, ele->w, ele->h,
+                5,
+                COLOR_LIGHTGREY);
+        }
+        else if (ele->id_type & ID_TYPE_TEXT)
+        {
             tft.fillRect(
                 ele->x, ele->y, ele->w, ele->h,
                 bg);
@@ -151,7 +162,7 @@
                 font,
                 ele->x, ele->y, ele->w, ele->h,
                 fg,
-                bg );
+                fg );
         }
     }
 
@@ -159,7 +170,7 @@
 
     // standard begin() method draws all typed elements
 
-    void uiWindow::drawTypedElements()
+    void uiWindow::drawTypedElements() const
     {
         for (int i=0; i<m_num_elements; i++)
         {

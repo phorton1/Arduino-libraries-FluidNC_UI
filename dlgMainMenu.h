@@ -1,5 +1,5 @@
 //--------------------------------------
-// The 'busy' window
+// The main menu is a dialog window
 //--------------------------------------
 
 #pragma once
@@ -8,11 +8,15 @@
 
 #ifdef WITH_APPLICATION
 
-    class winIdle : public uiWindow
+
+    class dlgMainMenu : public uiWindow
     {
         public:
 
-            winIdle();
+            dlgMainMenu();
+
+            virtual void begin();
+            virtual bool isModal() const override { return true; }
 
         private:
 
@@ -20,5 +24,7 @@
 
     };
 
+
+    extern dlgMainMenu main_menu;
 
 #endif  // WITH_APPLICATION

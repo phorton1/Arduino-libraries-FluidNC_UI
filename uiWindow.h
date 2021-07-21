@@ -70,16 +70,23 @@
                 m_elements(wins),
                 m_num_elements(num_elements) {}
 
-            virtual void begin()  { drawTypedElements(); }
+            virtual void begin()
+            {
+                tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT-UI_TOP_MARGIN-UI_BOTTOM_MARGIN,COLOR_BLACK);
+                drawTypedElements();
+            }
+
             virtual void update() {}
             virtual void onButton(const uiElement *ele, bool pressed) {}
+            virtual bool isModal() const { return false; }
+            virtual const char *getMenuLabel() const  { return ""; }
 
             // draw all typed elements
             // DO NOT CALL drawTypedElement except on "typed" elements
             // OR one with a V(const char *) param member !!!
 
-            void drawTypedElements();
-            void drawTypedElement(const uiElement *ele, bool pressed = false);
+            void drawTypedElements() const;
+            void drawTypedElement(const uiElement *ele, bool pressed = false) const;
 
             // touch and button handler handler
 
@@ -91,10 +98,10 @@
             uint16_t         m_num_elements;
             const uiElement *m_elements;
 
-            static bool         g_pressed;
-            static int          g_press_x;
-            static int          g_press_y;
-            static uint32_t     g_debounce_time;
+            static bool             g_pressed;
+            static int              g_press_x;
+            static int              g_press_y;
+            static uint32_t         g_debounce_time;
             static const uiElement *g_win_pressed;
             static uiWindow        *g_window_pressed;
 

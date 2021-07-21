@@ -16,12 +16,17 @@
 
         private:
 
-            bool m_busy = false;
-            bool m_paused = false;
+            JobState m_job_state;
 
+            void setElements();
+
+            virtual void begin() override;
             virtual void update() override;
-
             virtual void onButton(const uiElement *ele, bool pressed) override;
+            virtual const char *getMenuLabel() const override  { return "BUSY"; }
+
     };
+
+    extern winBusy busy_win;
 
 #endif  // WITH_APPLICATION

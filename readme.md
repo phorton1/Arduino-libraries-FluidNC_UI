@@ -1,131 +1,90 @@
-# Grbl_TouchUI
+# Grbl_MinUI
 
-This library provides a user interface to Grbl_Esp32 on a TFT touch screen.
-It makes use of the TFT_eSPI library to drive the TFT, and the LVGL library
-to provide the under-pinnings of the window system.
+This library provides a user interface to **Grbl_Esp32** on a TFT touch screen.
+It makes use of the **TFT_eSPI** library to drive the TFT.
 
-The system consists of a tree of uiWindows, starting with the gApplication.
+It is designed to have a minimal impact on RAM usage and a small footprint
+in program memory.  It makes no use of memory allocated dynamically at runtime.
 
-The gApplication has the gTitleBar at the top and the gStatusBar at the bottom
-of the screen, and in-between them is the gContentArea which contains the primary
-navigable content (derived from uiWindows).
+The system consists of a tree of *uiWindows*, starting with the **gApplication**.
 
-The entire system is modal depending on the users place in the window tree
-and the state of the gMachine, but generally the gTitleBar and gStatusBar
-are visible and active throughout.
+The gApplication has a *title bar* at the top and a *status bar* at the bottom
+of the screen, and in-between them is the *content area* which generally contains
+the various uiWindows that make up the system.
 
-The gTitleBar contains the Main Button, the Title text area, and
-the Indicator area containing the SDCard and Wifi icons.  The Main Button
-provides access to "top level" windows, like the Main window, the wDirectory
-listing window, the wSettings window, and so on.
+The title bar contains the *application button*, the *title text* area, and
+an *indicator area* containing the SDCard and Wifi indicators.
 
-The Title provides the user with context about their location within the UI
-when appropriate, and gives precedence to showing the filename of any active
-SDCard job which might be running at any given time.
+The **app button** provides access to the various functionality in the program.
 
-The gStatus bar doubles as a progress indicator when an SDCard job is active
-showing the percentage of the job completed at any point in time.  Normally
-the uiStatus bar will show the current work and/or machine positions as text.
+The **title text** provides the user with context about their location in the
+program and the state of the Grbl gcode machine.
+
+The **status bar** gives the *machine* and *work* **coordinates**, the *gCode machine*
+**state**, and the available, and least available, dynamic **memory** in kilobytes.
+
+The status bar also doubles as a *progress bar* when a **SDCard "job"** is running.
+
 
 ## File and Object Naming Convention
 
-grblTouchUI.h and cpp are the interface to external clients who just call
-the touchUI_init() method.  Everything else just "happens" as a result
-of the gDisplayTask which calls the_app->update() at the refresh rate.
+**Grbl_MinUI.h and cpp** are the interface to external clients who just call
+the *Grbl_MinUI_init()* method.  Everything else just "happens" as a result
+of the **gDisplayTask** which calls *app->update()* at the refresh rate.
 
 Apart from that, the objects and filenames are built in layers, from the
 bottom up (lower layers generally do not know about higher layers):
 
-- **UI** - the *UI* layer is an OOP wrapper around LVGL which provides
-  a basic re-usable windowing system, inluding the *uiWindow*, *uiStaticText*
-  *uiLabel* and son.
-- **G** - the *G* layer is the Grbl Specific Application.  It includes
-  the *gApplication*, *gTitleBar*, *gStatusBar* and has the *gContentArea*
-  To a degree it knows, and can instantiate, any of the application
-  windows (*W* objects, below), but it treats them in a polymorphic manner
-  via the uiWindow base class methods.
--- **W** - objects starting with *w* are the top level windows that
-  occupy the content area and make up the grblTouch_UI application.
-  This includes the *wDirectory*, *wMonitor*, *wIdle*, *wJob*, *wAlarm*,
-  windows and so on.
--- **D** - object starting with *d* are somewhat reusable dialog windows
-  like the *dAlert* and *dConfirm* dialogs.
+- **ui** - the *UI* layer is a somewhat general purpose windowsing system
+  implemented on top of TFT_eSPI.  It includes the basic *uiElement* and
+  *uiWindow* objects.
+- **g** - the *G* layer is the Grbl specific appplication and implements
+  the window update and event system.
+-- **win** - objects starting with *win* are the top level windows that
+  occupy the content area and make up the application.
+-- **dlg** - object starting with *dlg* are somewhat reusable dialog windows
+  like the *dlgConfirm* uiWindow.
 
 
+## Main Windows
 
-## Modality
-
-The UI is modal in nature, primarily depending on the state of the gMachine
-but also upon the users location in the window tree.
-
-There are certain parts of the UI that are not available, for instance, while
-a job is running, like jog navigation and setting coordinate systems (homing,
-zeroing, etc).  This modality is partiuclarly built into theMain window which
-is actuall three different windows depending on the state of the gMachine.
-
-- wIdle with jog controls, etc, when the gMachine is idle,
-- wJob with Pause, Stop, Reset, and Reboot buttons while a job is running
-- wAlarm when the gMachine is in an Alarm State
-
-As available, other "top level" windows, like the wSettings or wDirectory
-windows can be navigated to by pressing the Main Button which brings up
-a menu of the available functions at any point in time.
+The system consists of a nunmber of *main windows* that can be accessed
+via the *app button* and/or which are presented by the system depending
+on the *gCode Machine state*.
 
 
-## Update and Top Level Windows
-
-All uiWindows have a virtual update() method.  The purpose of the update()
-method is to allow windows to adjust their state and contents before
-the system calls the underlying LVGL lv_timer_handler() method to draw
-on the TFT.  gApplication::update() is called at the refresh rate.
-
-There is the notion of a "top level window" which generally takes over the
-content area or in some cases the entire screen.  gApplication calls the
-top level gContentArea'supdate() method, which then passes it on, as needed,
-to the current top level window (shown in the content area).  The gApplication
-also calls the gTitleBar::update() and gStatusBar::update() methods.
-
- The top level windows include
-
-- the coneptualized wMain window which the system starts in and reverts to based on state
-  which presents itself as the wIdle, wJobW, or wAlaram window.
-- the wSettings window which allows the user to modify the Grbl_Esp32 settings
-- the wDirectory window which lists the contents of the SD card and allows
-  the user to navigate directories, manipulate files and directories, and
-  initiate jobs from SD Card files.
-- the wMacros window which allows the user to associate gcode files on the
-  SPIFSS or SDCard with buttons in the uiJogWindow
-- the wMonitor window which allows the user to see serial output from
-  the gMachine and send it line oriented commands.
-- the wRender window which shows the tool path in real time and/or which
-  will hopefully be implemented to work with the wDirectory window to
-  render the contents of a gcode file at least when the gMachine is idle
-
-and so on.
-
-## Modal Dialogs
-
-As necessary the system presents modal dialog windows for confirmation
-of actions, etc. Modal dialog windows are like top level windows but there
-exists a mechanism for them to return a value to an underlying uiWindow.
+- **winMain** - the *idle window* is the default window that shows when
+   the system is not "busy" or in an "alaram* state.  It generally
+   shows the *jog* or *G0* navigation panel, the *home* button, and
+   so on.
+- **winBusy** - when an SDCard job is initiated the system automatically
+  changes to the *busy window*, which, among other things, allows the user
+  to **pause and resume** the SDCard job, **reset the gMachine** and/or
+  **reboot the ESP32**.
+- **winAlarm** - if an *Alarm* is encountered the sytstem will switch
+  to the *alarm window* which allows the alarm to be cancelled,
+  and also to **reset the gMachine** and/or
+  **reboot the ESP32**.
 
 
-## The Main Window and Main Button
+The system will automatically show the *busy* and *alarm* windows if
+it encounters a change to one of those two states, regardless of what
+other window the user happens to be in at the time.
 
-Due to the extremely limited space on the TFT, when in the Main Window,
-which is actually 3 different windows (wIdle, wJob, wAlaram) the title
-or text shown on the Main Button varies to show the state of the gMachine
-(idle, alarm, etc) and while a job is running, the percentage completion as
-text.  Yet it remains an active button as appropriate.'
+Otherwise, the user is free to switch to one of those, or one of the
+following, windows depending on their logical availablity based on
+the state of the gMachine.
 
-In most other top level windows, the uiMainButton label is synonymous with
-the name of the top level window, and so the label will show things like
-"Set", "File", "Macro", "Mon", respectively for the wSettings, wDirectory,
-wMacro, and wMonitor windows and so on.
+For example, the **busy window** contains the fields which allow
+the user to change the override *feed rates*.   Those can be
+change when a job is run, or when the machine is idle, though
+the *pause/resume* button within the busy window will be disabled
+unless a job is actually running.
 
-## Generic uiWindowing system
+Other windows include:
 
-The *UI* and to some degree *G* classes represent a more or less
-general purpose ESP32 TFT windowing system. It might be worth considering
-factoring the uiWindow system into a separate library, for use with
-other ESP32 applications, at some point.
+**winFiles** - allows the user to navigate the **SD Card** and
+    initiate jobs.
+
+**winPrefs** - allows the user to set their preferences for the UI
+**winConfig** - allows the user to modify (select) GCode Parameters
