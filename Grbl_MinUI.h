@@ -1,15 +1,14 @@
 #pragma once
 
-// This define allows you to run the UI without linking in grbl_Esp32.
-// Your program must provide the implementation of debug_serial()
 
-#define TEST_STANDALONE_UI   0
+#include "gDefs.h"
 
-#if TEST_STANDALONE_UI
+
+#ifdef WITH_GRBL
+    #include <Report.h>
+#else
     void debug_serial(const char *format, ...);
         // in _testGrblUI.ino
-#else
-    #include <Report.h>
 #endif
 
 

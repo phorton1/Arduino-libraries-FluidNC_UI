@@ -26,19 +26,18 @@
 // Please see http://github.com/phorton1/Arduino-libraries-lvgl/README.md
 // information.
 
-#define WITH_APPLICATION 1
 
-#include "gDefs.h"			// for version number/date
-#include "Grbl_MinUI.h"		// for TEST_STANDALONE_UI
+
+#include "Grbl_MinUI.h"
 #include "myTFT.h"
 
 
 
-#if !TEST_STANDALONE_UI
+#ifdef WITH_GRBL
 	#include <System.h>		// to initialize sys.state to Sleep
 #endif
 
-#if WITH_APPLICATION
+#ifdef WITH_APPLICATION
 	#include "gApp.h"
 #endif
 
@@ -57,7 +56,7 @@ void gDisplayTask(void* pvParameters)
 		// short delay to allow debug_serial from touchUI_init() to complete
 	debug_serial("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
 
-	#if WITH_APPLICATION
+	#ifdef WITH_APPLICATION
 		the_app.begin();
 	#endif
 
@@ -65,7 +64,7 @@ void gDisplayTask(void* pvParameters)
     {
 		vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
 
-		#if WITH_APPLICATION
+		#ifdef WITH_APPLICATION
 			the_app.update();
 		#endif
     }
@@ -85,7 +84,7 @@ void Grbl_MinUI_init()
 	// in Grbl.cpp.  there should be a "None" state during startup.  And there should
 	// be a setSystemState() method ...
 
-	#if !TEST_STANDALONE_UI
+	#ifdef WITH_GRBL
 		sys.state = State::Sleep;
 	#endif
 

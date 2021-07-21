@@ -6,17 +6,20 @@
 
 #include "gApp.h"
 
+#ifdef WITH_APPLICATION
 
-class winAlarm : public uiWindow
-{
-    public:
+    class winAlarm : public uiWindow
+    {
+        public:
 
-        winAlarm();
+            winAlarm();
 
-    private:
-
-
-        virtual void update() override {}
+        private:
 
 
-};
+            virtual void update() override {}
+
+
+    };
+
+#endif  // WITH_APPLICATION

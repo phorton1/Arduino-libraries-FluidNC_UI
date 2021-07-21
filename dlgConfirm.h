@@ -6,19 +6,22 @@
 
 #include "gApp.h"
 
+#ifdef WITH_APPLICATION
 
-class dlgConfirm : public uiWindow
-{
-    public:
+    class dlgConfirm : public uiWindow
+    {
+        public:
 
-        dlgConfirm();
+            dlgConfirm();
 
-        void setMessage(const char *msg);
-
-
-    private:
+            void setMessage(const char *msg);
 
 
-        virtual void onButton(const uiElement *ele, bool pressed) override;
+        private:
 
-};
+
+            virtual void onButton(const uiElement *ele, bool pressed) override;
+
+    };
+
+#endif  // WITH_APPLICATION

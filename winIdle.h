@@ -6,15 +6,19 @@
 
 #include "gApp.h"
 
+#ifdef WITH_APPLICATION
 
-class winIdle : public uiWindow
-{
-    public:
+    class winIdle : public uiWindow
+    {
+        public:
 
-        winIdle();
+            winIdle();
 
-    private:
+        private:
 
-        virtual void onButton(const uiElement *ele, bool pressed) override;
+            virtual void onButton(const uiElement *ele, bool pressed) override;
 
-};
+    };
+
+
+#endif  // WITH_APPLICATION
