@@ -17,8 +17,8 @@
 
     static const uiElement alarm_elements[] = {
 
-        { ID_CLEAR_BUTTON,  0,   0, 320, 240,   0,          COLOR_BLACK,    COLOR_WHITE, },
-        { ID_RESET_BUTTON,         0,   0, 320,  35,   0,   COLOR_DARKBLUE, COLOR_WHITE, },
+        { ID_CLEAR_BUTTON,  0,   0, 320, 240,   0,  COLOR_BLACK,    COLOR_WHITE, },
+        { ID_RESET_BUTTON,  0,   0, 320,  35,   0,  COLOR_DARKBLUE, COLOR_WHITE, },
     };
 
 

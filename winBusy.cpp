@@ -37,8 +37,8 @@
     static const uiElement busy_elements[] =
     {
         { ID_PAUSE_RESUME_BUTTON, 20,  70, 130,  90,    V(&pr_button),  },
-        { ID_RESET_BUTTON,       170,  60, 130,  40,    V("RESET"),         COLOR_ORANGE,  COLOR_BLACK, FONT_BIG },
-        { ID_REBOOT_BUTTON,      170, 130, 130,  40,    V("REBOOT"),        COLOR_DARKRED, COLOR_WHITE, FONT_BIG },
+        { ID_RESET_BUTTON,       170,  60, 130,  40,    V("RESET"),     COLOR_ORANGE,  COLOR_BLACK, FONT_BIG },
+        { ID_REBOOT_BUTTON,      170, 130, 130,  40,    V("REBOOT"),    COLOR_DARKRED, COLOR_WHITE, FONT_BIG },
     };
 
 
@@ -104,6 +104,7 @@
         JobState job_state = the_app.getJobState();
         if (m_job_state != job_state)
         {
+            m_job_state = job_state;
             setElements();
             drawTypedElement(&m_elements[IDX_RESUME_BUTTON]);
         }

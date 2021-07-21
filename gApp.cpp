@@ -62,7 +62,7 @@
     static const uiElement app_elements[] =
     {
         { ID_APP_BUTTON,         0,   0,  90,  35,   V(&app_button) },
-        { ID_APP_TITLE,         94,   0, 180,  35,   V(&app_title) },
+        { ID_APP_TITLE,         94,   0, 180,  35,   V(&app_title)  },
         { ID_SD_INDICATOR,     274,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
         { ID_WIFI_INDICATOR,   297,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
         { ID_STATUSBAR,          0, 205, 320,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, },
@@ -146,6 +146,7 @@
         }
     }
 
+
     //------------------------
     // utilities
     //------------------------
@@ -154,6 +155,7 @@
     {
         return app_button_buf;
     }
+
 
     void gApplication::setAppButtonText(const char *text)
     {
@@ -196,106 +198,9 @@
     }
 
 
-    //-------------------------
-    // progress bar
-    //-------------------------
-
-    void gApplication::initProgress()
-    {
-        prog_x = 0;
-        prog_w = 0;
-        last.prog_w = 0;
-        prog_color = COLOR_BROWN;
-    }
-
-    void gApplication::doTextProgress(const uiElement *ele, const char *text, bool changed)
-        // Called for fields that lie on the progress bar to draw the text.
-        // Called if the field has changed or last.prog_w != prog_w,
-        // which implies that a new bar portion has been drawn.
-    {
-        // develop s,e notation
-
-        int16_t win_s = ele->x;
-        int16_t win_e = ele->x + ele->w - 1;
-        int16_t prog_s = prog_x + last.prog_w;
-        int16_t prog_e = prog_x + prog_w - 1;
-
-        // win_s > prog_e implies that there is no progress bar or
-        // the field lays completely to the right of the progress bar
-        // so we only write the value if it changed using default background
-
-        if (win_s > prog_e)
-        {
-            if (changed)
-                doText(ele,text);
-            return;
-        }
-
-        // At least part of the field overlays the progress bar.
-        // We will redraw if it has changed, or if the field
-        // is over the "new" bar portion.
-
-        // If it was changed, and the field is to the left
-        // of the progress bar, we stretch prog_s to the beginning
-        // of the field to draw fully 'changed' bar backgrounds
-
-        if (changed && prog_s > win_s)
-        {
-            prog_s = win_s;
-        }
-
-        // Constrain the new progress area to the field window.
-        // bar will always start from the left.
-
-        if (prog_s < win_s)
-            prog_s = win_s;
-        if (prog_e > win_e)
-            prog_e = win_e;
-
-        // So now we can just compare and see if the window
-        // falls into the extended region, and leave if not.
-
-        if (!changed && (win_e < prog_s || win_s > prog_e))
-        {
-            return;
-        }
-
-        // Calculate the "blue" portion if any
-
-        int16_t normal_s = win_s;
-        int16_t normal_w = 0;
-        if (prog_e < win_e)
-        {
-            normal_s = prog_e + 1;
-            normal_w = win_e - prog_e;
-        }
-
-        // Change bsrt back to x,w format and
-        // draw the bar and normal bg portions, if any.
-
-        int16_t bar_w = prog_e - prog_s + 1;
-
-        if (bar_w > 0)
-            tft.fillRect(prog_s,ele->y,bar_w,ele->h,prog_color);
-        if (normal_w > 0)
-            tft.fillRect(normal_s,ele->y,normal_w,ele->h,ele->bg);
-
-        // Finally ... draw the text with no background color
-
-        drawText(
-            text,
-            ele->just,
-            ele->font,
-            ele->x, ele->y, ele->w, ele->h,
-            ele->fg,
-            ele->fg );      // bg <= fg implies no background
-    }
-
-
     //--------------------------------
     // frame callbacks
     //--------------------------------
-
 
     void gApplication::doAppButton(const uiElement *ele)
     {
@@ -303,11 +208,12 @@
         bool pct_changed =
             win_stack[0] &&
             win_stack[0] == &busy_win &&
-            last.pct != pct &&
-            (job_state == JOB_BUSY || job_state == JOB_HOLD);
+            last.pct != pct;
+            // (job_state == JOB_BUSY || job_state == JOB_HOLD);
 
         if (draw_needed ||
             pct_changed ||
+            job_state != last.job_state ||
             strcmp(last.app_button,app_button_buf))
         {
             if (pct_changed)
@@ -327,6 +233,7 @@
     void gApplication::doAppTitle(const uiElement *ele)
     {
         if (draw_needed ||
+            job_state != last.job_state ||
             strcmp(app_title_buf,last.app_title))
         {
             // the title, whatever it happens to be
@@ -338,19 +245,6 @@
                 job_state == JOB_HOLD ? COLOR_CYAN :
                 job_state == JOB_BUSY ? COLOR_YELLOW :
                 COLOR_WHITE;
-
-            // and we always set the color of the progress bar
-            // even if it's not in progress
-;
-            prog_color = job_state == JOB_HOLD ?
-                COLOR_DARKCYAN : COLOR_BROWN;
-
-            // invalidate the progress bar upon a color change
-
-            if (last.prog_color != prog_color)
-            {
-                last.prog_w = 0;
-            }
 
 
             drawTypedElement(ele,false);
@@ -466,6 +360,103 @@
     }
 
 
+
+    //-------------------------
+    // progress bar
+    //-------------------------
+
+    void gApplication::initProgress()
+    {
+        prog_x = 0;
+        prog_w = 0;
+        last.prog_w = 0;
+    }
+
+
+    void gApplication::doTextProgress(const uiElement *ele, const char *text, bool changed)
+        // Called for fields that lie on the progress bar to draw the text.
+        // Called if the field has changed or last.prog_w != prog_w,
+        // which implies that a new bar portion has been drawn.
+    {
+        // develop s,e notation
+
+        int16_t win_s = ele->x;
+        int16_t win_e = ele->x + ele->w - 1;
+        int16_t prog_s = prog_x + last.prog_w;
+        int16_t prog_e = prog_x + prog_w - 1;
+
+        // win_s > prog_e implies that there is no progress bar or
+        // the field lays completely to the right of the progress bar
+        // so we only write the value if it changed using default background
+
+        if (win_s > prog_e)
+        {
+            if (changed)
+                doText(ele,text);
+            return;
+        }
+
+        // At least part of the field overlays the progress bar.
+        // We will redraw if it has changed, or if the field
+        // is over the "new" bar portion.
+
+        // If it was changed, and the field is to the left
+        // of the progress bar, we stretch prog_s to the beginning
+        // of the field to draw fully 'changed' bar backgrounds
+
+        if (changed && prog_s > win_s)
+        {
+            prog_s = win_s;
+        }
+
+        // Constrain the new progress area to the field window.
+        // bar will always start from the left.
+
+        if (prog_s < win_s)
+            prog_s = win_s;
+        if (prog_e > win_e)
+            prog_e = win_e;
+
+        // So now we can just compare and see if the window
+        // falls into the extended region, and leave if not.
+
+        if (!changed && (win_e < prog_s || win_s > prog_e))
+        {
+            return;
+        }
+
+        // Calculate the "blue" portion if any
+
+        int16_t normal_s = win_s;
+        int16_t normal_w = 0;
+        if (prog_e < win_e)
+        {
+            normal_s = prog_e + 1;
+            normal_w = win_e - prog_e;
+        }
+
+        // Change bsrt back to x,w format and
+        // draw the bar and normal bg portions, if any.
+
+        int16_t bar_w = prog_e - prog_s + 1;
+
+        if (bar_w > 0)
+            tft.fillRect(prog_s,ele->y,bar_w,ele->h,prog_color);
+        if (normal_w > 0)
+            tft.fillRect(normal_s,ele->y,normal_w,ele->h,ele->bg);
+
+        // Finally ... draw the text with no background color
+
+        drawText(
+            text,
+            ele->just,
+            ele->font,
+            ele->x, ele->y, ele->w, ele->h,
+            ele->fg,
+            ele->fg );      // bg <= fg implies no background
+    }
+
+
     void gApplication::doJobProgress(const uiElement *ele)
     {
         // if "draw needed" it means there is no progress bar
@@ -484,11 +475,21 @@
         else
         {
             float pct = g_status.filePct();
+            prog_color = job_state == JOB_HOLD ? COLOR_DARKCYAN : COLOR_DARKGREEN;
+
             if (last.pct != pct ||
                 last.prog_color != prog_color)
             {
+                // invalidate the progress bar upon a color change
+
+                if (last.prog_color != prog_color)
+                    last.prog_w = 0;
+
                 prog_x = ele->x;     // 0
                 prog_w = ((pct * ele->w)/100.0);
+
+                // draw from last.prog_w to prog_w
+
                 if (last.prog_w != prog_w)
                 {
                     tft.fillRect(
@@ -502,8 +503,15 @@
 
 
     //----------------------------------
-    // udate()
+    // update()
     //----------------------------------
+
+
+    JobState combineBusyHold(JobState j)
+    {
+        if (j == JOB_HOLD) return JOB_BUSY;
+        return j;
+    }
 
 
     void gApplication::update()
@@ -516,12 +524,20 @@
 
         if (sys_state == grbl_State_t::Alarm)
             job_state = JOB_ALARM;
+        else if (sys_state == grbl_State_t::Hold)
+            job_state = JOB_HOLD;
         else if (sd_state == grbl_SDState_t::Busy)
             job_state = JOB_BUSY;
         else
             job_state = JOB_IDLE;
 
-        if (job_state != last.job_state)
+        // switch to main, busy, or alarm window if there is a
+        // state change that calls for it (which is not the case
+        // when it chagnes from BUSY to HOLD or vice-versa)
+
+        JobState was = combineBusyHold(last.job_state);
+        JobState is  = combineBusyHold(job_state);
+        if (was != is)
         {
             draw_needed = true;
             setDefaultWindow();

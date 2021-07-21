@@ -80,16 +80,16 @@
 
                 #ifdef WITH_GRBL
                     SDCard *sdCard = config->_sdCard;
-                    debug_serial("winMain testing SD Card");
+                    // debug_serial("winMain testing SD Card");
                     if (sdCard)
                     {
-                        debug_serial("winMain starting SD Card");
+                        // debug_serial("winMain starting SD Card");
                         if (sdCard->get_state(true) == SDCard::State::Idle)
                         {
-                            debug_serial("winMain opening ruler.g");
+                            // debug_serial("winMain opening ruler.g");
                             if (sdCard->openFile(SD,"/ruler.g"))
                             {
-                                debug_serial("winMain running ruler.g");
+                                // debug_serial("winMain running ruler.g");
                                 sdCard->_client = CLIENT_ALL;
                                 sdCard->_readyNext = true;
                             }
