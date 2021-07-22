@@ -48,7 +48,7 @@
     void dlgConfirm::setConfirm(uint16_t command)
     {
         confirm_msg.text =
-             command == CONFIRM_COMMAND_RESET ? "reset the GRBL Machine?" :
+             command == CONFIRM_COMMAND_RESET ? "restart the G-Machine?" :
              command == CONFIRM_COMMAND_REBOOT ? "reboot the Controller?" :
              "UNKNOWN CONFIRM COMMAND";
          pending_command = command;
@@ -64,6 +64,7 @@
             {
                 if (pending_command == CONFIRM_COMMAND_RESET)
                 {
+                    the_app.setTitle("");
                      #ifdef WITH_GRBL
                         execute_realtime_command(Cmd::Reset,CLIENT_ALL);
                     #endif

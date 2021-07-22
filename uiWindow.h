@@ -18,11 +18,14 @@
     // typedef int (*intFunction)();
     // typedef void (*buttonCallback)(uiWindow *, const uiElement*) ;
 
+    typedef const char *(*constCharStarMethod)();
+
     // uiElement types OR'd into the ID_TYPE
 
-    #define ID_TYPE_TEXT     0x1000      // static text
+    #define ID_TYPE_TEXT     0x1000      // param is const char *
     #define ID_TYPE_BUTTON   0x2000      // button with background
-    #define ID_TYPE_MUTABLE  0x4000      // calls a method to get the text, font, and colors
+    #define ID_TYPE_MUTABLE  0x4000      // param is pointer to a uiMutable
+    #define ID_TYPE_TEXT_FN  0x8000      // param is const char * method
 
     #define ID_TYPE_ALL      0xf000      // things that get drawn by the system
 

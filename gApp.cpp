@@ -220,7 +220,7 @@
                 sprintf(app_button_buf,"%2.1f%%",pct);
 
             app_button.fg =
-                job_state == JOB_ALARM ? COLOR_RED :
+                job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
                 job_state == JOB_HOLD ? COLOR_CYAN :
                 job_state == JOB_BUSY ? COLOR_YELLOW :
                 COLOR_WHITE;
@@ -241,7 +241,7 @@
             // cyan when hold, or white when idle
 
             app_title.fg =
-                job_state == JOB_ALARM ? COLOR_RED :
+                job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
                 job_state == JOB_HOLD ? COLOR_CYAN :
                 job_state == JOB_BUSY ? COLOR_YELLOW :
                 COLOR_WHITE;
@@ -539,6 +539,7 @@
         JobState is  = combineBusyHold(job_state);
         if (was != is)
         {
+
             draw_needed = true;
             setDefaultWindow();
             initProgress();

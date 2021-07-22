@@ -112,6 +112,10 @@
             *fg   = mut->fg;
             *font = mut->font;
         }
+        if (ele->id_type & ID_TYPE_TEXT_FN)
+        {
+            *text = ((constCharStarMethod) ele->param)();
+        }
     }
 
 

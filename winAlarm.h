@@ -16,7 +16,8 @@
 
         private:
 
-            virtual void update() override {}
+            virtual void update() override;
+            void onButton(const uiElement *ele, bool pressed) override;
             virtual const char *getMenuLabel() const override  { return "ALARM"; }
 
     };

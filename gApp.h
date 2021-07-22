@@ -63,7 +63,8 @@
             void setBaseWindow(uiWindow *win);
                 // the menu sets the base window directly
 
-            JobState getJobState()  { return job_state; }
+            JobState getJobState()      { return job_state; }
+            JobState getLastJobState()  { return last.job_state; }
 
             const char *getAppButtonText();
             void setAppButtonText(const char *text);
