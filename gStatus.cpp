@@ -4,11 +4,10 @@
 
 #include "gStatus.h"
 
+
 #ifdef WITH_APPLICATION
 
-
 	#include <WiFi.h>
-
 
 	#ifdef WITH_GRBL
 		#include <Config.h>
@@ -21,12 +20,20 @@
 
 	#define DEBUG_WIFI  0
 
-
-	#define SD_CARD_CHECK_TIME  1000        // ms
-
 	gStatus g_status;
 
+    grbl_SDState_t gStatus::getSDState(bool refresh/*=false*/)
+	{
+		#ifdef WITH_GRBL
+			if (refresh && config->_sdCard)
+				return static_cast<grbl_SDState_t>(config->_sdCard->get_state(true));
+		#endif
+		return m_sdcard_state;
+	}
 
+	//-----------------------------
+	// implementation
+	//-----------------------------
 
 	const char *sysStateName(grbl_State_t state)
 	{

@@ -36,7 +36,8 @@
                 {
                     uint16_t bg = ele->id_type & ID_TYPE_MUTABLE ?
                         ((uiMutable *) ele->param)->bg : ele->bg;
-                    if (bg != COLOR_BUTTON_DISABLED)
+                    if (bg != COLOR_BUTTON_DISABLED &&
+                        bg != COLOR_BUTTON_HIDDEN)
                     {
                         g_win_pressed = ele;
                         g_window_pressed = this;
@@ -134,39 +135,49 @@
         if (ele == g_win_pressed)
             pressed = true;
 
-        if (pressed)
-        {
-            bg = COLOR_BUTTON_BG_PRESSED;
-            fg = COLOR_BUTTON_FG_PRESSED;
-        }
-
-        if (ele->id_type & ID_TYPE_BUTTON)
-        {
-            tft.fillRoundRect(
-                ele->x, ele->y, ele->w, ele->h,
-                5,
-                bg);
-            tft.drawRoundRect(
-                ele->x, ele->y, ele->w, ele->h,
-                5,
-                COLOR_LIGHTGREY);
-        }
-        else if (ele->id_type & ID_TYPE_TEXT)
+        if (ele->id_type & ID_TYPE_BUTTON &&
+            bg == COLOR_BUTTON_HIDDEN)
         {
             tft.fillRect(
                 ele->x, ele->y, ele->w, ele->h,
                 bg);
         }
-
-        if (ele->id_type & ID_TYPE_TEXT)
+        else
         {
-            drawText(
-                text,
-                ele->just,
-                font,
-                ele->x, ele->y, ele->w, ele->h,
-                fg,
-                fg );
+            if (pressed)
+            {
+                bg = COLOR_BUTTON_BG_PRESSED;
+                fg = COLOR_BUTTON_FG_PRESSED;
+            }
+
+            if (ele->id_type & ID_TYPE_BUTTON)
+            {
+                tft.fillRoundRect(
+                    ele->x, ele->y, ele->w, ele->h,
+                    5,
+                    bg);
+                tft.drawRoundRect(
+                    ele->x, ele->y, ele->w, ele->h,
+                    5,
+                    COLOR_LIGHTGREY);
+            }
+            else if (ele->id_type & ID_TYPE_TEXT)
+            {
+                tft.fillRect(
+                    ele->x, ele->y, ele->w, ele->h,
+                    bg);
+            }
+
+            if (ele->id_type & ID_TYPE_TEXT)
+            {
+                drawText(
+                    text,
+                    ele->just,
+                    font,
+                    ele->x, ele->y, ele->w, ele->h,
+                    fg,
+                    fg );
+            }
         }
     }
 

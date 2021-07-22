@@ -65,7 +65,7 @@
 
         uint8_t getWifiState()          { return m_wifi_state; }
         grbl_State_t getSysState()      { return m_sys_state; }
-        grbl_SDState_t getSDState()     { return m_sdcard_state; }
+        grbl_SDState_t getSDState(bool refresh=false);
 
         // grbl_ProgramFlow_t getProgramFlow() { return m_program_flow; }
 

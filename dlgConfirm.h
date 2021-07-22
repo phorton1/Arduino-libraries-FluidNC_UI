@@ -8,8 +8,12 @@
 
 #ifdef WITH_APPLICATION
 
-    #define CONFIRM_COMMAND_RESET 0x0001
-    #define CONFIRM_COMMAND_REBOOT  0x0002
+    #define CONFIRM_COMMAND_RESET    0x0001
+    #define CONFIRM_COMMAND_REBOOT   0x0002
+
+    #define CONFIRM_COMMAND_RUN_FILE 0x0100
+
+
 
     class dlgConfirm : public uiWindow
     {

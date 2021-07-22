@@ -29,6 +29,8 @@
     #define UI_MAIN_BUTTON_WIDTH    80
     #define UI_INDICATOR_WIDTH      28
 
+    #define UI_CONTENT_HEIGHT       (UI_SCREEN_HEIGHT - UI_TOP_MARGIN - UI_BOTTOM_MARGIN)
+
     #define UI_MAX_TITLE            30          // maximum length of system title
     #define UI_MAX_BUTTON            7          // maximum length of a mutable button
 

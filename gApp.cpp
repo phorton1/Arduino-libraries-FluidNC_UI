@@ -56,15 +56,15 @@
         app_title_buf,
         COLOR_DARKBLUE,
         COLOR_WHITE,
-        FONT_BIG
+        FONT_SMALL
     };
 
     static const uiElement app_elements[] =
     {
         { ID_APP_BUTTON,         0,   0,  90,  35,   V(&app_button) },
         { ID_APP_TITLE,         94,   0, 180,  35,   V(&app_title)  },
-        { ID_SD_INDICATOR,     274,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
-        { ID_WIFI_INDICATOR,   297,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
+        { ID_SD_INDICATOR,     274,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_BIG, JUST_CENTER, },
+        { ID_WIFI_INDICATOR,   297,   0,  23,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_BIG, JUST_CENTER, },
         { ID_STATUSBAR,          0, 205, 320,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, },
         { ID_MACHINE_X,         10, 205,  55,  16,   V(UI_AXIS_X),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
         { ID_MACHINE_Y,         75, 205,  55,  16,   V(UI_AXIS_Y),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
@@ -109,8 +109,11 @@
 
     void gApplication::endModal()
     {
-        win_stack_ptr--;
-        openWindow(win_stack[win_stack_ptr]);
+        if (win_stack[win_stack_ptr]->isModal())
+        {
+            win_stack_ptr--;
+            openWindow(win_stack[win_stack_ptr]);
+        }
 
     }
 
