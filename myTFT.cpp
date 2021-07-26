@@ -4,6 +4,9 @@
 
 #include "myTFT.h"
 
+#ifdef WITH_TFT
+    // primary define
+
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -124,3 +127,6 @@ void drawText(                   // draw clipped and justified text
     tft.resetViewport();
 
 }
+
+
+#endif  // WITH_TFT

@@ -126,7 +126,7 @@
             if (the_app.getJobState() == JOB_ALARM)
                 strcpy(buf,alarmText(alarm));
 
-            debug_serial("winAlarm::alarm %d : %s",alarm,buf);
+            g_debug("winAlarm::alarm %d : %s",alarm,buf);
 
             const uiElement *ele = &m_elements[IDX_ALARM_TEXT];
             drawText(

@@ -25,6 +25,7 @@
     {
         if (g_pressed && !g_win_pressed)
         {
+            g_debug("pressed");
             for (uint16_t i=0; i<m_num_elements; i++)
             {
                 const uiElement *ele =&m_elements[i];
@@ -41,7 +42,7 @@
                     {
                         g_win_pressed = ele;
                         g_window_pressed = this;
-                        // debug_serial("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
+                        // g_debug("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
                         onButton(g_win_pressed,true);
                         drawTypedElement(g_win_pressed,true);
                     }
@@ -61,11 +62,12 @@
 
         if (touched)
         {
+            g_debug("touched");
             g_press_x = x;
             g_press_y = y;
             g_pressed = true;
             g_debounce_time = now;
-            // debug_serial("Touch(%d,%d)",touchX,touchY);
+            // g_debug("Touch(%d,%d)",touchX,touchY);
         }
         else
         {
@@ -85,7 +87,7 @@
                 {
                     const uiElement *was_pressed = g_win_pressed;
                     g_win_pressed = NULL;
-                    // debug_serial("hitTest(%08x) onButton(false) %04x at (%d,%d,%d,%)",g_window_pressed,was_pressed->id_type,was_pressed->x,was_pressed->y,was_pressed->w,was_pressed->h);
+                    // g_debug("hitTest(%08x) onButton(false) %04x at (%d,%d,%d,%)",g_window_pressed,was_pressed->id_type,was_pressed->x,was_pressed->y,was_pressed->w,was_pressed->h);
                     g_window_pressed->drawTypedElement(was_pressed,false);
                     g_window_pressed->onButton(was_pressed,false);
                     g_window_pressed = NULL;

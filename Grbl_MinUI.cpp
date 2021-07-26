@@ -3,7 +3,6 @@
 // TFT pins (defined in TFT_eSPI/User_Setup.h - prh_setup.h)
 //-----------------------------------------------------------
 // I am using TFT_eSPI with a ILI9341 320x240 XPT2046 TFT.
-// It is recommended you get the TFT working before trying LVGL.
 // Please see https://github.com/phorton1/Arduino-libraries-TFT_eSPI
 // commit history, README.md, and and prh_setup.h for more information.
 //
@@ -21,20 +20,22 @@
 //      T_DIN       23  jump    default ESP32 SPI MOSI
 //      T_DO        19  jump    MISO
 //      T_IRQ       -1          Not Used
-//
-// LVGL took a little work. I cloned the repository and added some notes.
-// Please see http://github.com/phorton1/Arduino-libraries-lvgl/README.md
-// information.
 
 
 
 #include "Grbl_MinUI.h"
-#include "myTFT.h"
+
+#ifdef WITH_TFT
+	#include "myTFT.h"
+#else
+	#include <Arduino.h>	// for va_list?!?
+#endif
 
 
 
 #ifdef WITH_GRBL
 	#include <System.h>		// to initialize sys.state to Sleep
+	#include <Logging.h>
 #endif
 
 #ifdef WITH_APPLICATION
@@ -43,84 +44,121 @@
 
 
 
-
-//---------------------------------------------------------------
-// gDisplayTask()
-//---------------------------------------------------------------
-
-#define TOUCHSCREEN_UPDATE_MS   33
-
-void gDisplayTask(void* pvParameters)
+void g_debug(const char *format, ...)
 {
-	vTaskDelay(200 / portTICK_PERIOD_MS);
-		// short delay to allow debug_serial from touchUI_init() to complete
-	debug_serial("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
-
-	#ifdef WITH_APPLICATION
-		the_app.begin();
+	va_list var;
+	va_start(var, format);
+	char display_buffer[255];
+	vsprintf(display_buffer,format,var);
+	#ifdef WITH_GRBL
+		log_debug(display_buffer);
+	#else
+		Serial.print("GDBG: ");
+		Serial.println(display_buffer);
 	#endif
-
-	while (true)
-    {
-		vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
-
-		#ifdef WITH_APPLICATION
-			the_app.update();
-		#endif
-    }
+	va_end(var);
 }
 
 
 
-//-------------------------------------------------------
-// touchUI_init()
-//-------------------------------------------------------
+#ifdef WITH_INIT_UI
 
-void Grbl_MinUI_init()
-{
-    debug_serial("Grbl_MinUI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
 
-	// set Grbl_Esp32 sys.state to "Sleep" so that we can tell when it goes to Idle
-	// in Grbl.cpp.  there should be a "None" state during startup.  And there should
-	// be a setSystemState() method ...
+	//---------------------------------------------------------------
+	// gDisplayTask()
+	//---------------------------------------------------------------
 
-	#ifdef WITH_GRBL
-		sys.state = State::Sleep;
-	#endif
+	#define TOUCHSCREEN_UPDATE_MS   33
 
-	// initialize tft
+	void gDisplayTask(void* pvParameters)
+	{
+		vTaskDelay(200 / portTICK_PERIOD_MS);
+			// short delay to allow g_debug from touchUI_init() to complete
+		g_debug("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
 
-    tft.init();
-    tft.setRotation(3);
-    uint16_t cal_data[5] = {252,3404,308,3417,7};
-    tft.setTouch(cal_data);
+		#ifdef WITH_APPLICATION
+			the_app.begin();
+		#endif
 
-    // splash screen
+		while (true)
+		{
+			vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
 
-    tft.setTouch(cal_data);
-    tft.fillScreen(TFT_BLACK);
-	drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
-		0,70,320,30,COLOR_BLUE,COLOR_BLACK);
-	drawText(UI_VERSION, JUST_CENTER,FONT_MONO,
-		0,105,320,20,COLOR_BLUE,COLOR_BLACK);
-	drawText(UI_VERSION_DATE, JUST_CENTER,FONT_MONO,
-		0,130,320,20,COLOR_BLUE,COLOR_BLACK);
+			#ifdef WITH_APPLICATION
+				the_app.update();
+			#endif
+		}
+	}
 
-	// delay(5000);  // to see splash screen
 
-	// start the update task
 
-    xTaskCreate(gDisplayTask,
-		"gDisplayTask",
-		10240,  // pretty big stack
-		NULL,
-		1,  	// priority
-		NULL);
+	//-------------------------------------------------------
+	// touchUI_init()
+	//-------------------------------------------------------
 
-	// finished
+	void Grbl_MinUI_init()
+	{
+		g_debug("Grbl_MinUI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
 
-	debug_serial("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
-	vTaskDelay(300 / portTICK_PERIOD_MS);
-		// another delay to allow the task to start
+		// set Grbl_Esp32 sys.state to "Sleep" so that we can tell when it goes to Idle
+		// in Grbl.cpp.  there should be a "None" state during startup.  And there should
+		// be a setSystemState() method ...
 
-}   // display_init()
+		#ifdef WITH_GRBL
+			sys.state = State::Sleep;
+		#else
+
+		// Denormalized define of vMachine SDCard CS pin.
+		// If not linked to GRBL, wherein the vMachine
+		// initializes the SD Card at startup, somebody
+		// needs to *at least* set the pin HIGH or else
+		// the Touch portion of the TFT does not work,
+		// presumably due to the SDCard's non-standard
+		// use of the CS bus.
+
+			#ifdef WITH_APPLICATION
+				pinMode(V_SDCARD_CS,OUTPUT);
+				digitalWrite(V_SDCARD_CS,1);
+			#endif
+
+		#endif
+
+		#ifdef WITH_TFT
+			tft.init();
+			tft.setRotation(3);
+			uint16_t cal_data[5] = {252,3404,308,3417,7};
+			tft.setTouch(cal_data);
+
+			// splash screen
+
+			tft.setTouch(cal_data);
+			tft.fillScreen(TFT_BLACK);
+			drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
+				0,70,320,30,COLOR_BLUE,COLOR_BLACK);
+			drawText(UI_VERSION, JUST_CENTER,FONT_MONO,
+				0,105,320,20,COLOR_BLUE,COLOR_BLACK);
+			drawText(UI_VERSION_DATE, JUST_CENTER,FONT_MONO,
+				0,130,320,20,COLOR_BLUE,COLOR_BLACK);
+
+			// delay(5000);  // to see splash screen
+		#endif
+
+
+		// start the update task
+
+		xTaskCreate(gDisplayTask,
+			"gDisplayTask",
+			10240,  // pretty big stack
+			NULL,
+			1,  	// priority
+			NULL);
+
+		// finished
+
+		g_debug("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
+		vTaskDelay(300 / portTICK_PERIOD_MS);
+			// another delay to allow the task to start
+
+	}   // display_init()
+
+#endif 	// WITH_TFT

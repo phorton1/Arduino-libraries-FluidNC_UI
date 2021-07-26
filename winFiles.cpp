@@ -11,8 +11,6 @@
     #include <SD.h>
     #include "protectedFS.h"
 
-    #define V_SDCARD_CS   GPIO_NUM_21
-
     #define NUM_LINES 5
 
     winFiles files_win;
@@ -137,7 +135,7 @@
         top_num = 0;
         last_top_num = 0;
         last_path[0] = 0;
-        debug_serial("init_path(%s)",path);
+        g_debug("init_path(%s)",path);
     }
 
 
@@ -162,7 +160,7 @@
             0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,
             COLOR_RED,
             COLOR_BLACK);
-        debug_serial("FILE ERROR: %s",text);
+        g_debug("FILE ERROR: %s",text);
         file_error = true;
     }
 
@@ -225,7 +223,7 @@
                 {
                     uint16_t file_num = ele->id_type - ID_FILE1;
                     const char *new_path = filenames[file_num];
-                    debug_serial("ID_FILE(%d) %s",file_num,new_path);
+                    g_debug("ID_FILE(%d) %s",file_num,new_path);
 
                     if (new_path[0] == '/')
                     {
@@ -274,7 +272,6 @@
                 static bool sd_started = false;
                 if (!sd_started)
                     sd_started = SD.begin(V_SDCARD_CS);
-
                 if (sd_started)
             #endif
             {
@@ -288,7 +285,7 @@
                     proFile file = root.openNextFile();
                     while (file)
                     {
-                        debug_serial("file(%s)",file.leafName());
+                        g_debug("file(%s)",file.leafName());
 
                         if (num_files >= top_num &&
                             num_files < top_num + NUM_LINES)
@@ -319,7 +316,7 @@
                     SD.end();
                 #endif
 
-                debug_serial("dir(%s) top(%d) lines(%d) files(%d)", path, top_num, num_lines, num_files);
+                g_debug("dir(%s) top(%d) lines(%d) files(%d)", path, top_num, num_lines, num_files);
 
                 if (strcmp(path,"/"))
                     buttons[IDX_BACK_BUTTON].bg = COLOR_BLUE;

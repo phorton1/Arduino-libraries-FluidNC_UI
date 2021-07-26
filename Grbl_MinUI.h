@@ -4,12 +4,8 @@
 #include "gDefs.h"
 
 
-#ifdef WITH_GRBL
-    #include <Report.h>
-#else
-    void debug_serial(const char *format, ...);
-        // in _testGrblUI.ino
+extern void g_debug(const char *format, ...);
+
+#ifdef WITH_INIT_UI
+    extern void Grbl_MinUI_init();
 #endif
-
-
-extern void Grbl_MinUI_init();

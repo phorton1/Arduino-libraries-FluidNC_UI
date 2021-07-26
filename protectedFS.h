@@ -21,6 +21,9 @@
 // It also has a limited notion of an "idle" file system which is one
 // on which no files or directories are currently opened.
 
+#include "gDefs.h"
+#ifdef WITH_APPLICATION
+
 #include <FS.h>
 
 class protectedFS;
@@ -55,7 +58,7 @@ class proFile
         proFile openNextFile();
 
         const char *leafName();
-        
+
 
     protected:
 
@@ -113,3 +116,5 @@ protected:
     proFile *p_last  = 0;
 
 };
+
+#endif  // WITH_APPLICATION

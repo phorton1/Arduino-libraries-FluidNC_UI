@@ -87,7 +87,7 @@
                 }
                 else if (pending_command == CONFIRM_COMMAND_REBOOT)
                 {
-                    debug_serial("gApplication estarting the ESP32!!");
+                    g_debug("gApplication estarting the ESP32!!");
                     delay(500);
                     ESP.restart();
                     while (1) {}
@@ -96,18 +96,18 @@
                 {
                     int file_num = pending_command - CONFIRM_COMMAND_RUN_FILE;
                     const char *filename = files_win.getFileToRun(file_num);
-                    debug_serial("dlgConfirm running %s",filename);
+                    g_debug("dlgConfirm running %s",filename);
                     #ifdef WITH_GRBL
 
                         // all access to Grbl_Esp32 should be encapsulated in gStatus
 
                         SDCard *sdCard = config->_sdCard;
-                        // debug_serial("winMain testing SD Card");
+                        // g_debug("winMain testing SD Card");
                         if (sdCard && sdCard->get_state(true) == SDCard::State::Idle)
                         {
                             if (sdCard->openFile(SD,filename))
                             {
-                                // debug_serial("winMain running ruler.g");
+                                // g_debug("winMain running ruler.g");
                                 sdCard->_client = CLIENT_ALL;
                                 sdCard->_readyNext = true;
                                 the_app.setBaseWindow(&busy_win);

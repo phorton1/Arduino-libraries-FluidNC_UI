@@ -10,6 +10,7 @@
 
     #ifdef WITH_GRBL
         #include <SDCard.h>
+        #include <Serial.h>
         #include <Machine/MachineConfig.h>
         #include <SD.h>
     #endif
@@ -56,7 +57,7 @@
     void winMain::onButton(const uiElement *ele, bool pressed)
         // called before drawElement
     {
-        debug_serial("winMain::onButton(%04x) pressed=%d",ele->id_type,pressed);
+        g_debug("winMain::onButton(%04x) pressed=%d",ele->id_type,pressed);
 
         if (!pressed)
         {
@@ -80,16 +81,16 @@
 
                 #ifdef WITH_GRBL
                     SDCard *sdCard = config->_sdCard;
-                    // debug_serial("winMain testing SD Card");
+                    // g_debug("winMain testing SD Card");
                     if (sdCard)
                     {
-                        // debug_serial("winMain starting SD Card");
+                        // g_debug("winMain starting SD Card");
                         if (sdCard->get_state(true) == SDCard::State::Idle)
                         {
-                            // debug_serial("winMain opening ruler.g");
+                            // g_debug("winMain opening ruler.g");
                             if (sdCard->openFile(SD,"/ruler.g"))
                             {
-                                // debug_serial("winMain running ruler.g");
+                                // g_debug("winMain running ruler.g");
                                 sdCard->_client = CLIENT_ALL;
                                 sdCard->_readyNext = true;
                             }

@@ -3,6 +3,7 @@
 //-------------------------------------------------------
 
 #include "gStatus.h"
+#include "Grbl_MinUI.h"
 
 
 #ifdef WITH_APPLICATION
@@ -171,7 +172,7 @@
 		// for me at this point, though of interest.
 	{
 		#if DEBUG_WIFI
-			debug_serial("onWifiEvent(%d) %s",event,wifiEventName(event));
+			g_debug("onWifiEvent(%d) %s",event,wifiEventName(event));
 		#endif
 		g_status.gWifiEvent(event);
 	}
@@ -198,7 +199,7 @@
 			if (!m_started && m_sys_state != grbl_State_t::Sleep)
 			{
 				m_started = true;
-				debug_serial("gStatus started ..");
+				g_debug("gStatus started ..");
 			}
 			if (!m_started)
 				return;

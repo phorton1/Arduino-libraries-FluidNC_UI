@@ -1,6 +1,10 @@
 
 
+
 #include "protectedFS.h"
+
+#ifdef WITH_APPLICATION
+
 #include "Grbl_MinUI.h"
 
 
@@ -23,7 +27,7 @@ proFile::proFile(File file) :
 void proFile::close()
 {
     #if DEBUG_PROTECTED_FS
-        debug_serial("close(%s)",name());
+        g_debug("close(%s)",name());
     #endif
     if (p_fs)
         p_fs->unlinkFile(this);
@@ -101,7 +105,7 @@ void protectedFS::unlinkFile(proFile *pf)
 proFile protectedFS::open(const char* path, const char* mode/* = FILE_READ*/)
 {
     #if DEBUG_PROTECTED_FS
-        debug_serial("open(%s)",path);
+        g_debug("open(%s)",path);
     #endif
     File file = _fs.open(path,mode);
     proFile pf(file);
@@ -180,7 +184,7 @@ bool protectedFS::check_path(const char *path)
 {
     proFile *ptr = p_first;
     int len = strlen(path);
-    // debug_serial("check_path len(%d) %s",len,path);
+    // g_debug("check_path len(%d) %s",len,path);
 
     // the name() is fully qualified
 
@@ -188,14 +192,14 @@ bool protectedFS::check_path(const char *path)
     {
         const char *tpath = ptr->name();    // fully qualified path including terminal node
         int tlen = strlen(tpath);
-        // debug_serial("    checking tlen(%d) %s",tlen,tpath);
+        // g_debug("    checking tlen(%d) %s",tlen,tpath);
 
         if (!strncmp(path,tpath,len))      // if they match upto the length of the path being removed
         {
             if (len == tlen)                // they are the same
             {
                 #if DEBUG_PROTECTED_FS
-                    debug_serial("---> check_path(%s) fail len==tlen",path);
+                    g_debug("---> check_path(%s) fail len==tlen",path);
                 #endif
                 return false;               // can't remove the directory
             }
@@ -208,7 +212,7 @@ bool protectedFS::check_path(const char *path)
             if (tpath[len] == '/')
             {
                 #if DEBUG_PROTECTED_FS
-                    debug_serial("---> check_path(%s) fail tpath[%d]='/' path2(%s)",path,len,tpath);
+                    g_debug("---> check_path(%s) fail tpath[%d]='/' path2(%s)",path,len,tpath);
                 #endif
                 return false;
             }
@@ -218,3 +222,5 @@ bool protectedFS::check_path(const char *path)
     }
     return true;
 }
+
+#endif  // WITH_APPLICATION

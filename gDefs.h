@@ -3,12 +3,21 @@
 #define UI_VERSION       "prh 1.1.0"
 #define UI_VERSION_DATE  "2021-07-15"
 
-
+#define WITH_INIT_UI
+    // can be commented out for memory footprint measurements
+    // required for all practical purposes
+#define WITH_TFT
+    // can be commented out for memory footprint measurements
+    // comment out for minimal library which just includes g_debug() to serial
+    // required for all practical purposes
 #define WITH_APPLICATION
+    // can be commented out for memory footprint measurements
     // Comment this out to run a bare-bones library with just the TFT
+    // required for all practical purposes
 #define WITH_GRBL
     // Comment this out to run the UI without linking to Grbl_Esp32.
-    // Should be commented out to run _testGrblUI.ino
+    // Must be commented out to run _testGrblUI.ino
+    // Should be commented in for "production"
 
 
 #ifdef WITH_APPLICATION
@@ -19,7 +28,6 @@
     #define UI_AXIS_Z        2
 
     // definitions common to Grbl_TouchUI
-
 
     #define UI_SCREEN_WIDTH         320
     #define UI_SCREEN_HEIGHT        240
@@ -41,81 +49,17 @@
     #define IND_STATE_ERROR        0x08
     #define IND_STATE_ALL          0x0f
 
+    // Denormalized define of vMachine SDCard CS pin.
+    // If not linked to GRBL, wherein the vMachine
+    // initializes the SD Card at startup, somebody
+    // needs to *at least* set the pin HIGH or else
+    // the Touch portion of the TFT does not work,
+    // presumably due to the SDCard's non-standard
+    // use of the CS bus.
 
-
-    // the primary modes of the "main" window
-    //
-    //  enum ui_main_mode_t
-    //  {
-    //      MAIN_MODE_NONE = 0,
-    //      MAIN_MODE_IDLE,
-    //      MAIN_MODE_BUSY,
-    //      MAIN_MODE_ALARM
-    //  };
-    //
-    //  // once a job has started it must go to
-    //  // completion, abort, or error.
-    //
-    //  enum ui_job_state_t
-    //  {
-    //      JOB_STATE_NONE = 0,
-    //      JOB_STATE_STARTED,
-    //      JOB_STATE_PAUSED,
-    //      JOB_STATE_COMPLETE,
-    //      JOB_STATE_ABORTED,
-    //      JOB_STATE_ERROR
-    //  };
-
-    // extern const char *uiMainModeName(ui_main_mode_t mode);
-    // extern const char *uiJobStateName(ui_job_state_t);
-
-
-    //	const char *uiMainModeName(ui_main_mode_t mode)
-    //	{
-    //	    switch (mode)
-    //	    {
-    //	        case MAIN_MODE_NONE   : return "NONE";
-    //	        case MAIN_MODE_IDLE   : return "IDLE";
-    //	        case MAIN_MODE_BUSY   : return "BUSY";
-    //	        case MAIN_MODE_ALARM  : return "ALARM";
-    //	    }
-    //	    return "UNKNOWN_MODE";
-    //	}
-    //
-    //
-    //	const char *uiJobStateName(ui_job_state_t state)
-    //	{
-    //		switch (state)
-    //		{
-    //			case JOB_STATE_NONE		: return "NONE";
-    //			case JOB_STATE_STARTED	: return "STARTED";
-    //			case JOB_STATE_COMPLETE : return "COMPLETE";
-    //			case JOB_STATE_ABORTED  : return "ABORTED";
-    //			case JOB_STATE_ERROR	: return "ERROR";
-    //		}
-    //		return "UNKNOWN_JOB";
-    //	}
-
-    //	switch (gc_state.modal.program_flow)
-    //	{
-    //		case ProgramFlow::Running:
-    //			m_job_state = JOB_STATE_STARTED;
-    //			m_file_pct = sdCard->report_perc_complete();
-    //			break;
-    //		case ProgramFlow::Paused:
-    //			m_job_state = JOB_STATE_PAUSED;
-    //			m_file_pct = sdCard->report_perc_complete();
-    //			break;
-    //		case ProgramFlow::OptionalStop:
-    //			m_job_state = JOB_STATE_ABORTED;
-    //			m_file_pct = sdCard->report_perc_complete();
-    //			break;
-    //		case ProgramFlow::CompletedM2:
-    //		case ProgramFlow::CompletedM30:
-    //			m_job_state = JOB_STATE_COMPLETE;
-    //			m_file_pct = 100.00;
-    //			break;
-    //	}
+    #ifndef V_SDCARD_CS
+        #define V_SDCARD_CS   GPIO_NUM_21
+    #endif
 
 
 #endif  // WITH_APPLICATION
