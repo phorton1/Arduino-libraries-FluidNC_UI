@@ -38,12 +38,12 @@
         "",
         COLOR_BLACK,
         COLOR_WHITE,
-        FONT_BIG,
+        FONT_NORMAL,
     };
 
     static const uiElement confirm_elements[] =
     {
-        { ID_LINE1,        0,  60, 320,  25,   V(RU_SURE),      COLOR_BLACK, COLOR_WHITE, FONT_BIG,},
+        { ID_LINE1,        0,  60, 320,  25,   V(RU_SURE),      COLOR_BLACK, COLOR_WHITE, FONT_NORMAL,},
         { ID_LINE2,        0,  85, 320,  25,   V(&confirm_msg), },
         { ID_YES_BUTTON,  40, 130, 100,  50,   V("YES"),        COLOR_BLUE,  COLOR_WHITE, FONT_BIG,},
         { ID_NO_BUTTON,  180, 130, 100,  50,   V("NO"),         COLOR_BLUE,  COLOR_WHITE, FONT_BIG,},

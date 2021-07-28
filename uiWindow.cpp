@@ -25,7 +25,7 @@
     {
         if (g_pressed && !g_win_pressed)
         {
-            g_debug("pressed");
+            // g_debug("pressed");
             for (uint16_t i=0; i<m_num_elements; i++)
             {
                 const uiElement *ele =&m_elements[i];
@@ -62,7 +62,7 @@
 
         if (touched)
         {
-            g_debug("touched");
+            // g_debug("touched");
             g_press_x = x;
             g_press_y = y;
             g_pressed = true;

@@ -9,7 +9,21 @@
     #include "dlgMsg.h"
     #include "dlgConfirm.h"
     #include <SD.h>
+    #include <string.h>
     #include "protectedFS.h"
+
+    #define DEBUG_FILES  0
+
+    #define WITH_BUFFER
+        // As it were, the FatFS returns filenames in a directory in the order of their creation,
+        // and not alphabetically, so, if we want them alphabetical (which is expected) then we
+        // must buffer them all and sort them.   Thus we are tempted to use dynamic memory to ensure
+        // that we can do a full directory.   However, due to memory constraints, we limit the number
+        // of filenames and total number of filename bytes to something usable, but not robust.
+        //
+        // If this is not defined, the window can handle ANY size directory listing, and use less
+        // memory, but the filenames will not be sorted.
+
 
     #define NUM_LINES 5
 
@@ -57,11 +71,11 @@
     };
     uiMutable files[NUM_LINES] =
     {
-        { filenames[0],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_SMALL },
-        { filenames[1],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_SMALL },
-        { filenames[2],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_SMALL },
-        { filenames[3],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_SMALL },
-        { filenames[4],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_SMALL },
+        { filenames[0],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_MONO },
+        { filenames[1],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_MONO },
+        { filenames[2],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_MONO },
+        { filenames[3],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_MONO },
+        { filenames[4],  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_MONO },
     };
 
 
@@ -95,9 +109,9 @@
     const char *winFiles::getFileQuestion(int i)
     {
         strcpy(selected_file,"run ");
-        strcat(selected_file,filenames[i]);
+        strcat(selected_file,&filenames[i][1]); // remove the extra space
         char *p = &selected_file[4];
-        while (*p && *p != ' ') p++;
+        while (*p && *p != ' ') p++;    // remove the file_size number
         *p = 0;
         strcat(selected_file,"?");
         return selected_file;
@@ -109,7 +123,7 @@
         strcpy(selected_file,path);
         if (strcmp(path,"/"))
             strcat(selected_file,"/");
-        strcat(selected_file,filenames[i]);
+        strcat(selected_file,&filenames[i][1]); // remove the extra space
         char *p = selected_file;
         while (*p && *p != ' ') p++;
         *p = 0;
@@ -135,7 +149,10 @@
         top_num = 0;
         last_top_num = 0;
         last_path[0] = 0;
-        g_debug("init_path(%s)",path);
+
+        #if DEBUG_FILES
+            g_debug("init_path(%s)",path);
+        #endif
     }
 
 
@@ -146,6 +163,11 @@
         {
             file_error = false;
             setPath("/",true);
+        }
+        else
+        {
+            last_path[0] = 0;
+                // force refresh on FILES-FILES button
         }
         draw_needed = true;
     }
@@ -222,8 +244,10 @@
                 case ID_FILE5 :
                 {
                     uint16_t file_num = ele->id_type - ID_FILE1;
-                    const char *new_path = filenames[file_num];
-                    g_debug("ID_FILE(%d) %s",file_num,new_path);
+                    const char *new_path = &filenames[file_num][1]; // remove extra space
+                    #if DEBUG_FILES
+                        g_debug("ID_FILE(%d) %s",file_num,new_path);
+                    #endif
 
                     if (new_path[0] == '/')
                     {
@@ -247,12 +271,147 @@
 
 
 
+    #ifdef WITH_BUFFER
+
+        #define MAX_FILENAMES     30
+        #define MAX_FILEBUFFER    2048
+        #define MAX_FILENAME      128
+
+        static int g_num_files = 0;
+        static int g_filebuffer_ptr = 0;
+        static char g_filebuffer[MAX_FILEBUFFER+1];
+        static int g_filesize[MAX_FILENAMES];
+        static char *g_filenames[MAX_FILENAMES];
+
+        static void addFilename(const char *filename, int size)
+        {
+            if (g_num_files >= MAX_FILENAME)
+            {
+                g_debug("too many files at '%s'",filename);
+                return;
+            }
+            int len = strlen(filename);
+            if (len >= MAX_FILENAME)
+            {
+                g_debug("filename too long: len=%d '%s'",len,filename);
+                return;
+            }
+            int avail = MAX_FILEBUFFER - g_filebuffer_ptr;
+            if (avail < len)
+            {
+                g_debug("no room for filename: avail=%d len=%d '%s'",avail,len,filename);
+                return;
+            }
+
+            char *ptr = &g_filebuffer[g_filebuffer_ptr];
+            strcpy(ptr,filename);
+            g_filesize[g_num_files] = size;
+            g_filenames[g_num_files++] = ptr;
+            g_filebuffer_ptr += len + 1;
+        }
+
+
+        static void sortFilenames()
+            // sort directories first, case insensitive
+        {
+            #if DEBUG_FILES
+                g_debug("sort %d filenames",g_num_files);
+            #endif
+
+            int i = 0;
+            while (i < g_num_files-1)
+            {
+                int cmp = 0;
+
+                #if 0   // dirs first
+                    bool isdir1 = g_filesize[i] == -1;
+                    bool isdir2 = g_filesize[i+1] == -1;
+                    if (isdir1 && !isdir2)
+                        cmp = -1;
+                    else if (isdir2 && !isdir1)
+                        cmp = 1;
+                    else
+                #endif
+                    cmp = strcasecmp(g_filenames[i],g_filenames[i+1]);
+
+                if (cmp <= 0)
+                {
+                    i++;
+                }
+                else
+                {
+                    int jj = g_filesize[i];
+                    g_filesize[i] = g_filesize[i+1];
+                    g_filesize[i+1] = jj;
+
+                    char *ptr = g_filenames[i];
+                    g_filenames[i] = g_filenames[i+1];
+                    g_filenames[i+1] = ptr;
+                    if (i > 0)
+                    {
+                        i--;
+                    }
+                }
+            }
+            #if DEBUG_FILES
+                g_debug("sort finished");
+            #endif
+
+        }
+
+
+        static void refreshDir()
+        {
+            g_num_files = 0;
+            g_filebuffer_ptr = 0;
+
+            g_debug("refhresDir(%d,%s)",top_num,path);
+
+            protectedFS fs(SD);     // for leafName();
+            proFile root = fs.open(path);
+            if (root && root.isDirectory())
+            {
+                proFile file = root.openNextFile();
+                while (file)
+                {
+                    #if DEBUG_FILES
+                        g_debug("file(%s)",file.leafName());
+                    #endif
+
+                    addFilename(file.leafName(),file.isDirectory() ?
+                        -1 : file.size());
+                    file = root.openNextFile();
+                }
+            }
+            else
+            {
+                fileError("Could not opendir");
+            }
+            if (root)
+                root.close();
+            sortFilenames();
+
+            // on refresh, constrain top_num in case files were deleted
+
+            if (top_num > g_num_files - NUM_LINES)
+            {
+                top_num = g_num_files - NUM_LINES;
+                if (top_num < 0) top_num = 0;
+            }
+        }
+
+
+    #endif  // WITH_BUFFER
+
+
+
     void winFiles::update()
     {
-        if (top_num != last_top_num ||
-            strcmp(last_path,path))
+        bool path_changed = strcmp(last_path,path);
+        if (path_changed || top_num != last_top_num)
         {
             draw_needed = true;
+
             last_top_num = top_num;
             strcpy(last_path,path);
 
@@ -275,48 +434,83 @@
                 if (sd_started)
             #endif
             {
-                protectedFS fs(SD);
-                int num_files = 0;
-                int num_lines = 0;
-
-                proFile root = fs.open(path);
-                if (root && root.isDirectory())
-                {
-                    proFile file = root.openNextFile();
-                    while (file)
+                #ifdef WITH_BUFFER
+                    if (path_changed)
                     {
-                        g_debug("file(%s)",file.leafName());
-
-                        if (num_files >= top_num &&
-                            num_files < top_num + NUM_LINES)
-                        {
-                            files[num_lines].bg = COLOR_DARKBLUE;
-                            if (file.isDirectory())
-                            {
-                                sprintf(filenames[num_lines++],"/%s",file.leafName());
-                            }
-                            else
-                            {
-                                sprintf(filenames[num_lines++],"%-20s %d",file.leafName(),file.size());
-                            }
-                        }
-                        num_files++;
-                        file = root.openNextFile();
+                        refreshDir();
                     }
-                }
-                else
-                {
-                    fileError("Could not opendir");
-                }
 
-                if (root)
-                    root.close();
+                    int num_lines = 0;
+                    int num_files = top_num;
+                    while (num_files < g_num_files &&
+                           num_lines < NUM_LINES)
+                    {
+                        // note the leading space which is removed upon usage
+                        files[num_lines].bg = COLOR_DARKBLUE;
+                        if (g_filesize[num_files] == -1)
+                        {
+                            sprintf(filenames[num_lines]," /%s",g_filenames[num_files]);
+                        }
+                        else
+                        {
+                            sprintf(filenames[num_lines]," %-20s %d",g_filenames[num_files],g_filesize[num_files]);
+                        }
+                        num_lines++;
+                        num_files++;
+                    }
+
+                    num_files = g_num_files;
+                #else
+
+                    protectedFS fs(SD);
+                    int num_files = 0;
+                    int num_lines = 0;
+
+                    proFile root = fs.open(path);
+                    if (root && root.isDirectory())
+                    {
+                        proFile file = root.openNextFile();
+                        while (file)
+                        {
+                            #if DEBUG_FILES
+                                g_debug("file(%s)",file.leafName());
+                            #endif
+
+                            if (num_files >= top_num &&
+                                num_files < top_num + NUM_LINES)
+                            {
+                                // note the leading space which is removed upon usage
+                                files[num_lines].bg = COLOR_DARKBLUE;
+                                if (file.isDirectory())
+                                {
+                                    sprintf(filenames[num_lines++],"/%s",file.leafName());
+                                }
+                                else
+                                {
+                                    sprintf(filenames[num_lines++],"%-20s %d",file.leafName(),file.size());
+                                }
+                            }
+                            num_files++;
+                            file = root.openNextFile();
+                        }
+                    }
+                    else
+                    {
+                        fileError("Could not opendir");
+                    }
+
+                    if (root)
+                        root.close();
+
+                #endif  // !WITH_BUFFER
 
                 #ifdef WITH_GRBL
                     SD.end();
                 #endif
 
-                g_debug("dir(%s) top(%d) lines(%d) files(%d)", path, top_num, num_lines, num_files);
+                #if DEBUG_FILES
+                    g_debug("dir(%s) top(%d) lines(%d) files(%d)", path, top_num, num_lines, num_files);
+                #endif
 
                 if (strcmp(path,"/"))
                     buttons[IDX_BACK_BUTTON].bg = COLOR_BLUE;
