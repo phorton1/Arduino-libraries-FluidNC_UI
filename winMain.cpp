@@ -7,6 +7,7 @@
 #ifdef WITH_APPLICATION
 
     #include "dlgMsg.h"
+    #include "gPrefs.h"
 
     #ifdef WITH_GRBL
         #include <System.h>
@@ -35,12 +36,12 @@
     #define IDX_Z_MINUS1       12
     #define IDX_Z_PLUS1        13
     #define IDX_Z_PLUS2        14
-    // #define IDX_MACRO1         15
-    // #define IDX_MACRO2         16
-    // #define IDX_MACRO3         17
-    // #define IDX_MACRO4         18
+    #define IDX_MACRO1         15
+    #define IDX_MACRO2         16
+    #define IDX_MACRO3         17
+    #define IDX_MACRO4         18
 
-    #define NUM_BUTTONS        15
+    #define NUM_BUTTONS        19
 
     #define ID_HOME_BUTTON     ( 1 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
     #define ID_SET_BUTTON      ( 2 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
@@ -65,34 +66,35 @@
     #define NUM_JOG_BUTTONS   12
 
     static char button_text[NUM_JOG_BUTTONS][6];
+    static char macro_button_text[4][2];
 
 
-    #define RC_TO_XY(r,c)      1+c*45, 35+r*34, 45,  35
+    #define RC_TO_XY(r,c)      1+c*45 +(c==6?2:0), 35+r*34, 45,  35
         // 7 x 5     buttons are 45 wide by 34 high
         // all buttons are mutable (can be disabled)
         // later (with a preferences file) the macro names can change
 
 
     static uiMutable buttons[NUM_BUTTONS] = {
-        {"home",          COLOR_BLUE,      COLOR_WHITE, FONT_MONO },
-        {"set",           COLOR_BLUE,      COLOR_WHITE, FONT_MONO },
-        {"micro",         COLOR_BLUE,      COLOR_WHITE, FONT_MONO },
-        {button_text[ 0], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 1], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 2], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 3], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 4], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 5], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 6], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 7], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 8], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[ 9], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[10], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        {button_text[11], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
-        // {"M1",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
-        // {"M2",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
-        // {"M3",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
-        // {"M4",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+        {"home",               COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
+        {"set",                COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
+        {"micro",              COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
+        {button_text[ 0],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 1],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 2],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 3],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 4],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 5],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 6],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 7],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 8],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 9],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[10],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {button_text[11],      COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+        {macro_button_text[0], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
+        {macro_button_text[1], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
+        {macro_button_text[2], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
+        {macro_button_text[3], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
     };
 
     static const uiElement idle_elements[] = {
@@ -111,10 +113,10 @@
         { ID_Z_MINUS1    ,   RC_TO_XY(1,5),     &buttons[12], },
         { ID_Z_PLUS1     ,   RC_TO_XY(3,5),     &buttons[13], },
         { ID_Z_PLUS2     ,   RC_TO_XY(4,5),     &buttons[14], },
-        // { ID_MACRO1      ,   RC_TO_XY(0,6),     &buttons[15], },
-        // { ID_MACRO2      ,   RC_TO_XY(1,6),     &buttons[16], },
-        // { ID_MACRO3      ,   RC_TO_XY(2,6),     &buttons[17], },
-        // { ID_MACRO4      ,   RC_TO_XY(3,6),     &buttons[18], },
+        { ID_MACRO1      ,   RC_TO_XY(0,6),     &buttons[15], },
+        { ID_MACRO2      ,   RC_TO_XY(1,6),     &buttons[16], },
+        { ID_MACRO3      ,   RC_TO_XY(2,6),     &buttons[17], },
+        { ID_MACRO4      ,   RC_TO_XY(3,6),     &buttons[18], },
     };
 
 
@@ -140,13 +142,16 @@
 
 
     void doJog(const char *axis, int jog_num)
+        // G91=relative mode, must provide feed rate
     {
-        // g_debug("doJog(%s%s)",axis,button_text[jog_num]);
+        g_debug("doJog(%s%s F%d)",axis,button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
 
         #ifdef WITH_GRBL
             char command_buf[20];
-            // G91=relative mode, must provide feed rate
-            sprintf(command_buf,"$J=G91 %s%s F1000\r",axis,button_text[jog_num]);
+            sprintf(command_buf,"$J=G91 %s%s F%d\r",
+                axis,
+                button_text[jog_num],
+                getIntPref(PREF_JOG_FEED_RATE));
             WebUI::inputBuffer.push(command_buf);
         #endif
     }
@@ -224,6 +229,9 @@
                 buttons[IDX_MICRO_BUTTON].bg = g_micro_mode ?
                     COLOR_GREEN :
                     COLOR_BLUE;
+                buttons[IDX_MICRO_BUTTON].fg = g_micro_mode ?
+                    COLOR_BLACK :
+                    COLOR_WHITE;
 
                 const char *scale2 = g_micro_mode ? "1"    : "100";
                 const char *scale1 = g_micro_mode ? "0.1"  : "10";
@@ -242,6 +250,14 @@
                 sprintf(button_text[ 9], "%s",scale3);
                 sprintf(button_text[10], "-%s", scale3);
                 sprintf(button_text[11], "-%s", scale4);
+
+                strcpy(macro_button_text[0],getStrPref(PREF_MACRO1_CHAR));
+                strcpy(macro_button_text[1],getStrPref(PREF_MACRO2_CHAR));
+                strcpy(macro_button_text[2],getStrPref(PREF_MACRO3_CHAR));
+                strcpy(macro_button_text[3],getStrPref(PREF_MACRO4_CHAR));
+
+                buttons[IDX_MACRO1].bg = COLOR_BLUE;
+
 
                 drawTypedElements();
 

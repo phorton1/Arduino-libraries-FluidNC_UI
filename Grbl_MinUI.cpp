@@ -72,8 +72,8 @@ void g_debug(const char *format, ...)
 
 	void gDisplayTask(void* pvParameters)
 	{
-		vTaskDelay(200 / portTICK_PERIOD_MS);
-			// short delay to allow g_debug from touchUI_init() to complete
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
+			// delay to allow g_debug from touchUI_init() to complete
 		g_debug("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
 
 		#ifdef WITH_APPLICATION
@@ -156,7 +156,7 @@ void g_debug(const char *format, ...)
 		// finished
 
 		g_debug("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
-		vTaskDelay(300 / portTICK_PERIOD_MS);
+			// vTaskDelay(300 / portTICK_PERIOD_MS);
 			// another delay to allow the task to start
 
 	}   // display_init()

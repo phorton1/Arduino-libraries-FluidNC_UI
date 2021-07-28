@@ -6,9 +6,11 @@
 
 #ifdef WITH_APPLICATION
 
+    #define DEBUG_APP   0
+
     #define MAX_WINDOW_STACK  5
 
-
+    #include "gPrefs.h"
     #include "winMain.h"
     #include "winBusy.h"
     #include "winAlarm.h"
@@ -91,9 +93,18 @@
 
     void gApplication::begin()
     {
+        #if DEBUG_APP
+            g_debug("gApplication::begin() started ...");
+        #endif
+
+        readPrefs();
         draw_needed = true;
         g_status.initWifiEventHandler();
         setDefaultWindow((uiWindow *)&main_win);
+
+        #if DEBUG_APP
+            g_debug("gApplication::begin() finished.");
+        #endif
     }
 
 
@@ -541,7 +552,9 @@
 
         if (job_state != last.job_state)
         {
-            // g_debug("JOB_STATE changing from %d to %d",last.job_state, job_state);
+            #if DEBUG_APP
+                g_debug("JOB_STATE changing from %d to %d",last.job_state, job_state);
+            #endif
 
             uiWindow *new_win = 0;
 
