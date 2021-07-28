@@ -93,7 +93,7 @@
     {
         draw_needed = true;
         g_status.initWifiEventHandler();
-        setDefaultWindow();
+        setDefaultWindow((uiWindow *)&main_win);
     }
 
 
@@ -124,18 +124,6 @@
         openWindow(win);
     }
 
-
-    void gApplication::setDefaultWindow()
-        // set window without doing openWindow
-        // which is deferred
-    {
-        win_stack_ptr = 0;
-        win_stack[0] =
-            job_state == JOB_ALARM ? (uiWindow *)&alarm_win :
-            job_state == JOB_BUSY  ? (uiWindow *)&busy_win :
-            (uiWindow *)&main_win;
-        setAppButtonText(win_stack[0]->getMenuLabel());
-    }
 
 
     void gApplication::onButton(const uiElement *ele, bool pressed)
@@ -201,6 +189,20 @@
     }
 
 
+    const char *jobStateName(JobState job_state)
+    {
+        switch (job_state)
+        {
+            case JOB_IDLE   : return "IDLE";
+            case JOB_BUSY   : return "BUSY";
+            case JOB_HOLD   : return "HOLD";
+            case JOB_HOMING : return "HOMING";
+            case JOB_ALARM  : return "ALARM";
+        }
+        return "UNKNOWN_JOB_STATE";
+    }
+
+
     //--------------------------------
     // frame callbacks
     //--------------------------------
@@ -212,7 +214,6 @@
             win_stack[0] &&
             win_stack[0] == &busy_win &&
             last.pct != pct;
-            // (job_state == JOB_BUSY || job_state == JOB_HOLD);
 
         if (draw_needed ||
             pct_changed ||
@@ -223,7 +224,7 @@
                 sprintf(app_button_buf,"%2.1f%%",pct);
 
             app_button.fg =
-                job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
+                job_state == JOB_HOMING || job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
                 job_state == JOB_HOLD ? COLOR_CYAN :
                 job_state == JOB_BUSY ? COLOR_YELLOW :
                 COLOR_WHITE;
@@ -244,7 +245,7 @@
             // cyan when hold, or white when idle
 
             app_title.fg =
-                job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
+                job_state == JOB_HOMING || job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
                 job_state == JOB_HOLD ? COLOR_CYAN :
                 job_state == JOB_BUSY ? COLOR_YELLOW :
                 COLOR_WHITE;
@@ -509,11 +510,13 @@
     // update()
     //----------------------------------
 
-
-    JobState combineBusyHold(JobState j)
+    void gApplication::setDefaultWindow(uiWindow *win)
+        // set window without doing openWindow
+        // which is deferred
     {
-        if (j == JOB_HOLD) return JOB_BUSY;
-        return j;
+        win_stack_ptr = 0;
+        win_stack[0] = win;
+        setAppButtonText(win->getMenuLabel());
     }
 
 
@@ -525,7 +528,9 @@
 
         // set the job_state, and possibly the title of the file
 
-        if (sys_state == grbl_State_t::Alarm)
+        if (sys_state == grbl_State_t::Homing)
+            job_state = JOB_HOMING;
+        else if (sys_state == grbl_State_t::Alarm)
             job_state = JOB_ALARM;
         else if (sys_state == grbl_State_t::Hold)
             job_state = JOB_HOLD;
@@ -534,19 +539,34 @@
         else
             job_state = JOB_IDLE;
 
-        // switch to main, busy, or alarm window if there is a
-        // state change that calls for it (which is not the case
-        // when it chagnes from BUSY to HOLD or vice-versa)
-
-        JobState was = combineBusyHold(last.job_state);
-        JobState is  = combineBusyHold(job_state);
-        if (was != is)
+        if (job_state != last.job_state)
         {
+            // g_debug("JOB_STATE changing from %d to %d",last.job_state, job_state);
 
-            draw_needed = true;
-            setDefaultWindow();
-            initProgress();
-            if (job_state == JOB_BUSY)
+            uiWindow *new_win = 0;
+
+            // switch to ALARM window if the job_state changes to JOB_ALARM
+            // switch to the BUSY window if the job_state changes to JOB_BUSY (except from HOLD)
+            // Note that GRBL allows for a file to be run WHILE homing
+
+            if (job_state == JOB_ALARM)
+                new_win = (uiWindow *)&alarm_win;
+            else if (job_state == JOB_BUSY && last.job_state != JOB_HOLD)
+                new_win = (uiWindow *)&busy_win;
+            else if (job_state == JOB_IDLE && (
+                last.job_state == JOB_ALARM ||
+                last.job_state == JOB_BUSY))
+                new_win = (uiWindow *)&main_win;
+
+            if (new_win)
+            {
+                draw_needed = true;
+                setDefaultWindow(new_win);
+                initProgress();
+            }
+
+            if (job_state == JOB_BUSY ||
+                job_state == JOB_HOLD)
             {
                 const char *filename = g_status.getActiveFilename();
                 const char *p = filename;
@@ -558,6 +578,7 @@
                 setTitle(filename);
             }
         }
+
 
         // redraw the whole window if necessary
 

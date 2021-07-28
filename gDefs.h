@@ -33,7 +33,7 @@
     #define UI_SCREEN_HEIGHT        240
 
     #define UI_TOP_MARGIN           35
-    #define UI_BOTTOM_MARGIN        35
+    #define UI_BOTTOM_MARGIN        34
     #define UI_MAIN_BUTTON_WIDTH    80
     #define UI_INDICATOR_WIDTH      28
 

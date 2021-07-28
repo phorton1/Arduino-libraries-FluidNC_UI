@@ -9,11 +9,10 @@
     #include "dlgMsg.h"
 
     #ifdef WITH_GRBL
-        #include <SDCard.h>
-        #include <Serial.h>
-        #include <Machine/MachineConfig.h>
-        #include <SD.h>
+        #include <System.h>
+        #include <WebUI/InputBuffer.h>
     #endif
+
 
     winMain main_win;
 
@@ -21,91 +20,233 @@
     // WINDOW DEFINITION
     //----------------------------------------------------------------------
 
-    #define IDX_TEXT_FIELD   0
-    #define ID_SOME_BUTTON1     (0x0002 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
-    #define ID_SOME_BUTTON2     (0x0003 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define IDX_HOME_BUTTON     0
+    #define IDX_SET_BUTTON      1
+    #define IDX_MICRO_BUTTON    2
+    #define IDX_X_MINUS2        3
+    #define IDX_X_MINUS1        4
+    #define IDX_X_PLUS1         5
+    #define IDX_X_PLUS2         6
+    #define IDX_Y_MINUS2        7
+    #define IDX_Y_MINUS1        8
+    #define IDX_Y_PLUS1         9
+    #define IDX_Y_PLUS2        10
+    #define IDX_Z_MINUS2       11
+    #define IDX_Z_MINUS1       12
+    #define IDX_Z_PLUS1        13
+    #define IDX_Z_PLUS2        14
+    // #define IDX_MACRO1         15
+    // #define IDX_MACRO2         16
+    // #define IDX_MACRO3         17
+    // #define IDX_MACRO4         18
 
-    static char some_text[UI_MAX_TITLE] = "variable text";
-    static char button_text[UI_MAX_BUTTON] = "BLECH";
+    #define NUM_BUTTONS        15
 
-    static uiMutable mutable_button = {
-        "BLEY",
-        COLOR_YELLOW,
-        COLOR_PURPLE,
-        FONT_SMALL
+    #define ID_HOME_BUTTON     ( 1 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_SET_BUTTON      ( 2 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_MICRO_BUTTON    ( 3 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_X_MINUS2        ( 4 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_X_MINUS1        ( 5 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_X_PLUS1         ( 6 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_X_PLUS2         ( 7 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Y_MINUS2        ( 8 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Y_MINUS1        ( 9 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Y_PLUS1         (10 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Y_PLUS2         (11 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Z_MINUS2        (12 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Z_MINUS1        (13 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Z_PLUS1         (14 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_Z_PLUS2         (15 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_MACRO1          (16 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_MACRO2          (17 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_MACRO3          (18 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+    #define ID_MACRO4          (19 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+
+    #define NUM_JOG_BUTTONS   12
+
+    static char button_text[NUM_JOG_BUTTONS][6];
+
+
+    #define RC_TO_XY(r,c)      1+c*45, 35+r*34, 45,  35
+        // 7 x 5     buttons are 45 wide by 34 high
+        // all buttons are mutable (can be disabled)
+        // later (with a preferences file) the macro names can change
+
+
+    static uiMutable buttons[NUM_BUTTONS] = {
+        {"home",          COLOR_BLUE,      COLOR_WHITE, FONT_MONO },
+        {"set",           COLOR_BLUE,      COLOR_WHITE, FONT_MONO },
+        {"micro",         COLOR_BLUE,      COLOR_WHITE, FONT_MONO },
+        {button_text[ 0], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 1], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 2], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 3], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 4], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 5], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 6], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 7], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 8], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[ 9], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[10], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        {button_text[11], COLOR_DARKGREEN, COLOR_WHITE, FONT_MONO },
+        // {"M1",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+        // {"M2",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+        // {"M3",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+        // {"M4",            COLOR_BLUE, COLOR_WHITE, FONT_MONO },
     };
 
     static const uiElement idle_elements[] = {
-
-        { ID_TYPE_TEXT,       0,  40, 320, 20, V(some_text),           COLOR_BLACK,     COLOR_WHITE, FONT_NORMAL, JUST_CENTER },
-        { ID_SOME_BUTTON1,   20,  70, 120, 90, V(button_text),         COLOR_DARKGREEN, COLOR_WHITE, FONT_BIG,    JUST_CENTER },
-        { ID_SOME_BUTTON2,  160,  70, 120, 90, V(&mutable_button),     },
-        { ID_TYPE_TEXT,       0, 170, 320, 20, V("this is some text"), COLOR_BLACK,     COLOR_WHITE, FONT_NORMAL, JUST_CENTER },
-
+        { ID_HOME_BUTTON ,    10,  52, 70, 34,  &buttons[ 0], },
+        { ID_SET_BUTTON  ,    10, 153, 70, 34,  &buttons[ 1], },
+        { ID_MICRO_BUTTON,   145,  52, 70, 34,  &buttons[ 2], },
+        { ID_X_MINUS2    ,   RC_TO_XY(2,0),     &buttons[ 3], },
+        { ID_X_MINUS1    ,   RC_TO_XY(2,1),     &buttons[ 4], },
+        { ID_X_PLUS1     ,   RC_TO_XY(2,3),     &buttons[ 5], },
+        { ID_X_PLUS2     ,   RC_TO_XY(2,4),     &buttons[ 6], },
+        { ID_Y_MINUS2    ,   RC_TO_XY(0,2),     &buttons[ 7], },
+        { ID_Y_MINUS1    ,   RC_TO_XY(1,2),     &buttons[ 8], },
+        { ID_Y_PLUS1     ,   RC_TO_XY(3,2),     &buttons[ 9], },
+        { ID_Y_PLUS2     ,   RC_TO_XY(4,2),     &buttons[10], },
+        { ID_Z_MINUS2    ,   RC_TO_XY(0,5),     &buttons[11], },
+        { ID_Z_MINUS1    ,   RC_TO_XY(1,5),     &buttons[12], },
+        { ID_Z_PLUS1     ,   RC_TO_XY(3,5),     &buttons[13], },
+        { ID_Z_PLUS2     ,   RC_TO_XY(4,5),     &buttons[14], },
+        // { ID_MACRO1      ,   RC_TO_XY(0,6),     &buttons[15], },
+        // { ID_MACRO2      ,   RC_TO_XY(1,6),     &buttons[16], },
+        // { ID_MACRO3      ,   RC_TO_XY(2,6),     &buttons[17], },
+        // { ID_MACRO4      ,   RC_TO_XY(3,6),     &buttons[18], },
     };
+
 
 
     //----------------------------------
     // implementation
     //----------------------------------
 
+    static bool g_draw_needed = false;
+    static bool g_micro_mode = false;
+    static bool g_last_micro_mode = false;
+
+
     winMain::winMain() :
         uiWindow(idle_elements,(sizeof(idle_elements)/sizeof(uiElement)))
     {}
 
 
+    void winMain::begin()
+    {
+        g_draw_needed = 1;
+    }
+
+
+    void doJog(const char *axis, int jog_num)
+    {
+        // g_debug("doJog(%s%s)",axis,button_text[jog_num]);
+
+        #ifdef WITH_GRBL
+            char command_buf[20];
+            // G91=relative mode, must provide feed rate
+            sprintf(command_buf,"$J=G91 %s%s F1000\r",axis,button_text[jog_num]);
+            WebUI::inputBuffer.push(command_buf);
+        #endif
+    }
+
+
     void winMain::onButton(const uiElement *ele, bool pressed)
         // called before drawElement
     {
-        g_debug("winMain::onButton(%04x) pressed=%d",ele->id_type,pressed);
+        // g_debug("winMain::onButton(%04x) pressed=%d",ele->id_type,pressed);
 
         if (!pressed)
         {
-            if (ele->id_type == ID_SOME_BUTTON1)
+            switch (ele->id_type)
             {
-                static int counter = 0;
-                sprintf(button_text,"BLAH%d",counter++);
-                    // drawElement will be called after onButton(false)
-                sprintf(some_text, "counter = %d",counter);
-                drawTypedElement(&m_elements[IDX_TEXT_FIELD]);
-            }
-            else if (ele->id_type == ID_SOME_BUTTON2)
-            {
-                static bool state = false;
-                state = !state;
-                mutable_button.text = state ? "RAW" : "MEAT";
-                mutable_button.bg   = state ? COLOR_RED : COLOR_BLUE;
-                mutable_button.fg   = state ? COLOR_BLACK : COLOR_WHITE;
-                mutable_button.font = state ? FONT_MONO : FONT_BIG;
-                    // drawElement will be called after onButton(false)
-
-                #ifdef WITH_GRBL
-                    SDCard *sdCard = config->_sdCard;
-                    // g_debug("winMain testing SD Card");
-                    if (sdCard)
-                    {
-                        // g_debug("winMain starting SD Card");
-                        if (sdCard->get_state(true) == SDCard::State::Idle)
-                        {
-                            // g_debug("winMain opening ruler.g");
-                            if (sdCard->openFile(SD,"/ruler.g"))
-                            {
-                                // g_debug("winMain running ruler.g");
-                                sdCard->_client = CLIENT_ALL;
-                                sdCard->_readyNext = true;
-                            }
-                            else
-                                errorMsg("Could not open ruler.g");
-                        }
-                        else
-                            errorMsg("Could not get SDCard");
-                    }
-                    else
-                        errorMsg("NO sdCard");
-
-                #endif
+                case ID_MICRO_BUTTON:
+                    g_micro_mode = !g_micro_mode;
+                    break;
+                case ID_HOME_BUTTON :
+                    the_app.setTitle("");
+                    #ifdef WITH_GRBL
+                        WebUI::inputBuffer.push("$H\r");
+                    #endif
+                    break;
+                case ID_X_MINUS2 :
+                case ID_X_MINUS1 :
+                case ID_X_PLUS1  :
+                case ID_X_PLUS2  :
+                     doJog("X",ele->id_type - ID_X_MINUS2);
+                     break;
+                case ID_Y_MINUS2 :
+                case ID_Y_MINUS1 :
+                case ID_Y_PLUS1  :
+                case ID_Y_PLUS2  :
+                    doJog("Y",ele->id_type - ID_X_MINUS2);
+                    break;
+                case ID_Z_MINUS2 :
+                case ID_Z_MINUS1 :
+                case ID_Z_PLUS1  :
+                case ID_Z_PLUS2  :
+                     doJog("Z",ele->id_type - ID_X_MINUS2);
+                     break;
             }
         }
     }
+
+
+    void winMain::update()
+    {
+        JobState job_state = the_app.getJobState();
+
+        if (g_draw_needed ||
+            g_last_micro_mode != g_micro_mode ||
+            job_state != the_app.getLastJobState())
+        {
+            g_draw_needed = false;
+            g_last_micro_mode = g_micro_mode;
+
+            tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,COLOR_BLACK);
+
+            if (job_state != JOB_IDLE)
+            {
+                drawText(
+                    jobStateName(job_state),
+                    JUST_CENTER,
+                    FONT_BIG,
+                    0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,
+                    COLOR_YELLOW,
+                    COLOR_BLACK );
+                m_num_elements = 0;
+            }
+            else
+            {
+                m_num_elements = NUM_BUTTONS;
+
+                buttons[IDX_MICRO_BUTTON].bg = g_micro_mode ?
+                    COLOR_GREEN :
+                    COLOR_BLUE;
+
+                const char *scale2 = g_micro_mode ? "1"    : "100";
+                const char *scale1 = g_micro_mode ? "0.1"  : "10";
+                const char *scale4 = g_micro_mode ? "1"    : "10";
+                const char *scale3 = g_micro_mode ? "0.1"  : "1";
+
+                sprintf(button_text[ 0], "-%s",scale2);
+                sprintf(button_text[ 1], "-%s",scale1);
+                sprintf(button_text[ 2], "%s", scale1);
+                sprintf(button_text[ 3], "%s", scale2);
+                sprintf(button_text[ 4], "%s",scale2);
+                sprintf(button_text[ 5], "%s",scale1);
+                sprintf(button_text[ 6], "-%s", scale1);
+                sprintf(button_text[ 7], "-%s", scale2);
+                sprintf(button_text[ 8], "%s",scale4);
+                sprintf(button_text[ 9], "%s",scale3);
+                sprintf(button_text[10], "-%s", scale3);
+                sprintf(button_text[11], "-%s", scale4);
+
+                drawTypedElements();
+
+            }   // idle
+        }   // changed
+    }   // update()
 
 #endif  // WITH_APPLICATION

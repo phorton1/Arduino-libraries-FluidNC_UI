@@ -15,8 +15,11 @@
         JOB_IDLE,
         JOB_BUSY,
         JOB_HOLD,
+        JOB_HOMING,
         JOB_ALARM
     };
+
+    extern const char *jobStateName(JobState job_state);
 
     typedef struct appLast_t
         // A structure that holds previous state of
@@ -90,7 +93,7 @@
             // methods
             //-----------------------------
 
-            void setDefaultWindow();
+            void setDefaultWindow(uiWindow *win);
 
             uint16_t indColor(uint8_t ind_state);
             void doText(const uiElement *ele, const char *text);

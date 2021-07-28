@@ -16,6 +16,8 @@
 
         private:
 
+            virtual void begin() override;
+            virtual void update() override;
             virtual void onButton(const uiElement *ele, bool pressed) override;
             virtual const char *getMenuLabel() const override  { return "MAIN"; }
 
