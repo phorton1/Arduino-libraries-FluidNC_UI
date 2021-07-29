@@ -8,15 +8,16 @@
 
 #ifdef WITH_APPLICATION
 
+    #define MAX_FILENAME      128
+
     class winFiles : public uiWindow
     {
         public:
 
             winFiles();
 
+            const char *getPath();
             const char *getFileToRun(int i);
-            const char *getFileQuestion(int i);
-
 
         private:
 

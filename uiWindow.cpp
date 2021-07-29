@@ -99,36 +99,49 @@
 
 
 
-    void getMutableElementSettings(
-        const uiElement *ele,
-        const char **text,
-        uint16_t *bg,
-        uint16_t *fg,
-        FontType *font)
-        // abstracted in case I wanna call it somewhere else
-    {
-        if (ele->id_type & ID_TYPE_MUTABLE)
-        {
-            uiMutable *mut = (uiMutable *) ele->param;
-            *text = mut->text;
-            *bg   = mut->bg;
-            *fg   = mut->fg;
-            *font = mut->font;
-        }
-        if (ele->id_type & ID_TYPE_TEXT_FN)
-        {
-            *text = ((constCharStarMethod) ele->param)();
-        }
-    }
+    #define DUAL_PADDING  2
 
 
     void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
     {
+        char buf[80];
         const char *text = (const char *) ele->param;
+        uint16_t label_x = ele->x;
+        uint16_t label_w = ele->w;
         uint16_t bg = ele->bg;
         uint16_t fg = ele->fg;
         FontType font = ele->font;
-        getMutableElementSettings(ele,&text,&bg,&fg,&font);
+        JustifyType just = ele->just;
+        uiDualElement *dual = ele->id_type & ID_TYPE_DUAL ?
+            (uiDualElement *) ele->param : NULL;
+
+
+        if (ele->id_type & ID_TYPE_MUTABLE)
+        {
+            uiMutable *mut = (uiMutable *) ele->param;
+            text = mut->text;
+            bg   = mut->bg;
+            fg   = mut->fg;
+            font = mut->font;
+        }
+        if (ele->id_type & ID_TYPE_TEXT_FN)
+        {
+            text = ((constCharStarMethod) ele->param)();
+        }
+        if (dual)
+        {
+            text = dual->label;
+            bg = dual->bg;
+            label_x +=  DUAL_PADDING;
+            label_w = dual->label_width - DUAL_PADDING * 2;
+            just = JUST_LEFT;
+
+            if (dual->type & ELEMENT_TYPE_FLAG_DIR)
+            {
+                sprintf(buf,"/%s",text);
+                text = buf;
+            }
+        }
 
         // if drawElement is called on the currently pressed button,
         // we force "pressed" to be true to prevent calls with false
@@ -174,9 +187,38 @@
             {
                 drawText(
                     text,
-                    ele->just,
+                    just,
                     font,
-                    ele->x, ele->y, ele->w, ele->h,
+                    label_x,ele->y,label_w,ele->h,
+                    fg,
+                    fg );
+            }
+
+            if (dual && !(dual->type & ELEMENT_TYPE_FLAG_DIR))
+            {
+                text = buf;
+
+                if (dual->type & ELEMENT_TYPE_FLOAT)
+                {
+                    sprintf(buf,"%3.1f",*(float *)dual->value);
+                }
+                else if (dual->type & ELEMENT_TYPE_INT)
+                {
+                    sprintf(buf,"%d",*(int *)dual->value);
+                }
+                else
+                {
+                    sprintf(buf,"%s",(const char *)dual->value);
+                }
+
+                int val_x = ele->x + ele->w - 1 - dual->value_width + DUAL_PADDING;
+                int val_w = dual->value_width - 2 * DUAL_PADDING;
+
+                drawText(
+                    text,
+                    JUST_RIGHT,
+                    dual->value_font,
+                    val_x,ele->y,val_w,ele->h,
                     fg,
                     fg );
             }

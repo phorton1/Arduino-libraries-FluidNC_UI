@@ -6,7 +6,7 @@
 
 #ifdef WITH_APPLICATION
 
-    #define DEBUG_APP   0
+    #define DEBUG_APP   1
 
     #define MAX_WINDOW_STACK  5
 
@@ -385,6 +385,9 @@
         prog_x = 0;
         prog_w = 0;
         last.prog_w = 0;
+        #if DEBUG_APP
+            g_debug("initProgress()");
+        #endif
     }
 
 
@@ -489,7 +492,7 @@
 
         else
         {
-            float pct = g_status.filePct();
+            float pct = job_state == JOB_HOLD || job_state == JOB_BUSY ? g_status.filePct() : 0;
             prog_color = job_state == JOB_HOLD ? COLOR_DARKCYAN : COLOR_DARKGREEN;
 
             if (last.pct != pct ||
@@ -568,14 +571,15 @@
                 new_win = (uiWindow *)&busy_win;
             else if (job_state == JOB_IDLE && (
                 last.job_state == JOB_ALARM ||
-                last.job_state == JOB_BUSY))
+                last.job_state == JOB_BUSY ||
+                last.job_state == JOB_HOLD ))
                 new_win = (uiWindow *)&main_win;
 
             if (new_win)
             {
                 draw_needed = true;
-                setDefaultWindow(new_win);
                 initProgress();
+                setDefaultWindow(new_win);
             }
 
             if (job_state == JOB_BUSY ||
@@ -659,7 +663,7 @@
         last.job_state = job_state;
         last.sd_state = sd_state;
         last.sys_state = sys_state;
-        last.pct = g_status.filePct();
+        last.pct = job_state == JOB_HOLD || job_state == JOB_BUSY ? g_status.filePct() : 0;
         last.prog_w = prog_w;
         last.prog_color = prog_color;
         strcpy(last.app_title,app_title_buf);

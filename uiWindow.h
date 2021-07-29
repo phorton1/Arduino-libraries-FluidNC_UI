@@ -26,26 +26,44 @@
     #define ID_TYPE_BUTTON   0x2000      // button with background
     #define ID_TYPE_MUTABLE  0x4000      // param is pointer to a uiMutable
     #define ID_TYPE_TEXT_FN  0x8000      // param is const char * method
+    #define ID_TYPE_REPEAT   0x0100      // button uses timing algorithm for repeats
+    #define ID_TYPE_DUAL     0x0200      // button with a left justified label and a right justified value
 
-    #define ID_TYPE_ALL      0xf000      // things that get drawn by the system
-
-
-    #define WIN_STATE_NONE      0x0000
-    #define WIN_STATE_VALID     0x0001
+    #define ID_TYPE_ALL      0xf200      // things that get drawn by the system
 
     #define COLOR_BUTTON_DISABLED     COLOR_LIGHTGREY
     #define COLOR_BUTTON_HIDDEN       COLOR_BLACK
     #define COLOR_BUTTON_BG_PRESSED   COLOR_CYAN
     #define COLOR_BUTTON_FG_PRESSED   COLOR_BLACK
 
+
     class uiMutable
     {
         public:
-
             const char  *text;
             uint16_t     bg;
             uint16_t     fg;
             FontType     font;
+    };
+
+    #define ELEMENT_TYPE_STR        0x0000
+    #define ELEMENT_TYPE_INT        0x0001
+    #define ELEMENT_TYPE_FLOAT      0x0002
+    #define ELEMENT_TYPE_FLAG_DIR   0x1000
+        // added at runtime
+
+
+    class uiDualElement
+    {
+        public:
+            uint16_t     type;
+            uint16_t     bg;
+            int16_t      label_width;
+            int16_t      value_width;
+            const char  *label;
+            const void  *value;
+            FontType     value_font;
+
     };
 
 

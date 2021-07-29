@@ -19,9 +19,11 @@
 		#include <Machine/MachineConfig.h>
     #endif
 
+    #define MAX_CONFIRM_LINE 40
+
 
     #define ID_LINE1        (0x0001 | ID_TYPE_TEXT)
-    #define ID_LINE2        (0x0002 | ID_TYPE_TEXT | ID_TYPE_MUTABLE )
+    #define ID_LINE2        (0x0002 | ID_TYPE_TEXT)
     #define ID_YES_BUTTON   (0x0003 | ID_TYPE_TEXT | ID_TYPE_BUTTON  )
     #define ID_NO_BUTTON    (0x0004 | ID_TYPE_TEXT | ID_TYPE_BUTTON  )
 
@@ -34,19 +36,15 @@
     // WINDOW DEFINITION
     //----------------------------------------------------------------------
 
-    static uiMutable confirm_msg = {
-        "",
-        COLOR_BLACK,
-        COLOR_WHITE,
-        FONT_NORMAL,
-    };
+    char line1[MAX_CONFIRM_LINE + 1];
+    char line2[MAX_CONFIRM_LINE + 1];
 
     static const uiElement confirm_elements[] =
     {
-        { ID_LINE1,        0,  60, 320,  25,   V(RU_SURE),      COLOR_BLACK, COLOR_WHITE, FONT_NORMAL,},
-        { ID_LINE2,        0,  85, 320,  25,   V(&confirm_msg), },
-        { ID_YES_BUTTON,  40, 130, 100,  50,   V("YES"),        COLOR_BLUE,  COLOR_WHITE, FONT_BIG,},
-        { ID_NO_BUTTON,  180, 130, 100,  50,   V("NO"),         COLOR_BLUE,  COLOR_WHITE, FONT_BIG,},
+        { ID_LINE1,        0,  60, 320,  25,   V(line1),  COLOR_BLACK, COLOR_WHITE, FONT_NORMAL,},
+        { ID_LINE2,        0,  85, 320,  25,   V(line2),  COLOR_BLACK, COLOR_WHITE, FONT_NORMAL,},
+        { ID_YES_BUTTON,  40, 130, 100,  50,   V("YES"),  COLOR_BLUE,  COLOR_WHITE, FONT_BIG,},
+        { ID_NO_BUTTON,  180, 130, 100,  50,   V("NO"),   COLOR_BLUE,  COLOR_WHITE, FONT_BIG,},
     };
 
 
@@ -61,13 +59,25 @@
 
     void dlgConfirm::setConfirm(uint16_t command)
     {
-        confirm_msg.text =
-            command >= CONFIRM_COMMAND_RUN_FILE ?
-                files_win.getFileQuestion(command - CONFIRM_COMMAND_RUN_FILE) :
-            command == CONFIRM_COMMAND_RESET ? "restart the G-Machine?" :
-            command == CONFIRM_COMMAND_REBOOT ? "reboot the Controller?" :
-            "UNKNOWN CONFIRM COMMAND";
-         pending_command = command;
+        strcpy(line1,"Are you sure you want to");
+        if (command >= CONFIRM_COMMAND_RUN_FILE)
+            strcat(line1," run");
+
+        if (command == CONFIRM_COMMAND_RESET)
+            strcpy(line2,"restart the G-Machine");
+        else if (command == CONFIRM_COMMAND_REBOOT)
+            strcpy(line2,"reboot the Controller");
+        else if (command >= CONFIRM_COMMAND_RUN_FILE)
+        {
+            const char *fn = files_win.getFileToRun(command - CONFIRM_COMMAND_RUN_FILE);
+            int len = strlen(fn);
+            if (len > MAX_CONFIRM_LINE - 2)
+                len = MAX_CONFIRM_LINE - 2;
+            strncpy(line2,fn,len);
+            line2[len] = 0;
+        }
+        strcat(line2," ?");
+        pending_command = command;
     }
 
 
@@ -94,8 +104,21 @@
                 }
                 else if (pending_command >= CONFIRM_COMMAND_RUN_FILE)
                 {
+
+                    char filename[MAX_FILENAME+1];
+                    strcpy(filename,files_win.getPath());
                     int file_num = pending_command - CONFIRM_COMMAND_RUN_FILE;
-                    const char *filename = files_win.getFileToRun(file_num);
+                    const char *fn = files_win.getFileToRun(file_num);
+
+                    if (strlen(filename) + strlen(fn) + 1 >= MAX_FILENAME)
+                    {
+                        errorMsg("path too long to run");
+                        return;
+                    }
+                    if (strcmp(filename,"/"))
+                        strcat(filename,"/");
+                    strcat(filename,fn);
+
                     g_debug("dlgConfirm running %s",filename);
                     #ifdef WITH_GRBL
 
