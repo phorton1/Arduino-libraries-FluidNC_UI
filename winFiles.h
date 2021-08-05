@@ -6,28 +6,25 @@
 
 #include "gApp.h"
 
-#ifdef WITH_APPLICATION
 
-    #define MAX_FILENAME      128
+#define MAX_FILENAME      128
 
-    class winFiles : public uiWindow
-    {
-        public:
+class winFiles : public uiWindow
+{
+    public:
 
-            winFiles();
+        winFiles();
 
-            const char *getPath();
-            const char *getFileToRun(int i);
+        const char *getPath();
+        const char *getFileToRun(int i);
 
-        private:
+    private:
 
-            virtual void begin() override;
-            virtual void update() override;
-            virtual void onButton(const uiElement *ele, bool pressed) override;
-            virtual const char *getMenuLabel() const override  { return "FILES"; }
+        virtual void begin() override;
+        virtual void update() override;
+        virtual void onButton(const uiElement *ele, bool pressed) override;
+        virtual const char *getMenuLabel() const override  { return "FILES"; }
 
-    };
+};
 
-    extern winFiles files_win;
-
-#endif  // WITH_APPLICATION
+extern winFiles files_win;

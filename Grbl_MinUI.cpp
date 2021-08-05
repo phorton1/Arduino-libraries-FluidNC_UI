@@ -22,24 +22,14 @@
 //      T_IRQ       -1          Not Used
 
 
-
 #include "Grbl_MinUI.h"
-
-#ifdef WITH_TFT
-	#include "myTFT.h"
-#else
-	#include <Arduino.h>	// for va_list?!?
-#endif
-
+#include "gApp.h"
+#include "myTFT.h"
 
 
 #ifdef WITH_GRBL
 	#include <System.h>		// to initialize sys.state to Sleep
 	#include <Logging.h>
-#endif
-
-#ifdef WITH_APPLICATION
-	#include "gApp.h"
 #endif
 
 
@@ -61,52 +51,44 @@ void g_debug(const char *format, ...)
 
 
 
-#ifdef WITH_INIT_UI
+//---------------------------------------------------------------
+// gDisplayTask()
+//---------------------------------------------------------------
 
+#define TOUCHSCREEN_UPDATE_MS   33
 
-	//---------------------------------------------------------------
-	// gDisplayTask()
-	//---------------------------------------------------------------
+void gDisplayTask(void* pvParameters)
+{
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+		// delay to allow g_debug from touchUI_init() to complete
+	g_debug("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
 
-	#define TOUCHSCREEN_UPDATE_MS   33
+	the_app.begin();
 
-	void gDisplayTask(void* pvParameters)
+	while (true)
 	{
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
-			// delay to allow g_debug from touchUI_init() to complete
-		g_debug("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
-
-		#ifdef WITH_APPLICATION
-			the_app.begin();
-		#endif
-
-		while (true)
-		{
-			vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
-
-			#ifdef WITH_APPLICATION
-				the_app.update();
-			#endif
-		}
+		vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
+		the_app.update();
 	}
+}
 
 
 
-	//-------------------------------------------------------
-	// touchUI_init()
-	//-------------------------------------------------------
+//-------------------------------------------------------
+// touchUI_init()
+//-------------------------------------------------------
 
-	void Grbl_MinUI_init()
-	{
-		g_debug("Grbl_MinUI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
+void Grbl_MinUI_init()
+{
+	g_debug("Grbl_MinUI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
 
-		// set Grbl_Esp32 sys.state to "Sleep" so that we can tell when it goes to Idle
-		// in Grbl.cpp.  there should be a "None" state during startup.  And there should
-		// be a setSystemState() method ...
+	// set Grbl_Esp32 sys.state to "Sleep" so that we can tell when it goes to Idle
+	// in Grbl.cpp.  there should be a "None" state during startup.  And there should
+	// be a setSystemState() method ...
 
-		#ifdef WITH_GRBL
-			sys.state = State::Sleep;
-		#else
+	#ifdef WITH_GRBL
+		sys.state = State::Sleep;
+	#else
 
 		// Denormalized define of vMachine SDCard CS pin.
 		// If not linked to GRBL, wherein the vMachine
@@ -116,46 +98,38 @@ void g_debug(const char *format, ...)
 		// presumably due to the SDCard's non-standard
 		// use of the CS bus.
 
-			#ifdef WITH_APPLICATION
-				pinMode(V_SDCARD_CS,OUTPUT);
-				digitalWrite(V_SDCARD_CS,1);
-			#endif
+		pinMode(V_SDCARD_CS,OUTPUT);
+		digitalWrite(V_SDCARD_CS,1);
 
-		#endif
-
-		#ifdef WITH_TFT
-
-			init_my_tft();
-
-			// splash screen
-
-			tft.fillScreen(TFT_BLACK);
-			drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
-				0,70,320,30,COLOR_BLUE,COLOR_BLACK);
-			drawText(UI_VERSION, JUST_CENTER,FONT_MONO,
-				0,105,320,20,COLOR_BLUE,COLOR_BLACK);
-			drawText(UI_VERSION_DATE, JUST_CENTER,FONT_MONO,
-				0,130,320,20,COLOR_BLUE,COLOR_BLACK);
-
-			// delay(5000);  // to see splash screen
-		#endif
+	#endif
 
 
-		// start the update task
+	init_my_tft();
 
-		xTaskCreate(gDisplayTask,
-			"gDisplayTask",
-			10240,  // pretty big stack
-			NULL,
-			1,  	// priority
-			NULL);
+	// splash screen
 
-		// finished
+	tft.fillScreen(TFT_BLACK);
+	drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
+		0,70,320,30,COLOR_BLUE,COLOR_BLACK);
+	drawText(UI_VERSION, JUST_CENTER,FONT_MONO,
+		0,105,320,20,COLOR_BLUE,COLOR_BLACK);
+	drawText(UI_VERSION_DATE, JUST_CENTER,FONT_MONO,
+		0,130,320,20,COLOR_BLUE,COLOR_BLACK);
+	// delay(5000);  // to see splash screen
 
-		g_debug("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
-			// vTaskDelay(300 / portTICK_PERIOD_MS);
-			// another delay to allow the task to start
+	// start the update task
 
-	}   // display_init()
+	xTaskCreate(gDisplayTask,
+		"gDisplayTask",
+		10240,  // pretty big stack
+		NULL,
+		1,  	// priority
+		NULL);
 
-#endif 	// WITH_TFT
+	// finished
+
+	g_debug("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
+		// vTaskDelay(300 / portTICK_PERIOD_MS);
+		// another delay to allow the task to start
+
+}   // display_init()

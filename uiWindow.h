@@ -8,125 +8,121 @@
 #include "Grbl_MinUI.h"
 #include "myTFT.h"
 
-#ifdef WITH_APPLICATION
+// cast to const void *
 
-    // cast to const void *
+#define V(x)        ((const void *)(x))
 
-    #define V(x)        ((const void *)(x))
+// function typedef prototypes for posterities sake
+// typedef int (*intFunction)();
+// typedef void (*buttonCallback)(uiWindow *, const uiElement*) ;
 
-    // function typedef prototypes for posterities sake
-    // typedef int (*intFunction)();
-    // typedef void (*buttonCallback)(uiWindow *, const uiElement*) ;
+typedef const char *(*constCharStarMethod)();
 
-    typedef const char *(*constCharStarMethod)();
+// uiElement types OR'd into the ID_TYPE
 
-    // uiElement types OR'd into the ID_TYPE
+#define ID_TYPE_TEXT     0x1000      // param is const char *
+#define ID_TYPE_BUTTON   0x2000      // button with background
+#define ID_TYPE_MUTABLE  0x4000      // param is pointer to a uiMutable
+#define ID_TYPE_TEXT_FN  0x8000      // param is const char * method
+#define ID_TYPE_REPEAT   0x0100      // button uses timing algorithm for repeats
+#define ID_TYPE_DUAL     0x0200      // button with a left justified label and a right justified value
 
-    #define ID_TYPE_TEXT     0x1000      // param is const char *
-    #define ID_TYPE_BUTTON   0x2000      // button with background
-    #define ID_TYPE_MUTABLE  0x4000      // param is pointer to a uiMutable
-    #define ID_TYPE_TEXT_FN  0x8000      // param is const char * method
-    #define ID_TYPE_REPEAT   0x0100      // button uses timing algorithm for repeats
-    #define ID_TYPE_DUAL     0x0200      // button with a left justified label and a right justified value
+#define ID_TYPE_ALL      0xf200      // things that get drawn by the system
 
-    #define ID_TYPE_ALL      0xf200      // things that get drawn by the system
-
-    #define COLOR_BUTTON_DISABLED     COLOR_LIGHTGREY
-    #define COLOR_BUTTON_HIDDEN       COLOR_BLACK
-    #define COLOR_BUTTON_BG_PRESSED   COLOR_CYAN
-    #define COLOR_BUTTON_FG_PRESSED   COLOR_BLACK
+#define COLOR_BUTTON_DISABLED     COLOR_LIGHTGREY
+#define COLOR_BUTTON_HIDDEN       COLOR_BLACK
+#define COLOR_BUTTON_BG_PRESSED   COLOR_CYAN
+#define COLOR_BUTTON_FG_PRESSED   COLOR_BLACK
 
 
-    class uiMutable
-    {
-        public:
-            const char  *text;
-            uint16_t     bg;
-            uint16_t     fg;
-            FontType     font;
-    };
+class uiMutable
+{
+    public:
+        const char  *text;
+        uint16_t     bg;
+        uint16_t     fg;
+        FontType     font;
+};
 
-    #define ELEMENT_TYPE_STR        0x0000
-    #define ELEMENT_TYPE_INT        0x0001
-    #define ELEMENT_TYPE_FLOAT      0x0002
-    #define ELEMENT_TYPE_FLAG_DIR   0x1000
-        // added at runtime
-
-
-    class uiDualElement
-    {
-        public:
-            uint16_t     type;
-            uint16_t     bg;
-            int16_t      label_width;
-            int16_t      value_width;
-            const char  *label;
-            const void  *value;
-            FontType     value_font;
-
-    };
+#define ELEMENT_TYPE_STR        0x0000
+#define ELEMENT_TYPE_INT        0x0001
+#define ELEMENT_TYPE_FLOAT      0x0002
+#define ELEMENT_TYPE_FLAG_DIR   0x1000
+    // added at runtime
 
 
-    class uiElement
-    {
-        public:
+class uiDualElement
+{
+    public:
+        uint16_t     type;
+        uint16_t     bg;
+        int16_t      label_width;
+        int16_t      value_width;
+        const char  *label;
+        const void  *value;
+        FontType     value_font;
 
-            const int16_t       id_type;
-            const int16_t       x;
-            const int16_t       y;
-            const int16_t       w;
-            const int16_t       h;
-            const void         *param;
-            const uint16_t      bg;
-            const uint16_t      fg;
-            const FontType      font;
-            const JustifyType   just;
-    };
+};
 
 
-    class uiWindow
-    {
-        public:
+class uiElement
+{
+    public:
 
-            uiWindow(const uiElement *wins, uint16_t num_elements) :
-                m_elements(wins),
-                m_num_elements(num_elements) {}
+        const int16_t       id_type;
+        const int16_t       x;
+        const int16_t       y;
+        const int16_t       w;
+        const int16_t       h;
+        const void         *param;
+        const uint16_t      bg;
+        const uint16_t      fg;
+        const FontType      font;
+        const JustifyType   just;
+};
 
-            virtual void begin()
-            {
-                tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT-UI_TOP_MARGIN-UI_BOTTOM_MARGIN,COLOR_BLACK);
-                drawTypedElements();
-            }
 
-            virtual void update() {}
-            virtual void onButton(const uiElement *ele, bool pressed) {}
-            virtual bool isModal() const { return false; }
-            virtual const char *getMenuLabel() const  { return ""; }
+class uiWindow
+{
+    public:
 
-            // draw all typed elements
-            // DO NOT CALL drawTypedElement except on "typed" elements
-            // OR one with a V(const char *) param member !!!
+        uiWindow(const uiElement *wins, uint16_t num_elements) :
+            m_elements(wins),
+            m_num_elements(num_elements) {}
 
-            void drawTypedElements() const;
-            void drawTypedElement(const uiElement *ele, bool pressed = false) const;
+        virtual void begin()
+        {
+            tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT-UI_TOP_MARGIN-UI_BOTTOM_MARGIN,COLOR_BLACK);
+            drawTypedElements();
+        }
 
-            // touch and button handler handler
+        virtual void update() {}
+        virtual void onButton(const uiElement *ele, bool pressed) {}
+        virtual bool isModal() const { return false; }
+        virtual const char *getMenuLabel() const  { return ""; }
 
-            static void updateTouch();
-            bool hitTest();
+        // draw all typed elements
+        // DO NOT CALL drawTypedElement except on "typed" elements
+        // OR one with a V(const char *) param member !!!
 
-        protected:
+        void drawTypedElements() const;
+        void drawTypedElement(const uiElement *ele, bool pressed = false) const;
 
-            uint16_t         m_num_elements;
-            const uiElement *m_elements;
+        // touch and button handler handler
 
-            static bool             g_pressed;
-            static int              g_press_x;
-            static int              g_press_y;
-            static uint32_t         g_debounce_time;
-            static const uiElement *g_win_pressed;
-            static uiWindow        *g_window_pressed;
+        static void updateTouch();
+        bool hitTest();
 
-    };
+    protected:
 
-#endif  // WITH_APPLICATION
+        uint16_t         m_num_elements;
+        const uiElement *m_elements;
+
+        static bool             g_pressed;
+        static int              g_press_x;
+        static int              g_press_y;
+        static uint32_t         g_debounce_time;
+        static const uiElement *g_win_pressed;
+        static uiWindow        *g_window_pressed;
+
+};

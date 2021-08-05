@@ -4,9 +4,6 @@
 
 #include "myTFT.h"
 
-#ifdef WITH_TFT
-    // primary define
-
 #define DEBUG_CALIBRATION
 #define CALIBRATION_DATA_FILE    "/tft_data.txt"
 
@@ -251,5 +248,3 @@ void init_my_tft()
         calibrate_my_tft();
     tft.setTouch(calibration_data);
 }
-
-#endif  // WITH_TFT

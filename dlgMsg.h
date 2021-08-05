@@ -6,30 +6,25 @@
 
 #include "gApp.h"
 
-#ifdef WITH_APPLICATION
+class dlgMsg : public uiWindow
+{
+    public:
 
-    class dlgMsg : public uiWindow
-    {
-        public:
+        dlgMsg();
 
-            dlgMsg();
+        virtual bool isModal() const override { return true; }
 
-            virtual bool isModal() const override { return true; }
+        void setMsg(uint16_t color, const char *line1, const char *line2="");
 
-            void setMsg(uint16_t color, const char *line1, const char *line2="");
+    private:
 
-        private:
+        virtual void onButton(const uiElement *ele, bool pressed) override;
 
-            virtual void onButton(const uiElement *ele, bool pressed) override;
-
-    };
+};
 
 
-    extern dlgMsg msg_dlg;
+extern dlgMsg msg_dlg;
 
-    extern void okMsg(const char *line1, const char *line2="");
-    extern void errorMsg(const char *msg);
-    extern void warningMsg(const char *msg);
-
-
-#endif  // WITH_APPLICATION
+extern void okMsg(const char *line1, const char *line2="");
+extern void errorMsg(const char *msg);
+extern void warningMsg(const char *msg);

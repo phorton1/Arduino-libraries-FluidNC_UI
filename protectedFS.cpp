@@ -1,12 +1,7 @@
-
-
+// protectedFS.cpp
 
 #include "protectedFS.h"
-
-#ifdef WITH_APPLICATION
-
 #include "Grbl_MinUI.h"
-
 
 #define DEBUG_PROTECTED_FS  0
 
@@ -222,5 +217,3 @@ bool protectedFS::check_path(const char *path)
     }
     return true;
 }
-
-#endif  // WITH_APPLICATION

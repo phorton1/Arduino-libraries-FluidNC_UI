@@ -6,27 +6,23 @@
 
 #include "gApp.h"
 
-#ifdef WITH_APPLICATION
+class winBusy : public uiWindow
+{
+    public:
 
-    class winBusy : public uiWindow
-    {
-        public:
+        winBusy();
 
-            winBusy();
+    private:
 
-        private:
+        JobState m_job_state;
 
-            JobState m_job_state;
+        void setElements();
 
-            void setElements();
+        virtual void begin() override;
+        virtual void update() override;
+        virtual void onButton(const uiElement *ele, bool pressed) override;
+        virtual const char *getMenuLabel() const override  { return "BUSY"; }
 
-            virtual void begin() override;
-            virtual void update() override;
-            virtual void onButton(const uiElement *ele, bool pressed) override;
-            virtual const char *getMenuLabel() const override  { return "BUSY"; }
+};
 
-    };
-
-    extern winBusy busy_win;
-
-#endif  // WITH_APPLICATION
+extern winBusy busy_win;

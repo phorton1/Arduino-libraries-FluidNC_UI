@@ -6,32 +6,26 @@
 
 #include "gApp.h"
 
-#ifdef WITH_APPLICATION
-
-    #define CONFIRM_COMMAND_RESET    0x0001
-    #define CONFIRM_COMMAND_REBOOT   0x0002
-
-    #define CONFIRM_COMMAND_RUN_FILE 0x0100
+#define CONFIRM_COMMAND_RESET    0x0001
+#define CONFIRM_COMMAND_REBOOT   0x0002
+#define CONFIRM_COMMAND_RUN_FILE 0x0100
 
 
+class dlgConfirm : public uiWindow
+{
+    public:
 
-    class dlgConfirm : public uiWindow
-    {
-        public:
+        dlgConfirm();
 
-            dlgConfirm();
+        virtual bool isModal() const override { return true; }
 
-            virtual bool isModal() const override { return true; }
+        void setConfirm(uint16_t command);
 
-            void setConfirm(uint16_t command);
+    private:
 
-        private:
+        virtual void onButton(const uiElement *ele, bool pressed) override;
 
-            virtual void onButton(const uiElement *ele, bool pressed) override;
-
-    };
+};
 
 
-    extern dlgConfirm confirm_dlg;
-
-#endif  // WITH_APPLICATION
+extern dlgConfirm confirm_dlg;

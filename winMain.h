@@ -6,23 +6,19 @@
 
 #include "gApp.h"
 
-#ifdef WITH_APPLICATION
+class winMain : public uiWindow
+{
+    public:
 
-    class winMain : public uiWindow
-    {
-        public:
+        winMain();
 
-            winMain();
+    private:
 
-        private:
+        virtual void begin() override;
+        virtual void update() override;
+        virtual void onButton(const uiElement *ele, bool pressed) override;
+        virtual const char *getMenuLabel() const override  { return "MAIN"; }
 
-            virtual void begin() override;
-            virtual void update() override;
-            virtual void onButton(const uiElement *ele, bool pressed) override;
-            virtual const char *getMenuLabel() const override  { return "MAIN"; }
+};
 
-    };
-
-    extern winMain main_win;
-
-#endif  // WITH_APPLICATION
+extern winMain main_win;

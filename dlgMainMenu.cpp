@@ -3,90 +3,84 @@
 //--------------------------------------
 
 #include "dlgMainMenu.h"
+#include "winMain.h"
+#include "winBusy.h"
+#include "winAlarm.h"
+#include "winFiles.h"
 
-#ifdef WITH_APPLICATION
+dlgMainMenu main_menu;
 
-    #include "winMain.h"
-    #include "winBusy.h"
-    #include "winAlarm.h"
-    #include "winFiles.h"
+//----------------------------------------------------------------------
+// WINDOW DEFINITION
+//----------------------------------------------------------------------
 
-    dlgMainMenu main_menu;
+#define NUM_APP_WINDOWS     4
 
-    //----------------------------------------------------------------------
-    // WINDOW DEFINITION
-    //----------------------------------------------------------------------
+#define ID_BUTTON1     (0x0001 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
+#define ID_BUTTON2     (0x0002 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
+#define ID_BUTTON3     (0x0003 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
+#define ID_BUTTON4     (0x0004 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 
-    #define NUM_APP_WINDOWS     4
+// for now I am defining a bunch of full mutables
+// probably want something different
 
-    #define ID_BUTTON1     (0x0001 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
-    #define ID_BUTTON2     (0x0002 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
-    #define ID_BUTTON3     (0x0003 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
-    #define ID_BUTTON4     (0x0004 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
-
-    // for now I am defining a bunch of full mutables
-    // probably want something different
-
-    static uiWindow *app_windows[NUM_APP_WINDOWS] = {
-        &main_win,
-        &busy_win,
-        &alarm_win,
-        &files_win };
+static uiWindow *app_windows[NUM_APP_WINDOWS] = {
+    &main_win,
+    &busy_win,
+    &alarm_win,
+    &files_win };
 
 
-    static char button_text[NUM_APP_WINDOWS][UI_MAX_BUTTON];
+static char button_text[NUM_APP_WINDOWS][UI_MAX_BUTTON];
 
-    static const uiElement menu_elements[] =
+static const uiElement menu_elements[] =
+{
+    { ID_BUTTON1,     0,  35, 90, 35, V(button_text[0]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
+    { ID_BUTTON2,     0,  70, 90, 35, V(button_text[1]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
+    { ID_BUTTON3,     0, 105, 90, 35, V(button_text[2]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
+    { ID_BUTTON3,     0, 140, 90, 35, V(button_text[3]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
+};
+
+
+
+
+//-----------------------
+// implementation
+//-----------------------
+
+dlgMainMenu::dlgMainMenu() :
+    uiWindow(menu_elements,4)
+{}
+
+void dlgMainMenu::begin()
+{
+    const char *app_text = the_app.getAppButtonText();
+    m_num_elements = 0;
+    for (int i=0; i<NUM_APP_WINDOWS; i++)
     {
-        { ID_BUTTON1,     0,  35, 90, 35, V(button_text[0]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
-        { ID_BUTTON2,     0,  70, 90, 35, V(button_text[1]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
-        { ID_BUTTON3,     0, 105, 90, 35, V(button_text[2]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
-        { ID_BUTTON3,     0, 140, 90, 35, V(button_text[3]), COLOR_BLUE,  COLOR_WHITE, FONT_BIG, JUST_CENTER },
-    };
+        const char *text = app_windows[i]->getMenuLabel();
+        if (strcmp(app_text,text))
+        {
+            strcpy(button_text[m_num_elements++],text);
+        }
+    }
+    drawTypedElements();
+}
 
 
-
-
-    //-----------------------
-    // implementation
-    //-----------------------
-
-    dlgMainMenu::dlgMainMenu() :
-        uiWindow(menu_elements,4)
-    {}
-
-    void dlgMainMenu::begin()
+void dlgMainMenu::onButton(const uiElement *ele, bool pressed)
+{
+    if (!pressed)
     {
-        const char *app_text = the_app.getAppButtonText();
-        m_num_elements = 0;
+        const char *text = (const char *) ele->param;
         for (int i=0; i<NUM_APP_WINDOWS; i++)
         {
-            const char *text = app_windows[i]->getMenuLabel();
-            if (strcmp(app_text,text))
+            uiWindow *win = app_windows[i];
+            if (!strcmp(text,win->getMenuLabel()))
             {
-                strcpy(button_text[m_num_elements++],text);
-            }
-        }
-        drawTypedElements();
-    }
-
-
-    void dlgMainMenu::onButton(const uiElement *ele, bool pressed)
-    {
-        if (!pressed)
-        {
-            const char *text = (const char *) ele->param;
-            for (int i=0; i<NUM_APP_WINDOWS; i++)
-            {
-                uiWindow *win = app_windows[i];
-                if (!strcmp(text,win->getMenuLabel()))
-                {
-                    the_app.setBaseWindow(win);
-                    return;
-                }
+                the_app.setBaseWindow(win);
+                return;
             }
         }
     }
-
-
-#endif  // WITH_APPLICATION
+}

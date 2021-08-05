@@ -6,23 +6,19 @@
 
 #include "gApp.h"
 
-#ifdef WITH_APPLICATION
+class winAlarm : public uiWindow
+{
+    public:
 
-    class winAlarm : public uiWindow
-    {
-        public:
+        winAlarm();
 
-            winAlarm();
+    private:
 
-        private:
+        virtual void begin() override;
+        virtual void update() override;
+        void onButton(const uiElement *ele, bool pressed) override;
+        virtual const char *getMenuLabel() const override  { return "ALARM"; }
 
-            virtual void begin() override;
-            virtual void update() override;
-            void onButton(const uiElement *ele, bool pressed) override;
-            virtual const char *getMenuLabel() const override  { return "ALARM"; }
+};
 
-    };
-
-    extern winAlarm alarm_win;
-
-#endif  // WITH_APPLICATION
+extern winAlarm alarm_win;

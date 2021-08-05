@@ -4,11 +4,6 @@
 
 #pragma once
 
-#include "gDefs.h"
-
-#ifdef WITH_TFT
-    // primary define, but allowed off for memory testing
-
 #include "TFT_eSPI.h"
 
 // Colors denormalized and some renamed from TFT_eSPI.h
@@ -84,6 +79,3 @@ extern TFT_eSPI tft;
 
 extern void init_my_tft();
 extern void calibrate_my_tft();
-
-
-#endif  // WITH_TFT

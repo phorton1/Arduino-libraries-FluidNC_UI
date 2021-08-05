@@ -21,9 +21,6 @@
 // It also has a limited notion of an "idle" file system which is one
 // on which no files or directories are currently opened.
 
-#include "gDefs.h"
-#ifdef WITH_APPLICATION
-
 #include <FS.h>
 
 class protectedFS;
@@ -116,5 +113,3 @@ protected:
     proFile *p_last  = 0;
 
 };
-
-#endif  // WITH_APPLICATION
