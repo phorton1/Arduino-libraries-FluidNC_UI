@@ -3,6 +3,19 @@
 #define UI_VERSION       "prh 1.1.0"
 #define UI_VERSION_DATE  "2021-07-15"
 
+// Only one of these should be defined and the driver
+// must match the one set in TFT_eSPI/prh_Setup.h.
+// For the time being the only difference is the default
+// calibration data used if SPIFFS tft_data.txt is not found.
+// Remember, you can press 5 times on any unused portion of the
+// screen to invoke TFT calibration.
+
+// #define TFT_2_POINT_8_INCH_ILI9341
+#define TFT_3_POINT_2_INCH_ILI9341
+// #define TFT_3_POINT_5_INCH_ILI9488
+
+// Debugging defines
+
 #define WITH_INIT_UI
     // can be commented out for memory footprint measurements
     // required for all practical purposes
@@ -29,8 +42,13 @@
 
     // definitions common to Grbl_TouchUI
 
-    #define UI_SCREEN_WIDTH         320
-    #define UI_SCREEN_HEIGHT        240
+    #ifdef TFT_3_POINT_5_INCH_ILI9488
+        #define UI_SCREEN_WIDTH         480
+        #define UI_SCREEN_HEIGHT        320
+    #else
+        #define UI_SCREEN_WIDTH         320
+        #define UI_SCREEN_HEIGHT        240
+    #endif
 
     #define UI_TOP_MARGIN           35
     #define UI_BOTTOM_MARGIN        34

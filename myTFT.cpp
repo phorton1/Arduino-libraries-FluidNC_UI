@@ -17,19 +17,9 @@
 #endif
 
 
-// Only one of these should be defined and the driver
-// must match the one set in TFT_eSPI/prh_Setup.h.
-// For the time being the only difference is the default
-// calibration data used if SPIFFS tft_data.txt is not found.
-// Remember, you can press 5 times on any unused portion of the
-// screen to invoke TFT calibration.
-
-// #define TFT_2_POINT_8_INCH_ILI9341
-#define TFT_3_POINT_5_INCH_ILI9341
-
 #ifdef TFT_2_POINT_8_INCH_ILI9341
 	uint16_t calibration_data[5] = {252,3404,308,3417,7};
-#else   // TFT_3_POINT_5_INCH_ILI9341
+#else   // TFT_3_POINT_2_INCH_ILI9341
 	uint16_t calibration_data[5] = {449,3431,374,3437,1};
 #endif
 
