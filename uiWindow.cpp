@@ -10,8 +10,15 @@
 
 #ifdef WITH_APPLICATION
 
+    #include "gApp.h"   // solely for redrawAll() after tft calibration
+
+
+    // pressing 5 times in a row without hitting a button in less
+    // than 8 seconds or so will bring up the tft calibration window
+
     #define DEBOUNCE_TIME  100
     #define PRESSURE_THRESHOLD  100		// was 600
+    #define CALIBRATE_TIMEOUT  8000
 
     bool uiWindow::g_pressed = false;
     int  uiWindow::g_press_x = 0;
@@ -19,6 +26,8 @@
     uint32_t uiWindow::g_debounce_time = 0;
     const uiElement *uiWindow::g_win_pressed = NULL;
     uiWindow *uiWindow::g_window_pressed = NULL;
+    int calibrate_count = 0;
+    uint32_t calibrate_timeout = 0;
 
 
     bool uiWindow::hitTest()
@@ -45,6 +54,10 @@
                         // g_debug("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
                         onButton(g_win_pressed,true);
                         drawTypedElement(g_win_pressed,true);
+
+                        // clear the calibration counter
+                        calibrate_count = 0;
+                        calibrate_timeout = 0;
                     }
                     return true;
                 }
@@ -67,14 +80,19 @@
             g_press_y = y;
             g_pressed = true;
             g_debounce_time = now;
+            if (!calibrate_timeout)
+                calibrate_timeout = millis();
+
             // g_debug("Touch(%d,%d)",touchX,touchY);
         }
         else
         {
+            bool was_pressed = false;
             if (g_debounce_time &&
                 now > g_debounce_time + DEBOUNCE_TIME)
             {
                 g_debounce_time = 0;
+                was_pressed = true;
             }
             if (!g_debounce_time)
             {
@@ -91,7 +109,26 @@
                     g_window_pressed->drawTypedElement(was_pressed,false);
                     g_window_pressed->onButton(was_pressed,false);
                     g_window_pressed = NULL;
-
+                }
+                else if (was_pressed && calibrate_timeout)
+                {
+                    if (millis() > calibrate_timeout + CALIBRATE_TIMEOUT)
+                    {
+                        calibrate_count = 0;
+                        calibrate_timeout = 0;
+                        g_debug("tft_calibration_timeout aborted");
+                    }
+                    else
+                    {
+                        calibrate_count++;
+                        if (calibrate_count >= 5)
+                        {
+                            calibrate_my_tft();
+                            calibrate_timeout = 0;
+                            calibrate_count = 0;
+                            the_app.redrawAll();
+                        }
+                    }
                 }
             }
         }

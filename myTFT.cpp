@@ -7,6 +7,31 @@
 #ifdef WITH_TFT
     // primary define
 
+#define DEBUG_CALIBRATION
+#define CALIBRATION_DATA_FILE    "/tft_data.txt"
+
+#include <SPIFFS.h>
+
+#ifdef DEBUG_CALIBRATION
+    #include "Grbl_MinUI.h"
+#endif
+
+
+// Only one of these should be defined and the driver
+// must match the one set in TFT_eSPI/prh_Setup.h.
+// For the time being the only difference is the default
+// calibration data used if SPIFFS tft_data.txt is not found.
+// Remember, you can press 5 times on any unused portion of the
+// screen to invoke TFT calibration.
+
+// #define TFT_2_POINT_8_INCH_ILI9341
+#define TFT_3_POINT_5_INCH_ILI9341
+
+#ifdef TFT_2_POINT_8_INCH_ILI9341
+	uint16_t calibration_data[5] = {252,3404,308,3417,7};
+#else   // TFT_3_POINT_5_INCH_ILI9341
+	uint16_t calibration_data[5] = {449,3431,374,3437,1};
+#endif
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -128,5 +153,113 @@ void drawText(                   // draw clipped and justified text
 
 }
 
+
+
+void calibrate_my_tft()
+{
+    #ifdef DEBUG_CALIBRATION
+        g_debug("Doing TFT Calibration");
+    #endif
+    tft.fillScreen(TFT_BLACK);
+    drawText(
+        "Touch corners as indicated",
+        JUST_CENTER,
+        FONT_NORMAL,
+        0,0,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT,
+        COLOR_WHITE,
+        COLOR_BLACK);
+
+    uint16_t t_caldata[5];
+    bool ok = tft.calibrateTouch(t_caldata, TFT_MAGENTA, TFT_BLACK, 15, 6000);
+
+    if (ok)
+    {
+        for (int i=0; i<5; i++)
+            calibration_data[i] = t_caldata[i];
+
+        #ifdef DEBUG_CALIBRATION
+            g_debug("writing TFT Calibration data: %d,%d,%d,%d,%d",
+                calibration_data[0],
+                calibration_data[1],
+                calibration_data[2],
+                calibration_data[3],
+                calibration_data[4]);
+        #endif
+        File f = SPIFFS.open(CALIBRATION_DATA_FILE, "w");
+        if (f)
+        {
+            f.write((const unsigned char *)calibration_data, 14);
+            f.close();
+        }
+        else
+        {
+            #ifdef DEBUG_CALIBRATION
+                g_debug("WARNING: Could not open %s for writing. Using default calibration data",CALIBRATION_DATA_FILE);
+            #endif
+        }
+    }
+    else
+    {
+        #ifdef DEBUG_CALIBRATION
+            g_debug("TFT Calibration Failed");
+        #endif
+    }
+}
+
+
+
+bool getCalibrationData()
+{
+    bool ok = false;
+    if (SPIFFS.exists(CALIBRATION_DATA_FILE))
+    {
+        File f = SPIFFS.open(CALIBRATION_DATA_FILE, "r");
+        if (f)
+        {
+            uint16_t t_caldata[5];
+            if (f.readBytes((char *)t_caldata, 14) == 14)
+            {
+                #ifdef DEBUG_CALIBRATION
+                    g_debug("got TFT Calibration data: %d,%d,%d,%d,%d",
+                        t_caldata[0],
+                        t_caldata[1],
+                        t_caldata[2],
+                        t_caldata[3],
+                        t_caldata[4]);
+                #endif
+
+                for (int i=0; i<5; i++)     // sanity check
+                {
+                    if (t_caldata[i] == 0 || t_caldata[i] > 5000)
+                    {
+                        g_debug("ABORTING due to bogus calibration data");
+                        return false;
+                    }
+                }
+
+                for (int i=0; i<5; i++)
+                    calibration_data[i] = t_caldata[i];
+
+                ok = 1;
+
+            }
+            f.close();
+        }
+    }
+    return ok;
+}
+
+
+
+
+
+void init_my_tft()
+{
+    tft.init();
+    tft.setRotation(3);
+    if (!getCalibrationData())
+        calibrate_my_tft();
+    tft.setTouch(calibration_data);
+}
 
 #endif  // WITH_TFT

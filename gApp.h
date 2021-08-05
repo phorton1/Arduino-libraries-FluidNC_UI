@@ -71,6 +71,7 @@
 
             const char *getAppButtonText();
             void setAppButtonText(const char *text);
+            void redrawAll()  {draw_needed = true;}
 
 
         private:

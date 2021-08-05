@@ -82,4 +82,8 @@ extern void drawText(           // draw clipped and justified text
 
 extern TFT_eSPI tft;
 
+extern void init_my_tft();
+extern void calibrate_my_tft();
+
+
 #endif  // WITH_TFT

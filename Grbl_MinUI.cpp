@@ -124,14 +124,11 @@ void g_debug(const char *format, ...)
 		#endif
 
 		#ifdef WITH_TFT
-			tft.init();
-			tft.setRotation(3);
-			uint16_t cal_data[5] = {252,3404,308,3417,7};
-			tft.setTouch(cal_data);
+
+			init_my_tft();
 
 			// splash screen
 
-			tft.setTouch(cal_data);
 			tft.fillScreen(TFT_BLACK);
 			drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
 				0,70,320,30,COLOR_BLUE,COLOR_BLACK);

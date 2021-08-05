@@ -596,6 +596,11 @@
             }
         }
 
+        // hmmm ... do hit testing before checking draw_needed
+        // as tft_calibration may set it ..
+
+        uiWindow::updateTouch();
+        hitTest();
 
         // redraw the whole window if necessary
 
@@ -607,8 +612,8 @@
             openWindow(win_stack[win_stack_ptr]);
         }
 
-        uiWindow::updateTouch();
-        hitTest();
+        // but do the hitTests after the window is drawn?
+
 
         // dispatch to child window if any
 
