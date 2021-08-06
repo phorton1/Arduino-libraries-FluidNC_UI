@@ -59,9 +59,15 @@ void g_debug(const char *format, ...)
 
 void gDisplayTask(void* pvParameters)
 {
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
-		// delay to allow g_debug from touchUI_init() to complete
-	g_debug("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
+	// The UI is asynchronous to the main thread, resulting in garbled output.
+	// I can't think of a good non-invasive way to syncrhonize it, due to Grbl_Esp32's
+	// use of streams which can output part of a "line" of text at a time.
+
+	// A few of the messages are particularly liable to garble things up.
+	// This is one of them.
+	//
+	// vTaskDelay(1000 / portTICK_PERIOD_MS);
+	// g_debug("gDisplayTask running on core %d at priority %d",xPortGetCoreID(),uxTaskPriorityGet(NULL));
 
 	the_app.begin();
 
