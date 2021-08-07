@@ -179,9 +179,9 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
     if (ele->id_type & ID_TYPE_BUTTON &&
         bg == COLOR_BUTTON_HIDDEN)
     {
-        tft.fillRect(
-            ele->x, ele->y, ele->w, ele->h,
-            bg);
+        // tft.fillRect(
+        //     ele->x, ele->y, ele->w, ele->h,
+        //     bg);
     }
     else
     {
