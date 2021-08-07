@@ -3,171 +3,85 @@
 //--------------------------------------
 
 #include "winFiles.h"
+#include "gBuffer.h"
 #include "dlgMsg.h"
 #include "dlgConfirm.h"
 #include <SD.h>
 #include <string.h>
 #include "protectedFS.h"
 
-#define DEBUG_FILES  0
-
-#define NUM_LINES         5
-#define MAX_FILENAMES     30
-#define MAX_FILEBUFFER    2048
-
-
-
-winFiles files_win;
-
-static char path[MAX_FILENAME+1] = "/";
-static int  top_num = 0;
-static bool draw_needed;
-static int  last_top_num = 0;
-static char last_path[80];
-static bool file_error = false;
-
-static int   g_num_files = 0;
-static int   g_filebuffer_ptr = 0;
-static char  g_filebuffer[MAX_FILEBUFFER+1];
-static int   g_filesize[MAX_FILENAMES];
-static char *g_filenames[MAX_FILENAMES];
-
-
-//----------------------------------------------------------------------
-// WINDOW DEFINITION
-//----------------------------------------------------------------------
-
-#define NUM_BUTTONS  4
-
-#define IDX_BACK_BUTTON     0
-#define IDX_UP_BUTTON       1
-#define IDX_DOWN_BUTTON     2
-#define IDX_ROOT_BUTTON     3
-
-#define ID_BACK_BUTTON   (0x0001 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE )
-#define ID_UP_BUTTON     (0x0002 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE )
-#define ID_DOWN_BUTTON   (0x0003 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE )
-#define ID_ROOT_BUTTON   (0x0004 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE )
-
-#define ID_FILE1     (0x0011 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_DUAL)
-#define ID_FILE2     (0x0012 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_DUAL)
-#define ID_FILE3     (0x0013 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_DUAL)
-#define ID_FILE4     (0x0014 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_DUAL)
-#define ID_FILE5     (0x0015 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_DUAL)
-
-uiMutable buttons[NUM_BUTTONS] =
-{
-    { "..", COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_BIG },
-    { "^",  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_BIG },
-    { "v",  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_BIG },
-    { "/",  COLOR_BUTTON_HIDDEN, COLOR_WHITE, FONT_BIG },
-};
-
-uiDualElement files[NUM_LINES] =
-{
-    { ELEMENT_TYPE_INT, COLOR_BUTTON_HIDDEN, 190, 70, NULL, NULL, FONT_MONO },
-    { ELEMENT_TYPE_INT, COLOR_BUTTON_HIDDEN, 190, 70, NULL, NULL, FONT_MONO },
-    { ELEMENT_TYPE_INT, COLOR_BUTTON_HIDDEN, 190, 70, NULL, NULL, FONT_MONO },
-    { ELEMENT_TYPE_INT, COLOR_BUTTON_HIDDEN, 190, 70, NULL, NULL, FONT_MONO },
-    { ELEMENT_TYPE_INT, COLOR_BUTTON_HIDDEN, 190, 70, NULL, NULL, FONT_MONO },
-};
-
-
-static const uiElement file_elements[] =
-{
-    { ID_BACK_BUTTON, 270,  37, 48, 42, V(&buttons[0]) },
-    { ID_UP_BUTTON  , 270,  79, 48, 42, V(&buttons[1]) },
-    { ID_DOWN_BUTTON, 270, 121, 48, 42, V(&buttons[2]) },
-    { ID_ROOT_BUTTON, 270, 163, 48, 42, V(&buttons[3]) },
-
-    { ID_FILE1, 0,   35, 265, 34, V(&files[0]), COLOR_BLUE,  COLOR_WHITE, FONT_MONO, JUST_LEFT },
-    { ID_FILE2, 0,   69, 265, 34, V(&files[1]), COLOR_BLUE,  COLOR_WHITE, FONT_MONO, JUST_LEFT },
-    { ID_FILE3, 0,  103, 265, 34, V(&files[2]), COLOR_BLUE,  COLOR_WHITE, FONT_MONO, JUST_LEFT },
-    { ID_FILE4, 0,  137, 265, 34, V(&files[3]), COLOR_BLUE,  COLOR_WHITE, FONT_MONO, JUST_LEFT },
-    { ID_FILE5, 0,  171, 265, 34, V(&files[4]), COLOR_BLUE,  COLOR_WHITE, FONT_MONO, JUST_LEFT },
-};
-
-
-
+#define DEBUG_FILES  1
 
 
 //----------------------
 // implementation
 //----------------------
 
-winFiles::winFiles() :
-    uiWindow(file_elements,sizeof(file_elements)/sizeof(uiElement))
-{}
+winFiles files_win;
 
-const char *winFiles::getPath()
+
+
+void winFiles::fileError(const char *text)
 {
-    return path;
-}
-
-const char *winFiles::getFileToRun(int i)
-{
-    return files[i].label;
-}
-
-
-static void setPath(const char *ipath, bool absolute)
-{
-    if (absolute)       // ipath includes the slash
-    {
-        strcpy(path,ipath);
-    }
-    else                // ipath gets added to current path
-    {
-        if (strlen(path) + strlen(ipath) + 1 >= MAX_FILENAME)
-        {
-            errorMsg("path too long!!");
-            return;
-        }
-        if (strcmp(path,"/"))
-            strcat(path,"/");
-        strcat(path,ipath);
-    }
-    if (!path[0])
-        strcpy(path,"/");
-    top_num = 0;
-    last_top_num = 0;
-    last_path[0] = 0;
-
-    #if DEBUG_FILES
-        g_debug("init_path(%s)",path);
-    #endif
-}
-
-
-void winFiles::begin()
-{
-    tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,COLOR_BLACK);
-    if (file_error)
-    {
-        file_error = false;
-        setPath("/",true);
-    }
-    else
-    {
-        last_path[0] = 0;
-            // force refresh on FILES-FILES button
-    }
-    draw_needed = true;
-}
-
-
-static void fileError(const char *text)
-{
-    drawText(
-        text,
-        JUST_CENTER,
-        FONT_BIG,
-        0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,
-        COLOR_RED,
-        COLOR_BLACK);
+    setErrMsg(text);
     g_debug("FILE ERROR: %s",text);
-    file_error = true;
+    m_file_error = true;
 }
+
+
+void winFiles::getLine(int line_num, const char **left_side, const char **right_side)
+{
+    char *p = gs_buffer;
+    while (line_num)
+    {
+        while (*p) p++;
+        p++;
+        while (*p) p++;
+        p++;
+        line_num--;
+    }
+    *left_side = p;
+    while (*p) p++;
+    p++;
+    *right_side = p;
+}
+
+
+const char *winFiles::getFileToRun(int i) const
+{
+    int line_num = m_top_num + i;
+    const char *p = gs_buffer;
+    while (line_num)
+    {
+        while (*p) p++;
+        p++;
+        while (*p) p++;
+        p++;
+        line_num--;
+    }
+    return p;
+}
+
+
+bool winFiles::canGoHome()  { return strcmp(m_path,"/"); }
+bool winFiles::canGoBack()  { return strcmp(m_path,"/"); }
+void winFiles::onGoHome()   { setPath("/",true); }
+void winFiles::onGoBack()
+{
+    char *p = m_path;
+    char *last = p;
+    while (*p)
+    {
+        if (*p == '/')
+        {
+            last = p;
+        }
+        p++;
+    }
+    *last = 0;
+    setPath(m_path,true);
+}
+
 
 
 bool isGcodeFile(const char *new_path)
@@ -188,173 +102,251 @@ bool isGcodeFile(const char *new_path)
 }
 
 
-void winFiles::onButton(const uiElement *ele, bool pressed)
-    // called before drawElement
+void winFiles::onLineClicked(uiDualElement *dual, int top_num, int rel_line_num)
 {
-    if (!pressed)
+    const char *fn = dual->label;
+
+    #if DEBUG_FILES
+        g_debug("onLineClicked(%d,%s)",rel_line_num,fn);
+    #endif
+
+    if (fn[0] == '/')
     {
-        switch (ele->id_type)
+        fn++;
+        setPath(fn,false);
+    }
+    else if (isGcodeFile(fn))
+    {
+        m_last_path[0] = 0;
+        confirm_dlg.setConfirm(CONFIRM_COMMAND_RUN_FILE + rel_line_num);
+        the_app.openWindow(&confirm_dlg);
+    }
+    else
+    {
+        warningMsg("File is not gcode!");
+    }
+}
+
+
+
+
+void winFiles::setPath(const char *ipath, bool absolute)
+{
+    if (absolute)       // ipath includes the slash
+    {
+        strcpy(m_path,ipath);
+    }
+    else                // ipath gets added to current path
+    {
+        if (strlen(m_path) + strlen(ipath) + 1 >= MAX_FILE_PATH)
         {
-            case ID_BACK_BUTTON :
-                {
-                    char *p = path;
-                    char *last = &path[0];
-                    while (*p)
-                    {
-                        if (*p == '/')
-                        {
-                            last = p;
-                        }
-                        p++;
-                    }
-                    *last = 0;
-                    setPath(path,true);
-                }
-                break;
-            case ID_UP_BUTTON :
-                top_num--;
-                break;
-            case ID_DOWN_BUTTON :
-                top_num++;
-                break;
-            case ID_ROOT_BUTTON :
-                setPath("/",true);
-                break;
-            case ID_FILE1 :
-            case ID_FILE2 :
-            case ID_FILE3 :
-            case ID_FILE4 :
-            case ID_FILE5 :
-            {
-                uint16_t file_num = ele->id_type - ID_FILE1;
-                uiDualElement *dual = &files[file_num];
-                const char *fn = dual->label;
-                bool is_dir = dual->type & ELEMENT_TYPE_FLAG_DIR;
-
-
-                #if DEBUG_FILES
-                    g_debug("ID_FILE(%d) is_dir(%d) %s",file_num,is_dir,fn);
-                #endif
-
-                if (is_dir)
-                {
-                    setPath(fn,false);
-                }
-                else if (isGcodeFile(getFileToRun(file_num)))
-                {
-                    // only allow running of .g, .gc, or .ngc files
-                    last_path[0] = 0;
-                    confirm_dlg.setConfirm(CONFIRM_COMMAND_RUN_FILE + file_num);
-                    the_app.openWindow(&confirm_dlg);
-                }
-                else
-                {
-                    warningMsg("File is not gcode!");
-                }
-            }
+            errorMsg("path too long!!");
+            return;
         }
+        if (strcmp(m_path,"/"))
+            strcat(m_path,"/");
+        strcat(m_path,ipath);
     }
+    if (!m_path[0])
+        strcpy(m_path,"/");
+
+    m_top_num = 0;
+    m_last_top_num = -1;
+    m_last_path[0] = 0;
+    m_buffer_version = 0;
+
+    #if DEBUG_FILES
+        g_debug("setPath(%s)",m_path);
+    #endif
 }
 
 
-
-static void addFilename(const char *filename, int size)
+void winFiles::begin()
 {
-    if (g_num_files >= MAX_FILENAME)
+    uiScrollable::begin();
+    if (m_file_error)
     {
-        g_debug("too many files at '%s'",filename);
-        return;
+        m_file_error = false;
+        setErrMsg(NULL);
+        setPath("/",true);
     }
-    int len = strlen(filename);
-    if (len >= MAX_FILENAME)
+    else
     {
-        g_debug("filename too long: len=%d '%s'",len,filename);
-        return;
+        m_last_path[0] = 0;
     }
-    int avail = MAX_FILEBUFFER - g_filebuffer_ptr;
-    if (avail < len)
-    {
-        g_debug("no room for filename: avail=%d len=%d '%s'",avail,len,filename);
-        return;
-    }
-
-    char *ptr = &g_filebuffer[g_filebuffer_ptr];
-    strcpy(ptr,filename);
-    g_filesize[g_num_files] = size;
-    g_filenames[g_num_files++] = ptr;
-    g_filebuffer_ptr += len + 1;
+    m_draw_needed = true;
 }
 
 
-static void sortFilenames()
-    // sort directories first, case insensitive
+
+bool winFiles::addFilename(const char *filename, int size)
+{
+    int len_fn = strlen(filename);
+
+    #if DEBUG_FILES > 1
+        g_debug("adding %s %d at %d",filename,size,gs_buf_ptr);
+    #endif
+
+    if (size == -1)     // directory
+    {
+        if (gs_buf_ptr + len_fn + 3 >= MAX_G_BUFFER)
+        {
+            g_debug("too many files at directory '%s'",filename);
+            return false;
+        }
+        gs_buffer[gs_buf_ptr++] = '/';
+        strcpy(&gs_buffer[gs_buf_ptr],filename);
+        gs_buf_ptr += len_fn + 1;
+        gs_buffer[gs_buf_ptr++] = 0;
+    }
+    else
+    {
+        char tmp_buf[12];
+        sprintf(tmp_buf,"%d",size);
+        int len_tmp = strlen(tmp_buf);
+        if (gs_buf_ptr + len_fn + len_tmp + 2 >= MAX_G_BUFFER)
+        {
+            g_debug("too many files at '%s'",filename);
+            return false;
+        }
+        strcpy(&gs_buffer[gs_buf_ptr],filename);
+        gs_buf_ptr += len_fn + 1;
+        strcpy(&gs_buffer[gs_buf_ptr],tmp_buf);
+        gs_buf_ptr += len_tmp + 1;
+    }
+    m_num_lines++;
+    return true;
+}
+
+
+
+void winFiles::sortFilenames()
+    // laborious sort in place with no cached pointers
 {
     #if DEBUG_FILES
-        g_debug("sort %d filenames",g_num_files);
+        g_debug("sort %d filenames",m_num_lines);
     #endif
 
     int i = 0;
-    while (i < g_num_files-1)
+    char *p1 = gs_buffer;
+    while (i < m_num_lines-1)
     {
-        int cmp = 0;
+        char *p2 = p1;
+        while (*p2) p2++;
+        p2++;
+        char *psize1 = p2;
+        while (*p2) p2++;
+        p2++;
+        char *psize2 = p2;
+        while (*psize2) psize2++;
+        psize2++;
 
-        #if 0   // dirs first
-            bool isdir1 = g_filesize[i] == -1;
-            bool isdir2 = g_filesize[i+1] == -1;
-            if (isdir1 && !isdir2)
-                cmp = -1;
-            else if (isdir2 && !isdir1)
-                cmp = 1;
-            else
+        #if DEBUG_FILES > 1
+            g_debug("compare(%d) %s:%s to %s:%s",i,p1,psize1,p2,psize2);
         #endif
-            cmp = strcasecmp(g_filenames[i],g_filenames[i+1]);
+
+        char *pcmp1 = p1;
+        char *pcmp2 = p2;
+        if (*pcmp1 == '/') pcmp1++;
+        if (*pcmp2 == '/') pcmp2++;
+        int cmp = strcasecmp(pcmp1,pcmp2);
 
         if (cmp <= 0)
         {
+            #if DEBUG_FILES > 2
+                g_debug("skipping(%d) %s:%s",i,p1,psize1);
+            #endif
+
             i++;
+            p1 = p2;
         }
         else
         {
-            int jj = g_filesize[i];
-            g_filesize[i] = g_filesize[i+1];
-            g_filesize[i+1] = jj;
+            #define MAX_FILENAME  128
+            char filename[MAX_FILENAME];
+            int copy1_len = strlen(p1) + strlen(psize1) + 2;
+            int copy2_len = strlen(p2) + strlen(psize2) + 2;
+            if (copy1_len > MAX_FILENAME)
+            {
+                fileError("Cannot sort directory!");
+                return;
+            }
 
-            char *ptr = g_filenames[i];
-            g_filenames[i] = g_filenames[i+1];
-            g_filenames[i+1] = ptr;
-            if (i > 0)
+            char *to2 = &p1[copy2_len];
+            memcpy(filename,p1,copy1_len);
+            memcpy(p1,p2,copy2_len);
+            memcpy(to2,filename,copy1_len);
+
+            #if DEBUG_FILES > 2
+                g_debug("after swapping %s and %s",p1,to2);
+            #endif
+
+            if (i>0)
             {
                 i--;
+                if (i == 0)
+                {
+                    p1 = gs_buffer;
+                }
+                else
+                {
+                    p1 -= 2;            // skip previous size delimiter
+                    while (*p1) p1--;   // skip size if any
+                    p1--;               // skip name delimiter
+                    while (*p1) p1--;   // until before previous name
+                    p1++;               // and then forward one
+                }
             }
         }
     }
-    #if DEBUG_FILES
+    #if DEBUG_FILES > 1
         g_debug("sort finished");
     #endif
 
 }
 
 
-static void refreshDir()
+uint32_t winFiles::updateBuffer()
 {
-    g_num_files = 0;
-    g_filebuffer_ptr = 0;
+    g_debug("winFiles::updateBuffer(%d,%s)",m_top_num,m_path);
 
-    g_debug("refhresDir(%d,%s)",top_num,path);
+    // invalidate the global buffer, take ownership of the version
+    // and set base number of lines and buffer pointer to zero
+
+    gs_buffer_version++;
+    gs_buf_ptr = 0;
+    m_num_lines = 0;
+
+    // start the SDCard as necessary
+
+    #ifdef WITH_GRBL
+        if (g_status.getSDState(true) != grbl_SDState_t::Idle)
+    #else
+        static bool sd_started = false;
+        if (!sd_started)
+            sd_started = SD.begin(V_SDCARD_CS);
+        if (!sd_started)
+    #endif
+    {
+        fileError("Could not get SDCard");
+        return gs_buffer_version;
+    }
+
+    // iterate over the directory
 
     protectedFS fs(SD);     // for leafName();
-    proFile root = fs.open(path);
+    proFile root = fs.open(m_path);
     if (root && root.isDirectory())
     {
         proFile file = root.openNextFile();
         while (file)
         {
-            #if DEBUG_FILES
-                g_debug("file(%s)",file.leafName());
-            #endif
+            if (!addFilename(file.leafName(),
+                file.isDirectory()? -1 : file.size()))
+            {
+                break;
+            }
 
-            addFilename(file.leafName(),file.isDirectory() ?
-                -1 : file.size());
             file = root.openNextFile();
         }
     }
@@ -364,97 +356,14 @@ static void refreshDir()
     }
     if (root)
         root.close();
+
+    #ifdef WITH_GRBL
+        // SD.end();
+    #endif
+
     sortFilenames();
 
-    // on refresh, constrain top_num in case files were deleted
-
-    if (top_num > g_num_files - NUM_LINES)
-    {
-        top_num = g_num_files - NUM_LINES;
-        if (top_num < 0) top_num = 0;
-    }
+    return gs_buffer_version;
 }
 
 
-void winFiles::update()
-{
-    bool path_changed = strcmp(last_path,path);
-    if (path_changed || top_num != last_top_num)
-    {
-        draw_needed = true;
-
-        last_top_num = top_num;
-        strcpy(last_path,path);
-
-        for (int i=0; i<NUM_LINES; i++)
-        {
-            files[i].bg = COLOR_BUTTON_HIDDEN;
-        }
-        for (int i=0; i<NUM_BUTTONS; i++)
-            buttons[i].bg = COLOR_BUTTON_HIDDEN;
-
-        the_app.setTitle(path);
-
-        #ifdef WITH_GRBL
-            if (g_status.getSDState(true) == grbl_SDState_t::Idle)
-        #else
-            static bool sd_started = false;
-            if (!sd_started)
-                sd_started = SD.begin(V_SDCARD_CS);
-            if (sd_started)
-        #endif
-        {
-
-            if (path_changed)
-            {
-                refreshDir();
-            }
-
-            int num_lines = 0;
-            int num_files = top_num;
-            while (num_files < g_num_files &&
-                   num_lines < NUM_LINES)
-            {
-                uiDualElement *dual = &files[num_lines];
-                // note the leading space which is removed upon usage
-                dual->bg = COLOR_DARKBLUE;
-                dual->label = g_filenames[num_files];
-                dual->value = &g_filesize[num_files];
-                if (g_filesize[num_files] == -1)
-                    dual->type |= ELEMENT_TYPE_FLAG_DIR;
-                else
-                    dual->type &= ~ELEMENT_TYPE_FLAG_DIR;
-                num_lines++;
-                num_files++;
-            }
-
-            num_files = g_num_files;
-
-            #ifdef WITH_GRBL
-                SD.end();
-            #endif
-
-            #if DEBUG_FILES
-                g_debug("dir(%s) top(%d) lines(%d) files(%d)", path, top_num, num_lines, num_files);
-            #endif
-
-            if (strcmp(path,"/"))
-                buttons[IDX_BACK_BUTTON].bg = COLOR_BLUE;
-
-            if (top_num)
-                buttons[IDX_UP_BUTTON].bg = COLOR_BLUE;
-
-            if (top_num + NUM_LINES < num_files)
-                buttons[IDX_DOWN_BUTTON].bg = COLOR_BLUE;
-
-            if (strcmp(path,"/"))
-                buttons[IDX_ROOT_BUTTON].bg = COLOR_BLUE;
-        }
-        else
-            fileError("Could not get SDCARD");
-    }
-
-    if (draw_needed && !file_error)
-        drawTypedElements();
-    draw_needed = false;
-}

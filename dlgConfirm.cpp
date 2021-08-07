@@ -101,12 +101,11 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
             }
             else if (pending_command >= CONFIRM_COMMAND_RUN_FILE)
             {
-
+                #define MAX_FILENAME  128
                 char filename[MAX_FILENAME+1];
                 strcpy(filename,files_win.getPath());
                 int file_num = pending_command - CONFIRM_COMMAND_RUN_FILE;
                 const char *fn = files_win.getFileToRun(file_num);
-
                 if (strlen(filename) + strlen(fn) + 1 >= MAX_FILENAME)
                 {
                     errorMsg("path too long to run");

@@ -47,8 +47,6 @@ class uiMutable
 #define ELEMENT_TYPE_STR        0x0000
 #define ELEMENT_TYPE_INT        0x0001
 #define ELEMENT_TYPE_FLOAT      0x0002
-#define ELEMENT_TYPE_FLAG_DIR   0x1000
-    // added at runtime
 
 
 class uiDualElement

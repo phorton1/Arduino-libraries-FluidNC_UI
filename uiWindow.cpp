@@ -137,7 +137,6 @@ void uiWindow::updateTouch()
 
 void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
 {
-    char buf[80];
     const char *text = (const char *) ele->param;
     uint16_t label_x = ele->x;
     uint16_t label_w = ele->w;
@@ -168,12 +167,6 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
         label_x +=  DUAL_PADDING;
         label_w = dual->label_width - DUAL_PADDING * 2;
         just = JUST_LEFT;
-
-        if (dual->type & ELEMENT_TYPE_FLAG_DIR)
-        {
-            sprintf(buf,"/%s",text);
-            text = buf;
-        }
     }
 
     // if drawElement is called on the currently pressed button,
@@ -227,21 +220,21 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
                 fg );
         }
 
-        if (dual && !(dual->type & ELEMENT_TYPE_FLAG_DIR))
+        if (dual)
         {
+            char buf[80];
             text = buf;
-
             if (dual->type & ELEMENT_TYPE_FLOAT)
             {
-                sprintf(buf,"%3.1f",*(float *)dual->value);
+                sprintf(buf,"%3.1f",*(float *) dual->value);
             }
             else if (dual->type & ELEMENT_TYPE_INT)
             {
-                sprintf(buf,"%d",*(int *)dual->value);
+                sprintf(buf,"%d",*(int *) dual->value);
             }
             else
             {
-                sprintf(buf,"%s",(const char *)dual->value);
+                text = (const char *) dual->value;
             }
 
             int val_x = ele->x + ele->w - 1 - dual->value_width + DUAL_PADDING;
