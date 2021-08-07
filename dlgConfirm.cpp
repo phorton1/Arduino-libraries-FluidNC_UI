@@ -4,8 +4,8 @@
 
 #include "dlgConfirm.h"
 #include "winFiles.h"
+#include "winMain.h"
 #include "dlgMsg.h"
-#include "winBusy.h"
 
 
 #ifdef WITH_GRBL
@@ -129,7 +129,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                             // g_debug("winMain running ruler.g");
                             sdCard->_client = CLIENT_ALL;
                             sdCard->_readyNext = true;
-                            the_app.setBaseWindow(&busy_win);
+                            the_app.setBaseWindow(&main_win);
                         }
                         else
                             errorMsg("Could not open file");

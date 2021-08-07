@@ -42,7 +42,7 @@ typedef struct appLast_t
     int16_t        prog_w;
     uint16_t       prog_color;
     char           app_title[UI_MAX_TITLE + 1];
-    char           app_button[UI_MAX_BUTTON + 1];
+    uiWindow      *window;
 
 };
 
@@ -67,7 +67,6 @@ class gApplication : public uiWindow
         JobState getLastJobState()  { return last.job_state; }
 
         const char *getAppButtonText();
-        void setAppButtonText(const char *text);
         void redrawAll()  {draw_needed = true;}
 
 
@@ -92,6 +91,7 @@ class gApplication : public uiWindow
         //-----------------------------
 
         void setDefaultWindow(uiWindow *win);
+        void setAppButtonText(const char *text);
 
         uint16_t indColor(uint8_t ind_state);
         void doText(const uiElement *ele, const char *text);

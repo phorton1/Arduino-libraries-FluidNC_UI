@@ -10,8 +10,6 @@
 
 #include "gPrefs.h"
 #include "winMain.h"
-#include "winBusy.h"
-#include "winAlarm.h"
 #include "dlgMainMenu.h"
 
 
@@ -219,24 +217,30 @@ const char *jobStateName(JobState job_state)
 
 void gApplication::doAppButton(const uiElement *ele)
 {
+    uiWindow *win = win_stack[0];
+
     float pct = g_status.filePct();
+    bool busy_or_hold =
+        job_state == JOB_BUSY ||
+        job_state == JOB_HOLD;
     bool pct_changed =
-        win_stack[0] &&
-        win_stack[0] == &busy_win &&
+        win == ((uiWindow *)&main_win) &&
+        busy_or_hold &&
         last.pct != pct;
 
     if (draw_needed ||
         pct_changed ||
-        job_state != last.job_state ||
-        strcmp(last.app_button,app_button_buf))
+        win != last.window ||
+        job_state != last.job_state)
     {
         if (pct_changed)
             sprintf(app_button_buf,"%2.1f%%",pct);
+        else if (!busy_or_hold)
+            strcpy(app_button_buf,win->getMenuLabel());
 
         app_button.fg =
-            job_state == JOB_HOMING || job_state == JOB_ALARM ? COLOR_YELLOW :  // COLOR_RED :
             job_state == JOB_HOLD ? COLOR_CYAN :
-            job_state == JOB_BUSY ? COLOR_YELLOW :
+            job_state != JOB_IDLE ? COLOR_YELLOW :
             COLOR_WHITE;
 
         drawTypedElement(ele,false);
@@ -558,27 +562,27 @@ void gApplication::update()
             g_debug("JOB_STATE changing from %d to %d",last.job_state, job_state);
         #endif
 
-        uiWindow *new_win = 0;
+        bool new_win = false;
 
         // switch to ALARM window if the job_state changes to JOB_ALARM
         // switch to the BUSY window if the job_state changes to JOB_BUSY (except from HOLD)
         // Note that GRBL allows for a file to be run WHILE homing
 
         if (job_state == JOB_ALARM)
-            new_win = (uiWindow *)&alarm_win;
+            new_win = true;
         else if (job_state == JOB_BUSY && last.job_state != JOB_HOLD)
-            new_win = (uiWindow *)&busy_win;
+            new_win = true;
         else if (job_state == JOB_IDLE && (
             last.job_state == JOB_ALARM ||
             last.job_state == JOB_BUSY ||
             last.job_state == JOB_HOLD ))
-            new_win = (uiWindow *)&main_win;
+            new_win = true;
 
         if (new_win)
         {
             draw_needed = true;
             initProgress();
-            setDefaultWindow(new_win);
+            setDefaultWindow((uiWindow *)&main_win);
         }
 
         if (job_state == JOB_BUSY ||
@@ -659,8 +663,6 @@ void gApplication::update()
         }
     }
 
-
-
     // save state for next time through update()
 
     draw_needed = false;
@@ -671,5 +673,5 @@ void gApplication::update()
     last.prog_w = prog_w;
     last.prog_color = prog_color;
     strcpy(last.app_title,app_title_buf);
-    strcpy(last.app_button,app_button_buf);
+    last.window = win_stack[0];
 }
