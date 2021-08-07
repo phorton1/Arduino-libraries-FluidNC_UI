@@ -92,6 +92,7 @@ gApplication::gApplication() :
 void gApplication::begin()
 {
     #if DEBUG_APP
+        delay(400);  // more attempt to stop garbling output
         g_debug("gApplication::begin() started ...");
     #endif
 

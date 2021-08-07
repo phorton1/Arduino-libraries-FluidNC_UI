@@ -195,7 +195,7 @@ void gStatus::updateStatus()
 		if (!m_started && m_sys_state != grbl_State_t::Sleep)
 		{
 			m_started = true;
-			g_debug("gStatus started ..");
+			// g_debug("gStatus started ..");
 		}
 		if (!m_started)
 			return;
