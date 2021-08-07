@@ -39,44 +39,46 @@ winMain main_win;
 // #define IDX_HOME_BUTTON      0
 // #define IDX_SET_BUTTON       1
 #define IDX_MICRO_BUTTON        2
-// #define IDX_X_MINUS2         3
-// #define IDX_X_MINUS1         4
-// #define IDX_X_PLUS1          5
-// #define IDX_X_PLUS2          6
-// #define IDX_Y_MINUS2         7
-// #define IDX_Y_MINUS1         8
-// #define IDX_Y_PLUS1          9
-// #define IDX_Y_PLUS2          10
-// #define IDX_Z_MINUS2         11
-// #define IDX_Z_MINUS1         12
-// #define IDX_Z_PLUS1          13
-// #define IDX_Z_PLUS2          14
-#define IDX_MACRO1              15
-// #define IDX_MACRO2           16
-// #define IDX_MACRO3           17
-// #define IDX_MACRO4           18
+// #define IDX_SYS_BUTTON       3
+// #define IDX_X_MINUS2         4
+// #define IDX_X_MINUS1         5
+// #define IDX_X_PLUS1          6
+// #define IDX_X_PLUS2          7
+// #define IDX_Y_MINUS2         8
+// #define IDX_Y_MINUS1         9
+// #define IDX_Y_PLUS1          10
+// #define IDX_Y_PLUS2          11
+// #define IDX_Z_MINUS2         12
+// #define IDX_Z_MINUS1         13
+// #define IDX_Z_PLUS1          14
+// #define IDX_Z_PLUS2          15
+#define IDX_MACRO1              16
+// #define IDX_MACRO2           17
+// #define IDX_MACRO3           18
+// #define IDX_MACRO4           20
 
-#define NUM_IDLE_BUTTONS   19
+#define NUM_IDLE_BUTTONS   21
 
 #define ID_HOME_BUTTON1    ( 1 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_SET_BUTTON      ( 2 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_MICRO_BUTTON    ( 3 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_X_MINUS2        ( 4 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_X_MINUS1        ( 5 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_X_PLUS1         ( 6 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_X_PLUS2         ( 7 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_MINUS2        ( 8 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_MINUS1        ( 9 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_PLUS1         (10 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_PLUS2         (11 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_MINUS2        (12 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_MINUS1        (13 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_PLUS1         (14 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_PLUS2         (15 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO1          (16 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO2          (17 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO3          (18 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO4          (19 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_SYS_BUTTON      ( 4 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_X_MINUS2        ( 5 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_X_MINUS1        ( 6 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_X_PLUS1         ( 7 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_X_PLUS2         ( 8 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_MINUS2        ( 9 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_MINUS1        (10 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_PLUS1         (11 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_PLUS2         (12 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_MINUS2        (13 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_MINUS1        (14 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_PLUS1         (15 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_PLUS2         (16 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_MACRO1          (17 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_MACRO2          (18 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_MACRO3          (19 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_MACRO4          (20 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 
 #define NUM_JOG_BUTTONS    12
 #define NUM_MACRO_BUTTONS   4
@@ -96,6 +98,7 @@ static uiMutable idle_buttons[NUM_IDLE_BUTTONS] = {
     {"home",               COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
     {"set",                COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
     {"micro",              COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
+    {"sys",                COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
     {idle_button_text[ 0], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
     {idle_button_text[ 1], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
     {idle_button_text[ 2], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
@@ -118,22 +121,23 @@ static const uiElement idle_elements[] = {
     { ID_HOME_BUTTON1,    10,  52, 70, 34,  &idle_buttons[ 0], },
     { ID_SET_BUTTON  ,    10, 153, 70, 34,  &idle_buttons[ 1], },
     { ID_MICRO_BUTTON,   145,  52, 70, 34,  &idle_buttons[ 2], },
-    { ID_X_MINUS2    ,   RC_TO_XY(2,0),     &idle_buttons[ 3], },
-    { ID_X_MINUS1    ,   RC_TO_XY(2,1),     &idle_buttons[ 4], },
-    { ID_X_PLUS1     ,   RC_TO_XY(2,3),     &idle_buttons[ 5], },
-    { ID_X_PLUS2     ,   RC_TO_XY(2,4),     &idle_buttons[ 6], },
-    { ID_Y_MINUS2    ,   RC_TO_XY(0,2),     &idle_buttons[ 7], },
-    { ID_Y_MINUS1    ,   RC_TO_XY(1,2),     &idle_buttons[ 8], },
-    { ID_Y_PLUS1     ,   RC_TO_XY(3,2),     &idle_buttons[ 9], },
-    { ID_Y_PLUS2     ,   RC_TO_XY(4,2),     &idle_buttons[10], },
-    { ID_Z_MINUS2    ,   RC_TO_XY(0,5),     &idle_buttons[11], },
-    { ID_Z_MINUS1    ,   RC_TO_XY(1,5),     &idle_buttons[12], },
-    { ID_Z_PLUS1     ,   RC_TO_XY(3,5),     &idle_buttons[13], },
-    { ID_Z_PLUS2     ,   RC_TO_XY(4,5),     &idle_buttons[14], },
-    { ID_MACRO1      ,   RC_TO_XY(0,6),     &idle_buttons[15], },
-    { ID_MACRO2      ,   RC_TO_XY(1,6),     &idle_buttons[16], },
-    { ID_MACRO3      ,   RC_TO_XY(2,6),     &idle_buttons[17], },
-    { ID_MACRO4      ,   RC_TO_XY(3,6),     &idle_buttons[18], },
+    { ID_SYS_BUTTON  ,   145, 153, 70, 34,  &idle_buttons[ 3], },
+    { ID_X_MINUS2    ,   RC_TO_XY(2,0),     &idle_buttons[ 4], },
+    { ID_X_MINUS1    ,   RC_TO_XY(2,1),     &idle_buttons[ 5], },
+    { ID_X_PLUS1     ,   RC_TO_XY(2,3),     &idle_buttons[ 6], },
+    { ID_X_PLUS2     ,   RC_TO_XY(2,4),     &idle_buttons[ 7], },
+    { ID_Y_MINUS2    ,   RC_TO_XY(0,2),     &idle_buttons[ 8], },
+    { ID_Y_MINUS1    ,   RC_TO_XY(1,2),     &idle_buttons[ 9], },
+    { ID_Y_PLUS1     ,   RC_TO_XY(3,2),     &idle_buttons[10], },
+    { ID_Y_PLUS2     ,   RC_TO_XY(4,2),     &idle_buttons[11], },
+    { ID_Z_MINUS2    ,   RC_TO_XY(0,5),     &idle_buttons[12], },
+    { ID_Z_MINUS1    ,   RC_TO_XY(1,5),     &idle_buttons[13], },
+    { ID_Z_PLUS1     ,   RC_TO_XY(3,5),     &idle_buttons[14], },
+    { ID_Z_PLUS2     ,   RC_TO_XY(4,5),     &idle_buttons[15], },
+    { ID_MACRO1      ,   RC_TO_XY(0,6),     &idle_buttons[16], },
+    { ID_MACRO2      ,   RC_TO_XY(1,6),     &idle_buttons[17], },
+    { ID_MACRO3      ,   RC_TO_XY(2,6),     &idle_buttons[18], },
+    { ID_MACRO4      ,   RC_TO_XY(3,6),     &idle_buttons[19], },
 };
 
 #define NUM_IDLE_ELEMENTS  (sizeof(idle_elements)/sizeof(uiElement))
