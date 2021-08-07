@@ -48,6 +48,7 @@ dlgMsg::dlgMsg() :
 
 void dlgMsg::setMsg(uint16_t color, const char *line1, const char *line2 /*=""*/)
 {
+    m_timeout = 0;
     msg1.fg = color;
     msg1.text = line1;
     msg2.fg = color;
@@ -60,6 +61,17 @@ void dlgMsg::onButton(const uiElement *ele, bool pressed)
 {
     if (!pressed)
     {
+        the_app.endModal();
+    }
+}
+
+
+
+void dlgMsg::update()
+{
+    if (m_timeout && millis() > m_timeout)
+    {
+        m_timeout = 0;
         the_app.endModal();
     }
 }
@@ -80,5 +92,12 @@ void errorMsg(const char *msg)
 void warningMsg(const char *msg)
 {
     msg_dlg.setMsg(COLOR_YELLOW,"WARNING",msg);
+    the_app.openWindow(&msg_dlg);
+}
+
+void doToast(uint16_t color, const char *line1, const char *line2 /*=""*/, uint32_t timeout /*=5000*/)
+{
+    msg_dlg.setMsg(color,line1,line2);
+    msg_dlg.setTimeout(millis() + timeout);
     the_app.openWindow(&msg_dlg);
 }

@@ -7,9 +7,12 @@
 #define DEBUG_APP   1
 
 #define MAX_WINDOW_STACK  5
+#define MAX_ACTIVE_FILENAME 80
+
 
 #include "gPrefs.h"
 #include "winMain.h"
+#include "dlgMsg.h"
 #include "dlgMainMenu.h"
 
 
@@ -37,7 +40,9 @@ static uint8_t win_stack_ptr = 0;
 static uiWindow *win_stack[MAX_WINDOW_STACK] = {0};
 
 static char app_button_buf[UI_MAX_BUTTON + 1] = "MAIN";
-static char app_title_buf[UI_MAX_TITLE + 1] = "title";
+static char app_title_buf[UI_MAX_TITLE + 1] = "";
+static char active_filename[MAX_ACTIVE_FILENAME + 1] = "";
+
 
 //----------------------------------------------------------------------
 // FRAME DEFINITION
@@ -119,6 +124,7 @@ void gApplication::endModal()
 {
     if (win_stack[win_stack_ptr]->isModal())
     {
+        draw_needed = true;
         win_stack_ptr--;
         openWindow(win_stack[win_stack_ptr]);
     }
@@ -201,6 +207,7 @@ const char *jobStateName(JobState job_state)
 {
     switch (job_state)
     {
+        case JOB_NONE   : return "";
         case JOB_IDLE   : return "IDLE";
         case JOB_BUSY   : return "BUSY";
         case JOB_HOLD   : return "HOLD";
@@ -218,13 +225,14 @@ const char *jobStateName(JobState job_state)
 void gApplication::doAppButton(const uiElement *ele)
 {
     uiWindow *win = win_stack[0];
+    bool is_main_win = win == ((uiWindow *)&main_win);
 
     float pct = g_status.filePct();
     bool busy_or_hold =
         job_state == JOB_BUSY ||
         job_state == JOB_HOLD;
     bool pct_changed =
-        win == ((uiWindow *)&main_win) &&
+        is_main_win &&
         busy_or_hold &&
         last.pct != pct;
 
@@ -233,9 +241,9 @@ void gApplication::doAppButton(const uiElement *ele)
         win != last.window ||
         job_state != last.job_state)
     {
-        if (pct_changed)
+        if (is_main_win && busy_or_hold)
             sprintf(app_button_buf,"%2.1f%%",pct);
-        else if (!busy_or_hold)
+        else // if (!busy_or_hold)
             strcpy(app_button_buf,win->getMenuLabel());
 
         app_button.fg =
@@ -480,9 +488,6 @@ void gApplication::doTextProgress(const uiElement *ele, const char *text, bool c
 
 void gApplication::doJobProgress(const uiElement *ele)
 {
-    // if "draw needed" it means there is no progress bar
-    // implies pct=0, prog_x=0, prog_w=0, and last.prog_w=0
-
     if (draw_needed)
     {
         tft.fillRect(
@@ -490,33 +495,30 @@ void gApplication::doJobProgress(const uiElement *ele)
             ele->bg);
     }
 
-    // otherwise we fill the bar if the color has changed
+    // we fill the bar if the color has changed
     // or the percent has changed
 
-    else
+    float pct = job_state == JOB_HOLD || job_state == JOB_BUSY ? g_status.filePct() : 0;
+    prog_color = job_state == JOB_HOLD ? COLOR_DARKCYAN : COLOR_DARKGREEN;
+
+    if (last.pct != pct ||
+        last.prog_color != prog_color)
     {
-        float pct = job_state == JOB_HOLD || job_state == JOB_BUSY ? g_status.filePct() : 0;
-        prog_color = job_state == JOB_HOLD ? COLOR_DARKCYAN : COLOR_DARKGREEN;
+        // invalidate the progress bar upon a color change
 
-        if (last.pct != pct ||
-            last.prog_color != prog_color)
+        if (last.prog_color != prog_color)
+            last.prog_w = 0;
+
+        prog_x = ele->x;     // 0
+        prog_w = ((pct * ele->w)/100.0);
+
+        // draw from last.prog_w to prog_w
+
+        if (last.prog_w != prog_w)
         {
-            // invalidate the progress bar upon a color change
-
-            if (last.prog_color != prog_color)
-                last.prog_w = 0;
-
-            prog_x = ele->x;     // 0
-            prog_w = ((pct * ele->w)/100.0);
-
-            // draw from last.prog_w to prog_w
-
-            if (last.prog_w != prog_w)
-            {
-                tft.fillRect(
-                    prog_x + last.prog_w, ele->y, prog_w - last.prog_w, ele->h,
-                    prog_color);
-            }
+            tft.fillRect(
+                prog_x + last.prog_w, ele->y, prog_w - last.prog_w, ele->h,
+                prog_color);
         }
     }
 }
@@ -539,11 +541,13 @@ void gApplication::setDefaultWindow(uiWindow *win)
 
 void gApplication::update()
 {
+    bool job_finished = false;
+
     g_status.updateStatus();
     grbl_State_t sys_state = g_status.getSysState();
     grbl_SDState_t sd_state = g_status.getSDState();
 
-    // set the job_state, and possibly the title of the file
+    // set the job_state
 
     if (sys_state == grbl_State_t::Homing)
         job_state = JOB_HOMING;
@@ -556,6 +560,13 @@ void gApplication::update()
     else
         job_state = JOB_IDLE;
 
+    // there is a weird case going from BUSY to IDLE where
+    // the machine keeps running a Cycle
+
+    if (job_state == JOB_IDLE &&
+        sys_state == grbl_State_t::Cycle)
+        job_state = last.job_state;
+
     if (job_state != last.job_state)
     {
         #if DEBUG_APP
@@ -563,11 +574,7 @@ void gApplication::update()
         #endif
 
         bool new_win = false;
-
-        // switch to ALARM window if the job_state changes to JOB_ALARM
-        // switch to the BUSY window if the job_state changes to JOB_BUSY (except from HOLD)
-        // Note that GRBL allows for a file to be run WHILE homing
-
+            // determine if we need to initProgress() and begin() the window again
         if (job_state == JOB_ALARM)
             new_win = true;
         else if (job_state == JOB_BUSY && last.job_state != JOB_HOLD)
@@ -578,11 +585,21 @@ void gApplication::update()
             last.job_state == JOB_HOLD ))
             new_win = true;
 
+        // the above *almost* connotes a job well done
+        // we presume going from BUSY directly to IDLE
+        // means just that.
+
         if (new_win)
         {
             draw_needed = true;
             initProgress();
             setDefaultWindow((uiWindow *)&main_win);
+
+            if (job_state == JOB_IDLE &&
+                last.job_state == JOB_BUSY)
+            {
+                job_finished = true;
+            }
         }
 
         if (job_state == JOB_BUSY ||
@@ -595,7 +612,12 @@ void gApplication::update()
                 if (*p++ == '/')
                 filename = p;
             }
-            setTitle(filename);
+
+            int len = strlen(filename);
+            if (len > MAX_ACTIVE_FILENAME) len = MAX_ACTIVE_FILENAME;
+            memcpy(active_filename,filename,len);
+            active_filename[len] = 0;
+            setTitle(active_filename);
         }
     }
 
@@ -630,7 +652,7 @@ void gApplication::update()
             !g_win_pressed &&
             win_stack[win_stack_ptr] == &main_menu)
         {
-                endModal();
+            endModal();
         }
         else
         {
@@ -674,4 +696,16 @@ void gApplication::update()
     last.prog_color = prog_color;
     strcpy(last.app_title,app_title_buf);
     last.window = win_stack[0];
+
+    if (job_finished)
+    {
+        doToast(COLOR_GREEN,"finished printing",active_filename);
+        setTitle("");
+    }
+}
+
+
+const char *gApplication::getActiveFilename()
+{
+    return active_filename;
 }

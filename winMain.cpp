@@ -350,14 +350,17 @@ void winMain::update()
             m_draw_needed = false;
             m_last_alarm = alarm;
             bool is_alarm = job_state == JOB_ALARM;
+            bool in_job = job_state == JOB_BUSY || job_state == JOB_HOLD;
 
             home_button.bg = is_alarm ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
 
-            active_text.text = is_alarm ?
-                alarmText(alarm) :
+            active_text.text =
+                is_alarm ? alarmText(alarm) :
+                in_job   ? the_app.getActiveFilename() :
                 jobStateName(job_state);
-            active_text.fg = is_alarm ?
-                COLOR_MAGENTA :
+            active_text.fg =
+                is_alarm ? COLOR_MAGENTA :
+                job_state == JOB_HOLD ? COLOR_CYAN :
                 COLOR_YELLOW;
 
             if (job_state == JOB_ALARM)
@@ -374,6 +377,7 @@ void winMain::update()
             {
                 cpr_button.bg = job_state == JOB_BUSY ? COLOR_BLUE : COLOR_DARKGREEN;
                 cpr_button.text = job_state == JOB_BUSY ? "PAUSE" : "RESUME";
+                the_app.setTitle(jobStateName(job_state));
             }
             else
             {

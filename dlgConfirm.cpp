@@ -88,6 +88,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
             if (pending_command == CONFIRM_COMMAND_RESET)
             {
                 the_app.setTitle("");
+                the_app.clearLastJobState();
                  #ifdef WITH_GRBL
                     execute_realtime_command(Cmd::Reset,CLIENT_ALL);
                 #endif

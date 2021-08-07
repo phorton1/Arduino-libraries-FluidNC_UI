@@ -9,6 +9,7 @@
 
 typedef enum JobState
 {
+    JOB_NONE,
     JOB_IDLE,
     JOB_BUSY,
     JOB_HOLD,
@@ -67,7 +68,27 @@ class gApplication : public uiWindow
         JobState getLastJobState()  { return last.job_state; }
 
         const char *getAppButtonText();
-        void redrawAll()  {draw_needed = true;}
+
+        void redrawAll()
+            // needed layer violation so that uiWindow can
+            // do the TFT calibration
+        {
+            draw_needed = true;
+        }
+
+        const char *getActiveFilename();
+            // the last active filename, gotten whenever
+            // a job is started
+
+        void clearLastJobState()
+            // for use in reset from dlgConfirm
+            // to cause progress bar to clear correctly
+            // and not get a toast when a job was in progress ..
+        {
+            job_state = JOB_NONE;
+            last.job_state = JOB_NONE;
+        }
+
 
 
     private:
