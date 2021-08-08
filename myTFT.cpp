@@ -26,7 +26,9 @@ TFT_eSPI tft = TFT_eSPI();
 #include "fonts/Dialog_plain_16.h"
 #include "fonts/Dialog_plain_18.h"
 #include "fonts/Dialog_plain_22.h"
-#include "fonts/Roboto_Mono_Bold_14.h"
+#include "fonts/FreeMonoBold8pt7b.h" // "fonts/Roboto_Mono_Bold_14.h"
+#include "fonts/mySymbolFont.h"
+
 
 
 
@@ -122,7 +124,10 @@ void drawText(                   // draw clipped and justified text
             tft.setFreeFont(&Dialog_plain_22);
             break;
         case FONT_MONO:
-            tft.setFreeFont(&Roboto_Mono_Bold_14);
+            tft.setFreeFont(&FreeMonoBold8pt7b);
+            break;
+        case FONT_SYMBOL:
+            tft.setFreeFont(&mySymbolFont);
             break;
         default:
         case FONT_NORMAL:

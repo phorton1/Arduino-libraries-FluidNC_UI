@@ -19,14 +19,14 @@ static uiMutable msg1 = {
     "",
     COLOR_BLACK,
     COLOR_WHITE,
-    FONT_BIG,
+    FONT_NORMAL,
 };
 
 static uiMutable msg2 = {
     "",
     COLOR_BLACK,
     COLOR_WHITE,
-    FONT_BIG,
+    FONT_NORMAL,
 };
 
 

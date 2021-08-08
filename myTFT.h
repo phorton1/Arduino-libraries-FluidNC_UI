@@ -54,6 +54,7 @@ typedef enum FontType
     FONT_NORMAL,
     FONT_BIG,
     FONT_MONO,
+    FONT_SYMBOL,
 };
 
 

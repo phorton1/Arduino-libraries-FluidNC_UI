@@ -158,7 +158,7 @@ static uiMutable active_text
     "",
     COLOR_BLACK,
     COLOR_YELLOW,
-    FONT_BIG,
+    FONT_NORMAL,
 };
 static uiMutable home_button = {
     "HOME",
