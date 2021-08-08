@@ -40,14 +40,20 @@ bool uiWindow::hitTest()
                 g_press_y >= ele->y &&
                 g_press_y <  ele->y + ele->h)
             {
-                uint16_t bg = ele->id_type & ID_TYPE_MUTABLE ?
-                    ((uiMutable *) ele->param)->bg : ele->bg;
+                uiMutable *mut = ele->id_type & ID_TYPE_MUTABLE ?
+                    ((uiMutable *) ele->param) : NULL;
+                uiDualElement *dual = ele->id_type & ID_TYPE_DUAL ?
+                    ((uiDualElement *) ele->param) : NULL;
+                uint16_t
+                    bg = mut ? mut->bg :
+                    dual ? dual->bg :
+                    ele->bg;
                 if (bg != COLOR_BUTTON_DISABLED &&
                     bg != COLOR_BUTTON_HIDDEN)
                 {
                     g_win_pressed = ele;
                     g_window_pressed = this;
-                    // g_debug("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
+                    g_debug("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
                     onButton(g_win_pressed,true);
                     drawTypedElement(g_win_pressed,true);
 
@@ -179,9 +185,9 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
     if (ele->id_type & ID_TYPE_BUTTON &&
         bg == COLOR_BUTTON_HIDDEN)
     {
-        // tft.fillRect(
-        //     ele->x, ele->y, ele->w, ele->h,
-        //     bg);
+        tft.fillRect(
+            ele->x, ele->y, ele->w, ele->h,
+            bg);
     }
     else
     {
