@@ -64,5 +64,5 @@
 // use of the CS bus.
 
 #ifndef V_SDCARD_CS
-    #define V_SDCARD_CS   GPIO_NUM_21
+    #define V_SDCARD_CS   GPIO_NUM_4
 #endif
