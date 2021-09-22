@@ -24,9 +24,10 @@
 #include "gPrefs.h"
 
 #ifdef WITH_GRBL
-    #include <System.h>
-    #include <Serial.h>     // for CLIENTS and execute_realtime_command() and Cmd types
-    #include <WebUI/InputBuffer.h>
+    #include <Protocol.h>               // FluidNC
+    #include <System.h>                 // FluidNC
+    #include <Serial.h>                 // FluidNC
+    #include <WebUI/InputBuffer.h>      // FluidNC
 #endif
 
 
@@ -300,7 +301,7 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                         execute_realtime_command(
                             !strcmp(b_text,"RESUME") ?
                                 Cmd::CycleStart : Cmd::FeedHold,
-                            CLIENT_ALL);
+                            allClients);
                     #endif
                 }
                 break;
@@ -340,7 +341,7 @@ void winMain::update()
         if (job_state != the_app.getLastJobState())
         {
             #ifdef WITH_GRBL
-                alarm = static_cast<uint8_t>(sys_rt_exec_alarm);
+                alarm = static_cast<uint8_t>(rtAlarm);
                 #if DEBUG_ALARM
                     g_debug("grabbed alarm=%d",alarm);
                 #endif

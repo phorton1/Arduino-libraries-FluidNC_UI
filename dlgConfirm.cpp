@@ -10,10 +10,9 @@
 
 #ifdef WITH_GRBL
     #include <SD.h>
-    #include <Grbl.h>
-    #include <SDCard.h>
-    #include <Report.h>
-    #include <Machine/MachineConfig.h>
+    #include <SDCard.h>                    // FluidNC
+    #include <Report.h>                    // FluidNC
+    #include <Machine/MachineConfig.h>     // FluidNC
 #endif
 
 #define MAX_CONFIRM_LINE 40
@@ -90,7 +89,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 the_app.setTitle("");
                 the_app.clearLastJobState();
                  #ifdef WITH_GRBL
-                    execute_realtime_command(Cmd::Reset,CLIENT_ALL);
+                    execute_realtime_command(Cmd::Reset,allClients);
                 #endif
             }
             else if (pending_command == CONFIRM_COMMAND_REBOOT)
@@ -123,12 +122,12 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
 
                     SDCard *sdCard = config->_sdCard;
                     // g_debug("winMain testing SD Card");
-                    if (sdCard && sdCard->get_state(true) == SDCard::State::Idle)
+                    if (sdCard && sdCard->begin(SDCard::State::Idle) == SDCard::State::Idle)
                     {
-                        if (sdCard->openFile(SD,filename))
+                        if (sdCard->openFile(SD,filename,allClients,WebUI::AuthenticationLevel::LEVEL_ADMIN))
                         {
                             // g_debug("winMain running ruler.g");
-                            sdCard->_client = CLIENT_ALL;
+                            // sdCard->_client = CLIENT_ALL;
                             sdCard->_readyNext = true;
                             the_app.setBaseWindow(&main_win);
                         }

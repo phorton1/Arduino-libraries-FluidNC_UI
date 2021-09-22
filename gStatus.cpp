@@ -6,12 +6,11 @@
 #include "Grbl_MinUI.h"
 #include <WiFi.h>
 
-#ifdef WITH_GRBL
-	#include <Config.h>
-	#include <Grbl.h>
-	#include <SDCard.h>
-	#include <Report.h>
-	#include <Machine/MachineConfig.h>
+#ifdef WITH_GRBL                          // FluidNC
+	#include <Config.h>                   // FluidNC
+	#include <SDCard.h>                   // FluidNC
+	#include <Report.h>                   // FluidNC
+	#include <Machine/MachineConfig.h>    // FluidNC
 #endif
 
 
@@ -23,7 +22,7 @@ grbl_SDState_t gStatus::getSDState(bool refresh/*=false*/)
 {
 	#ifdef WITH_GRBL
 		if (refresh && config->_sdCard)
-			return static_cast<grbl_SDState_t>(config->_sdCard->get_state(true));
+			return static_cast<grbl_SDState_t>(config->_sdCard->begin(SDCard::State::Idle));
 	#endif
 	return m_sdcard_state;
 }
@@ -200,46 +199,14 @@ void gStatus::updateStatus()
 		if (!m_started)
 			return;
 
-		// SDCARD STATE - once per second, if idle or not_present,
-		// call get_state(true) to detect removal/insertion
+		// SDCARD STATE
 
 		uint32_t now = millis();
 		SDCard *sdCard = config->_sdCard;
 		if (sdCard)
 		{
-			SDCard::State sd_state = sdCard->get_state(false);
+			SDCard::State sd_state = sdCard->get_state();
 				// from Grbl_Esp32/SDCard.h
-
-			// 	m_sd_card_timer = now;
-			// 	if (sd_state == SDCard::State::NotPresent ||
-			// 		sd_state == SDCard::State::Idle)
-			// 	{
-			// 		if (now > m_sd_card_timer + SD_CARD_CHECK_TIME)
-			// 		{
-			// 			m_sd_card_timer = now;
-			//
-			// 			#if 0
-			// 				if (sd_state == SDCard::State::NotPresent ||
-			// 					sd_state == SDCard::State::Idle)
-			// 					sd_state = sdCard->get_state(true);
-			// 			#endif
-			//
-			// 			#if 0
-			// 				SD.end();
-			// 				SD.begin(GPIO_NUM_21);   // V_SDCARD_CS);
-			// 				uint8_t cardType = SD.cardType();
-			// 				if (cardType == CARD_NONE)
-			// 				{
-			// 					sd_state == sdCard->set_state(SDCard::State::NotPresent);
-			// 				}
-			// 				else
-			// 				{
-			// 					sd_state == sdCard->set_state(SDCard::State::Idle);
-			// 				}
-			// 			#endif
-			// 		}
-			// 	}
-
 			m_sdcard_state = static_cast<grbl_SDState_t>(sd_state);
 			if (m_sdcard_state == grbl_SDState_t::Busy)
 			{
@@ -252,10 +219,10 @@ void gStatus::updateStatus()
 
 		// POSITIONS
 
-		float *pos = system_get_mpos();
+		float *pos = get_mpos();
 		for (int i=0; i<UI_NUM_AXES; i++)
 		{
-			m_sys_pos[i] = sys_position[i];
+			m_sys_pos[i] = motor_steps[i];
 				// from Grbl_Esp32/System.h
 			m_machine_pos[i] = pos[i];
 				// from Grbl_Esp32/System.h

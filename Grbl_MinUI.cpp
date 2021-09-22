@@ -28,8 +28,8 @@
 
 
 #ifdef WITH_GRBL
-	#include <System.h>		// to initialize sys.state to Sleep
-	#include <Logging.h>
+	#include <System.h>		// FluidNC
+	#include <Logging.h>	// FluidNC
 #endif
 
 
