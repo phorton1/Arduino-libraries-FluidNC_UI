@@ -95,6 +95,7 @@ bool isGcodeFile(const char *new_path)
     return
         !strcmp(new_path,"g") ||
         !strcmp(new_path,"gc") ||
+        !strcmp(new_path,"gcode") ||
         !strcmp(new_path,"ngc");
         !strcmp(new_path,"G") ||
         !strcmp(new_path,"GC") ||
@@ -365,5 +366,3 @@ uint32_t winFiles::updateBuffer()
 
     return gs_buffer_version;
 }
-
-
