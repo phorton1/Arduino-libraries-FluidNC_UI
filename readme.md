@@ -3,10 +3,15 @@
 This library provides a user interface to **FluidNC** on a TFT touch screen.
 It makes use of the **TFT_eSPI** library to drive the TFT.
 
+It is based on [my fork](https://github.com/phorton1/FluidNC) of the
+**bdring/FluidNC** project.
+
 It is designed to have a minimal impact on RAM usage and a small footprint
 in program memory.  It makes no use of memory allocated dynamically at runtime.
 
 The system consists of a tree of *uiWindows*, starting with the **gApplication**.
+
+![early_prototype_UI.jpg](images/early_prototype_UI.jpg)
 
 The gApplication has a *title bar* at the top and a *status bar* at the bottom
 of the screen, and in-between them is the *content area* which generally contains
