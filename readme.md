@@ -1,6 +1,6 @@
-# Grbl_MinUI
+# FluidNC_UI
 
-This library provides a user interface to **Grbl_Esp32** on a TFT touch screen.
+This library provides a user interface to **FluidNC** on a TFT touch screen.
 It makes use of the **TFT_eSPI** library to drive the TFT.
 
 It is designed to have a minimal impact on RAM usage and a small footprint
@@ -18,7 +18,7 @@ an *indicator area* containing the SDCard and Wifi indicators.
 The **app button** provides access to the various functionality in the program.
 
 The **title text** provides the user with context about their location in the
-program and the state of the Grbl gcode machine.
+program and the state of the FluidNC gcode machine.
 
 The **status bar** gives the *machine* and *work* **coordinates**, the *gCode machine*
 **state**, and the available, and least available, dynamic **memory** in kilobytes.
@@ -28,8 +28,8 @@ The status bar also doubles as a *progress bar* when a **SDCard "job"** is runni
 
 ## File and Object Naming Convention
 
-**Grbl_MinUI.h and cpp** are the interface to external clients who just call
-the *Grbl_MinUI_init()* method.  Everything else just "happens" as a result
+**FluidNC_UI.h and cpp** are the interface to external clients who just call
+the *FluidNC_UI_init()* method.  Everything else just "happens" as a result
 of the **gDisplayTask** which calls *app->update()* at the refresh rate.
 
 Apart from that, the objects and filenames are built in layers, from the

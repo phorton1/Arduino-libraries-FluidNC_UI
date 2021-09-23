@@ -23,7 +23,7 @@
 #include "dlgConfirm.h"
 #include "gPrefs.h"
 
-#ifdef WITH_GRBL
+#ifdef WITH_FLUID_NC
     #include <Protocol.h>               // FluidNC
     #include <System.h>                 // FluidNC
     #include <Serial.h>                 // FluidNC
@@ -226,7 +226,7 @@ void winMain::doJog(const char *axis, int jog_num)
 {
     g_debug("doJog(%s%s F%d)",axis,idle_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
 
-    #ifdef WITH_GRBL
+    #ifdef WITH_FLUID_NC
         char command_buf[20];
         sprintf(command_buf,"$J=G91 %s%s F%d\r",
             axis,
@@ -252,7 +252,7 @@ void winMain::onButton(const uiElement *ele, bool pressed)
             case ID_HOME_BUTTON1 :
             case ID_HOME_BUTTON2 :
                 the_app.setTitle("");
-                #ifdef WITH_GRBL
+                #ifdef WITH_FLUID_NC
                     WebUI::inputBuffer.push("$H\r");
                 #endif
                 break;
@@ -291,13 +291,13 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                 if (!strcmp(b_text,"CLEAR"))
                 {
                     the_app.setTitle("");
-                    #ifdef WITH_GRBL
+                    #ifdef WITH_FLUID_NC
                         WebUI::inputBuffer.push("$X\r");
                     #endif
                 }
                 else
                 {
-                    #ifdef WITH_GRBL
+                    #ifdef WITH_FLUID_NC
                         execute_realtime_command(
                             !strcmp(b_text,"RESUME") ?
                                 Cmd::CycleStart : Cmd::FeedHold,
@@ -340,7 +340,7 @@ void winMain::update()
 
         if (job_state != the_app.getLastJobState())
         {
-            #ifdef WITH_GRBL
+            #ifdef WITH_FLUID_NC
                 alarm = static_cast<uint8_t>(rtAlarm);
                 #if DEBUG_ALARM
                     g_debug("grabbed alarm=%d",alarm);

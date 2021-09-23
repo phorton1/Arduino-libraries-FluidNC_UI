@@ -1,12 +1,12 @@
 //-------------------------------------------------------
-// An object that abstracts the state of Grbl_Esp32
+// An object that abstracts the state of FluidNC
 //-------------------------------------------------------
 
 #include "gStatus.h"
-#include "Grbl_MinUI.h"
+#include "FluidNC_UI.h"
 #include <WiFi.h>
 
-#ifdef WITH_GRBL                          // FluidNC
+#ifdef WITH_FLUID_NC                          // FluidNC
 	#include <Config.h>                   // FluidNC
 	#include <SDCard.h>                   // FluidNC
 	#include <Report.h>                   // FluidNC
@@ -20,7 +20,7 @@ gStatus g_status;
 
 grbl_SDState_t gStatus::getSDState(bool refresh/*=false*/)
 {
-	#ifdef WITH_GRBL
+	#ifdef WITH_FLUID_NC
 		if (refresh && config->_sdCard)
 			return static_cast<grbl_SDState_t>(config->_sdCard->begin(SDCard::State::Idle));
 	#endif
@@ -50,7 +50,7 @@ const char *sysStateName(grbl_State_t state)
 
 
 const char *sdStateName(grbl_SDState_t state)
-	//  grbl BusyPrinting is same as Busy
+	// BusyPrinting is same as Busy
 {
 	switch (state)
 	{
@@ -62,19 +62,6 @@ const char *sdStateName(grbl_SDState_t state)
 	}
 	return "UNKNOWN_SD_STATE";
 }
-
-// const char *programFlowName(grbl_ProgramFlow_t flow)
-// {
-//     switch (flow)
-//     {
-//         case grbl_ProgramFlow_t::Running       : return "Running";
-//         case grbl_ProgramFlow_t::Paused        : return "Paused";
-//         case grbl_ProgramFlow_t::OptionalStop  : return "OptionalStop";
-//         case grbl_ProgramFlow_t::CompletedM2   : return "CompletedM2";
-//         case grbl_ProgramFlow_t::CompletedM30  : return "CompletedM30";
-//     }
-//     return "UNKNOWN_PROGRAM_FLOW";
-// }
 
 
 
@@ -162,7 +149,7 @@ void gStatus::gWifiEvent(uint16_t event)
 
 
 static void onWiFiEvent(WiFiEvent_t event)
-	// We need to put activity indicators in Grbl_Esp32 for IO to the Wifi AP/Station
+	// We need to put activity indicators in FluidNC for IO to the Wifi AP/Station
 	// and (for them) perhaps add telnet indicator as well.  Fairly low priority
 	// for me at this point, though of interest.
 {
@@ -183,12 +170,12 @@ void gStatus::initWifiEventHandler()
 
 void gStatus::updateStatus()
 {
-	#ifndef WITH_GRBL
+	#ifndef WITH_FLUID_NC
 		return;
 	#else
 
 		// SYSTEM STATE
-		// wait until a known state before polling Grbl_Esp32
+		// wait until a known state before polling FluidNC
 
 		m_sys_state = static_cast<grbl_State_t>(sys.state);
 		if (!m_started && m_sys_state != grbl_State_t::Sleep)
@@ -206,7 +193,7 @@ void gStatus::updateStatus()
 		if (sdCard)
 		{
 			SDCard::State sd_state = sdCard->get_state();
-				// from Grbl_Esp32/SDCard.h
+				// from FluidNC/SDCard.h
 			m_sdcard_state = static_cast<grbl_SDState_t>(sd_state);
 			if (m_sdcard_state == grbl_SDState_t::Busy)
 			{
@@ -223,9 +210,9 @@ void gStatus::updateStatus()
 		for (int i=0; i<UI_NUM_AXES; i++)
 		{
 			m_sys_pos[i] = motor_steps[i];
-				// from Grbl_Esp32/System.h
+				// from FluidNC/System.h
 			m_machine_pos[i] = pos[i];
-				// from Grbl_Esp32/System.h
+				// from FluidNC/System.h
 			m_work_pos[i] = pos[i];
 				// converted below
 		}

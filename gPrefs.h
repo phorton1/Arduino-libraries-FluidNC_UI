@@ -1,5 +1,5 @@
 //--------------------------------------
-// The Grbl_MinUI application class
+// The FluidNC_UI application class
 //--------------------------------------
 
 #pragma once

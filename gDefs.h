@@ -3,11 +3,11 @@
 #define UI_VERSION       "prh 1.1.0"
 #define UI_VERSION_DATE  "2021-07-15"
 
-// Comment WITH_GRBL out to run the UI without linking to Grbl_Esp32.
+// Comment WITH_FLUID_NC out to run the UI without linking to FluidNC.
 // Must be commented out to run _testGrblUI.ino
 // Should be commented in for all practical purposes
 
-#define WITH_GRBL
+#define WITH_FLUID_NC
 
 // Only one of these should be defined and the driver
 // must match the one set in TFT_eSPI/prh_Setup.h.
@@ -28,7 +28,7 @@
 #define UI_AXIS_Y        1
 #define UI_AXIS_Z        2
 
-// definitions common to Grbl_TouchUI
+// definitions common to FluidNC_UI
 
 #ifdef TFT_3_POINT_5_INCH_ILI9488
     #define UI_SCREEN_WIDTH         480
@@ -56,7 +56,7 @@
 #define IND_STATE_ALL          0x0f
 
 // Denormalized define of vMachine SDCard CS pin.
-// If not linked to GRBL, wherein the vMachine
+// If not linked to Fluid_NC, wherein the vMachine
 // initializes the SD Card at startup, somebody
 // needs to *at least* set the pin HIGH or else
 // the Touch portion of the TFT does not work,

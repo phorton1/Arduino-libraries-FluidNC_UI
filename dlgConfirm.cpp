@@ -8,7 +8,7 @@
 #include "dlgMsg.h"
 
 
-#ifdef WITH_GRBL
+#ifdef WITH_FLUID_NC
     #include <SD.h>
     #include <SDCard.h>                    // FluidNC
     #include <Report.h>                    // FluidNC
@@ -88,7 +88,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
             {
                 the_app.setTitle("");
                 the_app.clearLastJobState();
-                 #ifdef WITH_GRBL
+                 #ifdef WITH_FLUID_NC
                     execute_realtime_command(Cmd::Reset,allClients);
                 #endif
             }
@@ -116,9 +116,9 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 strcat(filename,fn);
 
                 g_debug("dlgConfirm running %s",filename);
-                #ifdef WITH_GRBL
+                #ifdef WITH_FLUID_NC
 
-                    // all access to Grbl_Esp32 should be encapsulated in gStatus
+                    // all access to FluidNC should be encapsulated in gStatus
 
                     SDCard *sdCard = config->_sdCard;
                     // g_debug("winMain testing SD Card");

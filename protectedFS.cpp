@@ -1,7 +1,7 @@
 // protectedFS.cpp
 
 #include "protectedFS.h"
-#include "Grbl_MinUI.h"
+#include "FluidNC_UI.h"
 
 #define DEBUG_PROTECTED_FS  0
 

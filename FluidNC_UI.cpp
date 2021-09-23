@@ -22,12 +22,12 @@
 //      T_IRQ       -1          Not Used
 
 
-#include "Grbl_MinUI.h"
+#include "FluidNC_UI.h"
 #include "gApp.h"
 #include "myTFT.h"
 
 
-#ifdef WITH_GRBL
+#ifdef WITH_FLUID_NC
 	#include <System.h>		// FluidNC
 	#include <Logging.h>	// FluidNC
 #endif
@@ -40,7 +40,7 @@ void g_debug(const char *format, ...)
 	va_start(var, format);
 	char display_buffer[255];
 	vsprintf(display_buffer,format,var);
-	#ifdef WITH_GRBL
+	#ifdef WITH_FLUID_NC
 		log_debug(display_buffer);
 	#else
 		Serial.print("GDBG: ");
@@ -60,7 +60,7 @@ void g_debug(const char *format, ...)
 void gDisplayTask(void* pvParameters)
 {
 	// The UI is asynchronous to the main thread, resulting in garbled output.
-	// I can't think of a good non-invasive way to syncrhonize it, due to Grbl_Esp32's
+	// I can't think of a good non-invasive way to syncrhonize it, due to FluidNC_UI's
 	// use of streams which can output part of a "line" of text at a time.
 
 	// A few of the messages are particularly liable to garble things up.
@@ -84,20 +84,20 @@ void gDisplayTask(void* pvParameters)
 // touchUI_init()
 //-------------------------------------------------------
 
-void Grbl_MinUI_init()
+void FluidNC_UI_init()
 {
-	g_debug("Grbl_MinUI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
+	g_debug("FluidNC_UI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
 
-	// set Grbl_Esp32 sys.state to "Sleep" so that we can tell when it goes to Idle
-	// in Grbl.cpp.  there should be a "None" state during startup.  And there should
+	// set FluidNC sys.state to "Sleep" so that we can tell when it goes to Idle
+	// There should be a "None" state during startup.  And there should
 	// be a setSystemState() method ...
 
-	#ifdef WITH_GRBL
+	#ifdef WITH_FLUID_NC
 		sys.state = State::Sleep;
 	#else
 
 		// Denormalized define of vMachine SDCard CS pin.
-		// If not linked to GRBL, wherein the vMachine
+		// If not linked to FluidNC, wherein the vMachine
 		// initializes the SD Card at startup, somebody
 		// needs to *at least* set the pin HIGH or else
 		// the Touch portion of the TFT does not work,
@@ -115,7 +115,7 @@ void Grbl_MinUI_init()
 	// splash screen
 
 	tft.fillScreen(TFT_BLACK);
-	drawText("ESP32_GRBL",JUST_CENTER,FONT_BIG,
+	drawText("FluidNC",JUST_CENTER,FONT_BIG,
 		0,70,320,30,COLOR_BLUE,COLOR_BLACK);
 	drawText(UI_VERSION, JUST_CENTER,FONT_MONO,
 		0,105,320,20,COLOR_BLUE,COLOR_BLACK);
@@ -134,7 +134,7 @@ void Grbl_MinUI_init()
 
 	// finished
 
-	g_debug("Grbl_MinUI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
+	g_debug("FluidNC_UI_init() finished %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
 		// vTaskDelay(300 / portTICK_PERIOD_MS);
 		// another delay to allow the task to start
 

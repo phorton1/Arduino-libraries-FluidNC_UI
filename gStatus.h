@@ -1,7 +1,7 @@
 //-------------------------------------------------------
-// An object that abstracts the state of Grbl_Esp32
+// An object that abstracts the state of FluidNC
 //-------------------------------------------------------
-// Hides the underlying Grbl_Esp32 impelementation from
+// Hides the underlying FluidNC impelementation from
 // the UI. Is called once per refresh cycle.  Has a scheme
 // for primary UI objects to detect state changes.
 // Currently implemented to maintain state of a 3 axis machine.
@@ -12,7 +12,7 @@
 #include <Arduino.h>    // for String type
 #include "gDefs.h"
 
-// duplicated from GRBL for isolation
+// duplicated from FluidNC for isolation
 
 enum class grbl_State_t : uint8_t {
     Idle = 0,    // Must be zero.
@@ -64,8 +64,6 @@ public:
     grbl_State_t getSysState()      { return m_sys_state; }
     grbl_SDState_t getSDState(bool refresh=false);
 
-    // grbl_ProgramFlow_t getProgramFlow() { return m_program_flow; }
-
     const char* getActiveFilename() { return m_active_filename; }
     float filePct()                 { return m_file_pct; }
 
@@ -82,7 +80,6 @@ protected:
     uint8_t m_wifi_state;
     grbl_State_t m_sys_state = grbl_State_t::Sleep;
     grbl_SDState_t m_sdcard_state = grbl_SDState_t::NotPresent;
-    // grbl_ProgramFlow_t m_program_flow;
 
     const char *m_active_filename;
     float m_file_pct;

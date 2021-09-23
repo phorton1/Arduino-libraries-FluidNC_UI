@@ -320,7 +320,7 @@ uint32_t winFiles::updateBuffer()
 
     // start the SDCard as necessary
 
-    #ifdef WITH_GRBL
+    #ifdef WITH_FLUID_NC
         if (g_status.getSDState(true) != grbl_SDState_t::Idle)
     #else
         static bool sd_started = false;
@@ -358,7 +358,7 @@ uint32_t winFiles::updateBuffer()
     if (root)
         root.close();
 
-    #ifdef WITH_GRBL
+    #ifdef WITH_FLUID_NC
         // SD.end();
     #endif
 

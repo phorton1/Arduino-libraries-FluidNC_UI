@@ -1,5 +1,5 @@
 //--------------------------------------
-// GRBL application specific classes
+// FluidNC application specific classes
 //--------------------------------------
 
 #include "gApp.h"
