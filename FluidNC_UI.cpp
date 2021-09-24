@@ -29,25 +29,19 @@
 
 #ifdef WITH_FLUID_NC
 	#include <System.h>		// FluidNC
-	#include <Logging.h>	// FluidNC
-#endif
-
-
-
-void g_debug(const char *format, ...)
-{
-	va_list var;
-	va_start(var, format);
-	char display_buffer[255];
-	vsprintf(display_buffer,format,var);
-	#ifdef WITH_FLUID_NC
-		log_debug(display_buffer);
-	#else
+	#include <FluidDebug.h>	// FluidNC_extensions
+#else
+	void g_debug(const char *format, ...)
+	{
+		va_list var;
+		va_start(var, format);
+		char display_buffer[255];
+		vsprintf(display_buffer,format,var);
 		Serial.print("GDBG: ");
 		Serial.println(display_buffer);
-	#endif
-	va_end(var);
-}
+		va_end(var);
+	}
+#endif
 
 
 
