@@ -14,7 +14,11 @@
 #include "winMain.h"
 #include "dlgMsg.h"
 #include "dlgMainMenu.h"
+#include <MotionControl.h>     // FluidNC
 
+#ifdef UI_WITH_MESH
+    #include <Mesh.h>          // FluidNC_extensions
+#endif
 
 // IDS OF ANY PARENTS MUST BE GLOBALLY UNIQUE !!
 
@@ -210,12 +214,14 @@ const char *jobStateName(JobState job_state)
 {
     switch (job_state)
     {
-        case JOB_NONE   : return "";
-        case JOB_IDLE   : return "IDLE";
-        case JOB_BUSY   : return "BUSY";
-        case JOB_HOLD   : return "HOLD";
-        case JOB_HOMING : return "HOMING";
-        case JOB_ALARM  : return "ALARM";
+        case JOB_NONE    : return "";
+        case JOB_IDLE    : return "IDLE";
+        case JOB_BUSY    : return "BUSY";
+        case JOB_HOLD    : return "HOLD";
+        case JOB_HOMING  : return "HOMING";
+        case JOB_PROBING : return "PROBING";
+        case JOB_MESHING : return "MESHING";
+        case JOB_ALARM   : return "ALARM";
     }
     return "UNKNOWN_JOB_STATE";
 }
@@ -552,7 +558,16 @@ void gApplication::update()
 
     // set the job_state
 
-    if (sys_state == grbl_State_t::Homing)
+    #ifdef UI_WITH_MESH
+        if (the_mesh.inLeveling())
+            job_state = JOB_MESHING;
+    #endif
+    #ifdef WITH_FLUID_NC
+        // probeState not abstracted in gStatus
+        else if (probeState == ProbeState::Active)
+            job_state = JOB_PROBING;
+    #endif
+    else if (sys_state == grbl_State_t::Homing)
         job_state = JOB_HOMING;
     else if (sys_state == grbl_State_t::Alarm)
         job_state = JOB_ALARM;
@@ -598,10 +613,10 @@ void gApplication::update()
             initProgress();
             setDefaultWindow((uiWindow *)&main_win);
 
-            if (job_state == JOB_IDLE &&
-                last.job_state == JOB_BUSY)
+            if (job_state == JOB_IDLE)
             {
-                job_finished = true;
+                if (last.job_state == JOB_BUSY)
+                    job_finished = true;
             }
         }
 

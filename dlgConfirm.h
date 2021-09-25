@@ -28,4 +28,4 @@ class dlgConfirm : public uiWindow
 };
 
 
-extern dlgConfirm confirm_dlg;
+extern dlgConfirm dlg_confirm;

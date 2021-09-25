@@ -18,16 +18,23 @@
 
 
 
+#include "gPrefs.h"
 #include "winMain.h"
 #include "dlgMsg.h"
 #include "dlgConfirm.h"
-#include "gPrefs.h"
+#include "dlgHome.h"
+#include "dlgSetPosition.h"
+
 
 #ifdef WITH_FLUID_NC
     #include <Protocol.h>               // FluidNC
     #include <System.h>                 // FluidNC
     #include <Serial.h>                 // FluidNC
+    #include <Machine/MachineConfig.h>  // FluidNC
     #include <WebUI/InputBuffer.h>      // FluidNC
+#endif
+#ifdef UI_WITH_MESH
+    #include <Mesh.h>           // FluidNC_extensions
 #endif
 
 
@@ -53,12 +60,9 @@ winMain main_win;
 // #define IDX_Z_MINUS1         13
 // #define IDX_Z_PLUS1          14
 // #define IDX_Z_PLUS2          15
-#define IDX_MACRO1              16
-// #define IDX_MACRO2           17
-// #define IDX_MACRO3           18
-// #define IDX_MACRO4           20
+// #define IDZ_XY_ZERO          16
+// #define IDZ_Z_AZERO          17
 
-#define NUM_IDLE_BUTTONS   21
 
 #define ID_HOME_BUTTON1    ( 1 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_SET_BUTTON      ( 2 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
@@ -68,54 +72,46 @@ winMain main_win;
 #define ID_X_MINUS1        ( 6 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_X_PLUS1         ( 7 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_X_PLUS2         ( 8 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_MINUS2        ( 9 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_MINUS1        (10 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_PLUS1         (11 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Y_PLUS2         (12 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_MINUS2        (13 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_MINUS1        (14 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_PLUS1         (15 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_Z_PLUS2         (16 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO1          (17 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO2          (18 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO3          (19 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MACRO4          (20 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_PLUS2         ( 9 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_PLUS1         (10 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_MINUS1        (11 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Y_MINUS2        (12 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_PLUS2         (13 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_PLUS1         (14 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_MINUS1        (15 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_MINUS2        (16 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_XY_ZERO         (17 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_Z_ZERO          (18 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+
 
 #define NUM_JOG_BUTTONS    12
-#define NUM_MACRO_BUTTONS   4
 
-
-static char idle_button_text[NUM_JOG_BUTTONS][6];
-static char macro_button_text[NUM_MACRO_BUTTONS][2];
+static char jog_button_text[NUM_JOG_BUTTONS][6];
 
 
 #define RC_TO_XY(r,c)      1+c*45 +(c==6?2:0), 35+r*34, 45,  35
     // 7 x 5     idle_buttons are 45 wide by 34 high
-    // all idle_buttons are mutable (can be disabled)
-    // later (with a preferences file) the macro names can change
 
 
-static uiMutable idle_buttons[NUM_IDLE_BUTTONS] = {
+static uiMutable idle_buttons[] = {
     {"home",               COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
     {"set",                COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
     {"micro",              COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
     {"sys",                COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
-    {idle_button_text[ 0], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 1], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 2], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 3], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 4], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 5], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 6], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 7], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 8], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[ 9], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[10], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {idle_button_text[11], COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
-    {macro_button_text[0], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
-    {macro_button_text[1], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
-    {macro_button_text[2], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
-    {macro_button_text[3], COLOR_BUTTON_HIDDEN,  COLOR_WHITE, FONT_BIG },
+    {jog_button_text[ 0],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 1],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 2],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 3],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 4],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 5],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 6],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 7],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 8],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[ 9],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[10],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {jog_button_text[11],  COLOR_DARKGREEN,      COLOR_WHITE, FONT_MONO },
+    {"0",                  COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
+    {"safe",               COLOR_BLUE,           COLOR_WHITE, FONT_MONO },
 };
 
 static const uiElement idle_elements[] = {
@@ -127,18 +123,16 @@ static const uiElement idle_elements[] = {
     { ID_X_MINUS1    ,   RC_TO_XY(2,1),     &idle_buttons[ 5], },
     { ID_X_PLUS1     ,   RC_TO_XY(2,3),     &idle_buttons[ 6], },
     { ID_X_PLUS2     ,   RC_TO_XY(2,4),     &idle_buttons[ 7], },
-    { ID_Y_MINUS2    ,   RC_TO_XY(0,2),     &idle_buttons[ 8], },
-    { ID_Y_MINUS1    ,   RC_TO_XY(1,2),     &idle_buttons[ 9], },
-    { ID_Y_PLUS1     ,   RC_TO_XY(3,2),     &idle_buttons[10], },
-    { ID_Y_PLUS2     ,   RC_TO_XY(4,2),     &idle_buttons[11], },
-    { ID_Z_MINUS2    ,   RC_TO_XY(0,5),     &idle_buttons[12], },
-    { ID_Z_MINUS1    ,   RC_TO_XY(1,5),     &idle_buttons[13], },
-    { ID_Z_PLUS1     ,   RC_TO_XY(3,5),     &idle_buttons[14], },
-    { ID_Z_PLUS2     ,   RC_TO_XY(4,5),     &idle_buttons[15], },
-    { ID_MACRO1      ,   RC_TO_XY(0,6),     &idle_buttons[16], },
-    { ID_MACRO2      ,   RC_TO_XY(1,6),     &idle_buttons[17], },
-    { ID_MACRO3      ,   RC_TO_XY(2,6),     &idle_buttons[18], },
-    { ID_MACRO4      ,   RC_TO_XY(3,6),     &idle_buttons[19], },
+    { ID_Y_PLUS2     ,   RC_TO_XY(0,2),     &idle_buttons[ 8], },
+    { ID_Y_PLUS1     ,   RC_TO_XY(1,2),     &idle_buttons[ 9], },
+    { ID_Y_MINUS1    ,   RC_TO_XY(3,2),     &idle_buttons[10], },
+    { ID_Y_MINUS2    ,   RC_TO_XY(4,2),     &idle_buttons[11], },
+    { ID_Z_PLUS2     ,   RC_TO_XY(0,5),     &idle_buttons[12], },
+    { ID_Z_PLUS1     ,   RC_TO_XY(1,5),     &idle_buttons[13], },
+    { ID_Z_MINUS1    ,   RC_TO_XY(3,5),     &idle_buttons[14], },
+    { ID_Z_MINUS2    ,   RC_TO_XY(4,5),     &idle_buttons[15], },
+    { ID_XY_ZERO     ,   RC_TO_XY(2,2),     &idle_buttons[16], },
+    { ID_Z_ZERO      ,   RC_TO_XY(2,5),     &idle_buttons[17], },
 };
 
 #define NUM_IDLE_ELEMENTS  (sizeof(idle_elements)/sizeof(uiElement))
@@ -153,6 +147,7 @@ static const uiElement idle_elements[] = {
 #define ID_RESET_BUTTON     (103 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 #define ID_REBOOT_BUTTON    (104 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 
+static char active_text_buffer[30];
 
 static uiMutable active_text
 {
@@ -224,13 +219,13 @@ void winMain::begin()
 void winMain::doJog(const char *axis, int jog_num)
     // G91=relative mode, must provide feed rate
 {
-    g_debug("doJog(%s%s F%d)",axis,idle_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
+    g_debug("doJog(%s%s F%d)",axis,jog_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
 
     #ifdef WITH_FLUID_NC
         char command_buf[20];
         sprintf(command_buf,"$J=G91 %s%s F%d\r",
             axis,
-            idle_button_text[jog_num],
+            jog_button_text[jog_num],
             getIntPref(PREF_JOG_FEED_RATE));
         WebUI::inputBuffer.push(command_buf);
     #endif
@@ -249,12 +244,14 @@ void winMain::onButton(const uiElement *ele, bool pressed)
             case ID_MICRO_BUTTON:
                 m_micro_mode = !m_micro_mode;
                 break;
+            case ID_SET_BUTTON:
+                the_app.setTitle("");
+                the_app.openWindow(&dlg_position);
+                break;
             case ID_HOME_BUTTON1 :
             case ID_HOME_BUTTON2 :
                 the_app.setTitle("");
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$H\r");
-                #endif
+                the_app.openWindow(&dlg_home);
                 break;
             case ID_X_MINUS2 :
             case ID_X_MINUS1 :
@@ -274,16 +271,34 @@ void winMain::onButton(const uiElement *ele, bool pressed)
             case ID_Z_PLUS2  :
                  doJog("Z",ele->id_type - ID_X_MINUS2);
                  break;
+            case ID_XY_ZERO :
+                #ifdef WITH_FLUID_NC
+                    // Programmed Zero
+                    WebUI::inputBuffer.push("G0 X0 Y0\r");
+                #endif
+                break;
+            case ID_Z_ZERO :
+                #ifdef WITH_FLUID_NC
+                    // Absolute 0, actually it's minus the z_axis
+                    // pulloff
+                    {
+                        char buf[30];
+                        sprintf(buf,"G0 G53 Z%5.3f\r", - (config->_axes->_axis[Z_AXIS]->_motors[0]->_pulloff) );
+                        g_debug("AZERO(%s)",buf);
+                        WebUI::inputBuffer.push(buf);
+                    }
+                #endif
+                break;
 
             // active mode buttons (ID_HOME_BUTTON2 handled above)
 
             case ID_RESET_BUTTON :
-                confirm_dlg.setConfirm(CONFIRM_COMMAND_RESET);
-                the_app.openWindow(&confirm_dlg);
+                dlg_confirm.setConfirm(CONFIRM_COMMAND_RESET);
+                the_app.openWindow(&dlg_confirm);
                 break;
             case ID_REBOOT_BUTTON :
-                confirm_dlg.setConfirm(CONFIRM_COMMAND_REBOOT);
-                the_app.openWindow(&confirm_dlg);
+                dlg_confirm.setConfirm(CONFIRM_COMMAND_REBOOT);
+                the_app.openWindow(&dlg_confirm);
                 break;
             case ID_CPR_BUTTON :
             {
@@ -321,6 +336,12 @@ void winMain::update()
 
         g_debug("winMain setting m_mode to %d",m_mode);
 
+        if (m_last_mode != m_mode)
+        {
+            m_last_mode = m_mode;
+            the_app.setTitle("");
+        }
+
         if (m_mode == MAIN_MODE_ACTIVE)
         {
             m_elements = active_elements;
@@ -348,12 +369,28 @@ void winMain::update()
             #endif
         }
 
+        #ifdef UI_WITH_MESH
+            static int last_mesh_num_steps = 0;
+            static int last_mesh_step = 0;
+        #endif
+
         if (m_draw_needed ||
             m_last_alarm != alarm ||
-            job_state != the_app.getLastJobState())
+            job_state != the_app.getLastJobState()
+            #ifdef UI_WITH_MESH
+                || last_mesh_num_steps != the_mesh.getNumSteps() ||
+                   last_mesh_step != the_mesh.getCurStep()
+            #endif
+            )
         {
             m_draw_needed = false;
             m_last_alarm = alarm;
+
+            #ifdef UI_WITH_MESH
+                last_mesh_num_steps = the_mesh.getNumSteps();
+                last_mesh_step = the_mesh.getCurStep();
+            #endif
+
             bool is_alarm = job_state == JOB_ALARM;
             bool in_job = job_state == JOB_BUSY || job_state == JOB_HOLD;
 
@@ -367,6 +404,20 @@ void winMain::update()
                 is_alarm ? COLOR_MAGENTA :
                 job_state == JOB_HOLD ? COLOR_CYAN :
                 COLOR_YELLOW;
+
+            #ifdef UI_WITH_MESH
+                if (job_state == JOB_MESHING)
+                {
+                    char buf[20];
+                    sprintf(buf,"MESH %d/%d",last_mesh_step,last_mesh_num_steps);
+                    the_app.setTitle(buf);
+
+                    sprintf(active_text_buffer,"MESH %d%% complete",
+                        (100 * last_mesh_step) / last_mesh_num_steps);
+                    active_text.text = active_text_buffer;
+                }
+                else
+            #endif
 
             if (job_state == JOB_ALARM)
             {
@@ -404,8 +455,6 @@ void winMain::update()
             m_draw_needed = false;
             m_last_micro_mode = m_micro_mode;
 
-            m_num_elements = NUM_IDLE_BUTTONS;
-
             idle_buttons[IDX_MICRO_BUTTON].bg = m_micro_mode ?
                 COLOR_GREEN :
                 COLOR_BLUE;
@@ -413,30 +462,28 @@ void winMain::update()
                 COLOR_BLACK :
                 COLOR_WHITE;
 
-            const char *scale2 = m_micro_mode ? "1"    : "100";
-            const char *scale1 = m_micro_mode ? "0.1"  : "10";
-            const char *scale4 = m_micro_mode ? "1"    : "10";
-            const char *scale3 = m_micro_mode ? "0.1"  : "1";
+            // JOG Buttons
 
-            sprintf(idle_button_text[ 0], "-%s",scale2);
-            sprintf(idle_button_text[ 1], "-%s",scale1);
-            sprintf(idle_button_text[ 2], "%s", scale1);
-            sprintf(idle_button_text[ 3], "%s", scale2);
-            sprintf(idle_button_text[ 4], "%s",scale2);
-            sprintf(idle_button_text[ 5], "%s",scale1);
-            sprintf(idle_button_text[ 6], "-%s", scale1);
-            sprintf(idle_button_text[ 7], "-%s", scale2);
-            sprintf(idle_button_text[ 8], "%s",scale4);
-            sprintf(idle_button_text[ 9], "%s",scale3);
-            sprintf(idle_button_text[10], "-%s", scale3);
-            sprintf(idle_button_text[11], "-%s", scale4);
+            const char *xy_scale1 = m_micro_mode ? "0.1"  : "10";
+            const char *xy_scale2 = m_micro_mode ? "1"    : "100";
 
-            strcpy(macro_button_text[0],getStrPref(PREF_MACRO1_CHAR));
-            strcpy(macro_button_text[1],getStrPref(PREF_MACRO2_CHAR));
-            strcpy(macro_button_text[2],getStrPref(PREF_MACRO3_CHAR));
-            strcpy(macro_button_text[3],getStrPref(PREF_MACRO4_CHAR));
+            const char *z_scale1 = m_micro_mode ? "0.01"  : "1";
+            const char *z_scale2 = m_micro_mode ? "0.10"  : "10";
 
-            idle_buttons[IDX_MACRO1].bg = COLOR_BLUE;
+            sprintf(jog_button_text[ 0], "-%s", xy_scale2);        // X_MINUS2
+            sprintf(jog_button_text[ 1], "-%s", xy_scale1);        // X_MINUS1
+            sprintf(jog_button_text[ 2], "%s",  xy_scale1);        // X_PLUS1
+            sprintf(jog_button_text[ 3], "%s",  xy_scale2);        // X_PLUS2
+
+            sprintf(jog_button_text[ 4], "%s",  xy_scale2);         // Y_PLUS2
+            sprintf(jog_button_text[ 5], "%s",  xy_scale1);         // Y_PLUS1
+            sprintf(jog_button_text[ 6], "-%s", xy_scale1);       // Y_MINUS1
+            sprintf(jog_button_text[ 7], "-%s", xy_scale2);       // Y_MINUS2
+
+            sprintf(jog_button_text[ 8], "%s",  z_scale2);         // Z_PLUS2
+            sprintf(jog_button_text[ 9], "%s",  z_scale1);         // Z_PLUS1
+            sprintf(jog_button_text[10], "-%s", z_scale1);       // Z_MINUS1`
+            sprintf(jog_button_text[11], "-%s", z_scale2);       // Z_MINUS2
 
             tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,COLOR_BLACK);
             drawTypedElements();

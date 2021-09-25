@@ -119,8 +119,8 @@ void winFiles::onLineClicked(uiDualElement *dual, int top_num, int rel_line_num)
     else if (isGcodeFile(fn))
     {
         m_last_path[0] = 0;
-        confirm_dlg.setConfirm(CONFIRM_COMMAND_RUN_FILE + rel_line_num);
-        the_app.openWindow(&confirm_dlg);
+        dlg_confirm.setConfirm(CONFIRM_COMMAND_RUN_FILE + rel_line_num);
+        the_app.openWindow(&dlg_confirm);
     }
     else
     {

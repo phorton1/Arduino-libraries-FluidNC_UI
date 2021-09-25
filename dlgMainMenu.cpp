@@ -1,5 +1,5 @@
 //--------------------------------------
-// The confirm Yes/No window
+// The Main Menu
 //--------------------------------------
 
 #include "dlgMainMenu.h"

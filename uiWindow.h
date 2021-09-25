@@ -29,7 +29,7 @@ typedef const char *(*constCharStarMethod)();
 
 #define ID_TYPE_ALL      0xf200      // things that get drawn by the system
 
-#define COLOR_BUTTON_DISABLED     COLOR_LIGHTGREY
+#define COLOR_BUTTON_DISABLED     COLOR_DARKGREY
 #define COLOR_BUTTON_HIDDEN       COLOR_BLACK
 #define COLOR_BUTTON_BG_PRESSED   COLOR_CYAN
 #define COLOR_BUTTON_FG_PRESSED   COLOR_BLACK

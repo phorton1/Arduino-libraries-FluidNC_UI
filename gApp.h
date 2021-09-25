@@ -14,6 +14,8 @@ typedef enum JobState
     JOB_BUSY,
     JOB_HOLD,
     JOB_HOMING,
+    JOB_PROBING,
+    JOB_MESHING,
     JOB_ALARM
 };
 
@@ -94,7 +96,6 @@ class gApplication : public uiWindow
     private:
 
         JobState job_state;
-
         bool draw_needed;
 
         // progress bar

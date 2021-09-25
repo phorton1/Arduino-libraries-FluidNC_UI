@@ -25,7 +25,7 @@
 
 #define RU_SURE     "Are you sure you want to"
 
-dlgConfirm  confirm_dlg;
+dlgConfirm  dlg_confirm;
 static uint16_t pending_command;
 
 //----------------------------------------------------------------------

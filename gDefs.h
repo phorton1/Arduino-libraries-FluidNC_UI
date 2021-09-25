@@ -9,6 +9,10 @@
 
 #define WITH_FLUID_NC
 
+// UI_WITH_MESH requires WITH_FLUID_NC
+
+#define UI_WITH_MESH
+
 // Only one of these should be defined and the driver
 // must match the one set in TFT_eSPI/prh_Setup.h.
 // For the time being the only difference is the default
