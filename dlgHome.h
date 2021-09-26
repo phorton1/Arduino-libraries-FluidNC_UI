@@ -12,6 +12,12 @@ class dlgHome : public uiWindow
 
         dlgHome();
 
+        bool m_doing_probe;
+            // set to true on a probe,
+            // set to false by the_app, which
+            // sets the z_position (for us, but
+            // not for a general G38.2 probe)
+
     private:
 
         bool m_mesh_valid;

@@ -6,6 +6,7 @@
 #include "gApp.h"
 
 #ifdef WITH_FLUID_NC
+    #include <MotionControl.h>          // FluidNC
     #include <WebUI/InputBuffer.h>      // FluidNC
     #include <FluidDebug.h>             // FluidNC_extensions
 #endif
@@ -57,6 +58,7 @@ dlgHome::dlgHome() :
     uiWindow(home_elements,sizeof(home_elements)/sizeof(uiElement))
 {
     m_mesh_valid = 0;
+    m_doing_probe = 0;
 }
 
 
@@ -115,19 +117,23 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
                 break;
 
             case ID_PROBE :
-                // my Probe function also sets Z zero
-                // as does the mesh
-
                 #ifdef WITH_FLUID_NC
-                {
-                    char buf[24];
-                    strcpy(buf,"G38.2 F100 Z-50");
-                    if (FluidNC_execute(buf))
-                    {
-                        strcpy(buf,"G10 L20 Z0");
-                        FluidNC_execute(buf);
-                    }
-                }
+
+                    g_debug("PROBE STARTED");
+
+                    // clear the global FluidNC probe success flag JIC
+
+                    probe_succeeded = false;
+
+                    // start the probe
+
+                    WebUI::inputBuffer.push("G38.2 F100 Z-50\r");
+
+                    // we set a flag that we started a probe,
+                    // it will be finished in winMain::update()
+
+                    m_doing_probe = true;
+
                 #endif
                 break;
 

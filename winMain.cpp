@@ -27,6 +27,7 @@
 
 
 #ifdef WITH_FLUID_NC
+    #include <MotionControl.h>          // FluidNC
     #include <Protocol.h>               // FluidNC
     #include <System.h>                 // FluidNC
     #include <Serial.h>                 // FluidNC
@@ -340,6 +341,34 @@ void winMain::update()
         {
             m_last_mode = m_mode;
             the_app.setTitle("");
+
+            // a weird place to reset m_doing_probe,
+            // but we have to wait until the probe
+            // is good and done
+
+            if (m_mode == 0 && dlg_home.m_doing_probe)
+            {
+                #ifdef WITH_FLUID_NC
+                    // if a probe (from UI) has been completed,
+                    // set the Z zero position
+                    if (probe_succeeded)
+                    {
+                        dlg_home.m_doing_probe = false;
+                        g_debug("PROBE COMPLETED");
+                        vTaskDelay(500);
+                        WebUI::inputBuffer.push("G10 L20 Z0\r");
+                        vTaskDelay(1000);
+                        WebUI::inputBuffer.push("G0 Z5\r");
+                        vTaskDelay(500);
+                    }
+                    else
+                    {
+                        dlg_home.m_doing_probe = false;
+                        g_debug("PROBE FAILED");
+                    }
+                #endif
+            }
+
         }
 
         if (m_mode == MAIN_MODE_ACTIVE)
