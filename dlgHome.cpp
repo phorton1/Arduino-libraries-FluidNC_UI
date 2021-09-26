@@ -12,6 +12,7 @@
 #endif
 #ifdef UI_WITH_MESH
     #include <Mesh.h>           // FluidNC_extensions
+    #include "dlgMeshSettings.h"
 #endif
 
 dlgHome dlg_home;
@@ -149,6 +150,9 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
                 return;
                 break;
             case ID_MESH_SET:
+                #ifdef UI_WITH_MESH
+                    the_app.openWindow(&dlg_mesh_settings);
+                #endif
                 return;
                 break;
         }

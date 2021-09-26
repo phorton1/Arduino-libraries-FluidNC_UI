@@ -162,10 +162,6 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
         fg   = mut->fg;
         font = mut->font;
     }
-    if (ele->id_type & ID_TYPE_TEXT_FN)
-    {
-        text = ((constCharStarMethod) ele->param)();
-    }
     if (dual)
     {
         text = dual->label;
@@ -199,14 +195,23 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
 
         if (ele->id_type & ID_TYPE_BUTTON)
         {
-            tft.fillRoundRect(
-                ele->x, ele->y, ele->w, ele->h,
-                5,
-                bg);
-            tft.drawRoundRect(
-                ele->x, ele->y, ele->w, ele->h,
-                5,
-                COLOR_LIGHTGREY);
+            if (ele->id_type & ID_TYPE_NO_BORDER)
+            {
+                tft.fillRect(
+                    ele->x, ele->y, ele->w, ele->h,
+                    bg);
+            }
+            else
+            {
+                tft.fillRoundRect(
+                    ele->x, ele->y, ele->w, ele->h,
+                    5,
+                    bg);
+                tft.drawRoundRect(
+                    ele->x, ele->y, ele->w, ele->h,
+                    5,
+                    COLOR_LIGHTGREY);
+            }
         }
         else if (ele->id_type & ID_TYPE_TEXT)
         {

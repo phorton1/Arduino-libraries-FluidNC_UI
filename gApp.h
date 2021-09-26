@@ -91,12 +91,13 @@ class gApplication : public uiWindow
             last.job_state = JOB_NONE;
         }
 
-
+        void suppressStatus()  { suppress_status = true; }
 
     private:
 
         JobState job_state;
         bool draw_needed;
+        bool suppress_status;
 
         // progress bar
 

@@ -108,6 +108,7 @@ void gApplication::begin()
 
     readPrefs();
     draw_needed = true;
+    suppress_status = false;
     g_status.initWifiEventHandler();
     setDefaultWindow((uiWindow *)&main_win);
 
@@ -121,7 +122,15 @@ void gApplication::begin()
 void gApplication::openWindow(uiWindow *win)
 {
     if (win->isModal())
+    {
         win_stack_ptr++;
+        g_debug("openWindow(modal) stack=%d",win_stack_ptr);
+        if (win_stack_ptr>1)
+        {
+            strcpy(app_button_buf,"back");
+            drawTypedElement(&app_elements[0]);
+        }
+    }
     win_stack[win_stack_ptr] = win;
     win->begin();
 }
@@ -131,9 +140,12 @@ void gApplication::endModal()
 {
     if (win_stack[win_stack_ptr]->isModal())
     {
+        g_debug("endModal stack=%d",win_stack_ptr);
+
         draw_needed = true;
         win_stack_ptr--;
-        openWindow(win_stack[win_stack_ptr]);
+        suppress_status = false;
+        win_stack[win_stack_ptr]->begin();
     }
 
 }
@@ -652,7 +664,8 @@ void gApplication::update()
         tft.fillRect(0,0,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT,COLOR_BLACK);
         tft.fillRect(0,0,UI_SCREEN_WIDTH,UI_TOP_MARGIN,COLOR_DARKBLUE);
         drawTypedElements();
-        openWindow(win_stack[win_stack_ptr]);
+        // openWindow();
+        win_stack[win_stack_ptr]->begin();
     }
 
     // but do the hitTests after the window is drawn?
@@ -690,16 +703,23 @@ void gApplication::update()
             case ID_APP_TITLE:          doAppTitle(ele);        break;
             case ID_SD_INDICATOR:       doSDIndicator(ele);     break;
             case ID_WIFI_INDICATOR:     doWifiIndicator(ele);   break;
-            case ID_STATUSBAR:          doJobProgress(ele);     break;
-            case ID_MACHINE_X:
-            case ID_MACHINE_Y:
-            case ID_MACHINE_Z:          doMachinePosition(ele); break;
-            case ID_WORK_X:
-            case ID_WORK_Y:
-            case ID_WORK_Z:             doWorkPosition(ele);    break;
-            case ID_GRBL_STATE:         doSysState(ele);        break;
-            case ID_MEMAVAIL:
-            case ID_MEMAVAIL_MIN:       doMemAvail(ele);        break;
+        }
+
+        if (!suppress_status)
+        {
+            switch (ele->id_type)
+            {
+                case ID_STATUSBAR:          doJobProgress(ele);     break;
+                case ID_MACHINE_X:
+                case ID_MACHINE_Y:
+                case ID_MACHINE_Z:          doMachinePosition(ele); break;
+                case ID_WORK_X:
+                case ID_WORK_Y:
+                case ID_WORK_Z:             doWorkPosition(ele);    break;
+                case ID_GRBL_STATE:         doSysState(ele);        break;
+                case ID_MEMAVAIL:
+                case ID_MEMAVAIL_MIN:       doMemAvail(ele);        break;
+            }
         }
     }
 
