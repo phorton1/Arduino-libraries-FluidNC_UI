@@ -16,6 +16,8 @@
 
         private:
 
+            bool draw_needed;
+
             virtual void begin() override;
             virtual void update() override;
             virtual bool isModal() const override { return true; }

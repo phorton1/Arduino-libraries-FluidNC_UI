@@ -12,7 +12,9 @@
     #include <SD.h>
     #include <SDCard.h>                    // FluidNC
     #include <Report.h>                    // FluidNC
+    #include <MotionControl.h>             // FluidNC
     #include <Machine/MachineConfig.h>     // FluidNC
+    #include <WebUI/Commands.h>            // FluidNC
 #endif
 
 #define MAX_CONFIRM_LINE 40
@@ -96,6 +98,11 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
             {
                 g_debug("gApplication estarting the ESP32!!");
                 delay(500);
+
+                // ESP.restart() works better after a call to mc_reset()
+                // otherwise steppers don't work after reboot
+
+                mc_reset();
                 ESP.restart();
                 while (1) {}
             }

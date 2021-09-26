@@ -150,6 +150,8 @@ void initValues()
 
 void dlgMeshSettings::begin()
 {
+    draw_needed = true;
+
     initValues();
 
     mesh_max[0] = config->_axes->_axis[X_AXIS]->_maxTravel;
@@ -302,7 +304,8 @@ void dlgMeshSettings::update()
 {
     for (int i=0; i<NUM_PARAMS; i++)
     {
-        if (last_item_state[i] != item_state[i] ||
+        if (draw_needed ||
+            last_item_state[i] != item_state[i] ||
             last_mesh_value[i] != mesh_value[i] )
         {
             int state = last_item_state[i] = item_state[i];
@@ -321,13 +324,15 @@ void dlgMeshSettings::update()
 
     for (int i=0; i<NUM_BUTTONS; i++)
     {
-       if (last_button_bg[i] != buttons[i].bg)
+       if (draw_needed ||
+           last_button_bg[i] != buttons[i].bg)
        {
             last_button_bg[i] = buttons[i].bg;
             drawTypedElement(&mesh_elements[i]);
        }
     }
 
+    draw_needed = false;
 }
 
 

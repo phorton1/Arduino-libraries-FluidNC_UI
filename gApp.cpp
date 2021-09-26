@@ -1,6 +1,9 @@
 //--------------------------------------
 // FluidNC application specific classes
 //--------------------------------------
+// TODO: Going to files window while homing (allowed ?!?)
+// permanently mucks up the main window which never notices
+// the mode change.
 
 #include "gApp.h"
 
@@ -141,6 +144,7 @@ void gApplication::endModal()
     if (win_stack[win_stack_ptr]->isModal())
     {
         g_debug("endModal stack=%d",win_stack_ptr);
+        setTitle("");
 
         draw_needed = true;
         win_stack_ptr--;
