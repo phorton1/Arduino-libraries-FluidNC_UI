@@ -22,6 +22,7 @@ class winMain : public uiWindow
         bool m_draw_needed;
         bool m_micro_mode;
         bool m_last_micro_mode;
+        JobState m_last_job_state;
 
         int     m_last_mode;
         uint8_t m_last_alarm;

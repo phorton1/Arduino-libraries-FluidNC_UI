@@ -214,6 +214,7 @@ winMain::winMain() :
 void winMain::begin()
 {
     m_draw_needed = 1;
+    m_last_job_state = JOB_NONE;
 }
 
 
@@ -330,9 +331,10 @@ void winMain::update()
 {
     JobState job_state = the_app.getJobState();
 
-    if (job_state != the_app.getLastJobState())
+    if (m_last_job_state != job_state)
     {
         m_draw_needed = true;
+        m_last_job_state = job_state;
         m_mode = job_state == JOB_IDLE ? MAIN_MODE_IDLE : MAIN_MODE_ACTIVE;
 
         g_debug("winMain setting m_mode to %d",m_mode);

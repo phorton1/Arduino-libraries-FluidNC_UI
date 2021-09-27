@@ -28,10 +28,10 @@ dlgSetPosition dlg_position;
 
 static const uiElement set_position_elements[] =
 {
-    { ID_SET_ALL,      30,  45, 110,  33,  V("Set All"), COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
-    { ID_SET_X,        30,  83, 110,  33,  V("Set X"),   COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
-    { ID_SET_Y,        30, 121, 110,  33,  V("Set Y"),   COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
-    { ID_SET_Z,        30, 159, 110,  33,  V("Set Z"),   COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
+    { ID_SET_ALL,      30,  45, 110,  33,  V("Zero All"), COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
+    { ID_SET_X,        30,  83, 110,  33,  V("X Zero"),   COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
+    { ID_SET_Y,        30, 121, 110,  33,  V("Y Zero"),   COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
+    { ID_SET_Z,        30, 159, 110,  33,  V("Z Zero"),   COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
 };
 
 

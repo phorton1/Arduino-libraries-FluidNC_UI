@@ -124,7 +124,7 @@ int     last_mesh_value[NUM_PARAMS];
 int     last_button_bg[NUM_BUTTONS];
 
 static const bool allows_10[NUM_PARAMS] = {true, true, false, false, false};
-static const int  mesh_min[NUM_PARAMS]  = {10, 10, 1, 1, 1};
+static const int  mesh_min[NUM_PARAMS]  = {10, 10, 2, 2, 1};
 static int  mesh_max[NUM_PARAMS]  = {1000,1000, MAX_MESH_X_STEPS,MAX_MESH_Y_STEPS, 4};
 
 //-----------------------

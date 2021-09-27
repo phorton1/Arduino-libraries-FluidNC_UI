@@ -6,6 +6,16 @@
 #include "FluidNC_UI.h"
 #include <WiFi.h>
 
+// overrides in protocol.h
+
+// extern volatile Percent rtFOverride;  // Feed override value in percent
+// extern volatile Percent rtROverride;  // Rapid feed override value in percent
+// extern volatile Percent rtSOverride;  // Spindle override value in percent
+//
+// rtAccessoryOverride.bit.coolantFloodOvrToggle
+
+
+
 #ifdef WITH_FLUID_NC                          // FluidNC
 	#include <Config.h>                   // FluidNC
 	#include <SDCard.h>                   // FluidNC
