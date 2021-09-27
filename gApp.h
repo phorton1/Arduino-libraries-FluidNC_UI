@@ -5,21 +5,8 @@
 #pragma once
 
 #include "uiWindow.h"
-#include "gStatus.h"
+#include <gStatus.h>    // FluidNC_extensions
 
-typedef enum JobState
-{
-    JOB_NONE,
-    JOB_IDLE,
-    JOB_BUSY,
-    JOB_HOLD,
-    JOB_HOMING,
-    JOB_PROBING,
-    JOB_MESHING,
-    JOB_ALARM
-};
-
-extern const char *jobStateName(JobState job_state);
 
 typedef struct appLast_t
     // A structure that holds previous state of
@@ -35,8 +22,8 @@ typedef struct appLast_t
     // gStatus change detection
 
     uint8_t        wifi_state;
-    grbl_State_t   sys_state;
-    grbl_SDState_t sd_state;
+    State          sys_state;
+    SDState        sd_state;
     float          pct;
     float          pos[UI_NUM_AXES * 2];
 
@@ -68,6 +55,8 @@ class gApplication : public uiWindow
 
         JobState getJobState()      { return job_state; }
         JobState getLastJobState()  { return last.job_state; }
+            // UI Windows besides the application should NOT
+            // use g_status directly.
 
         const char *getAppButtonText();
 
@@ -95,7 +84,10 @@ class gApplication : public uiWindow
 
     private:
 
+        State sys_state;
+        SDState sd_state;
         JobState job_state;
+
         bool draw_needed;
         bool suppress_status;
 

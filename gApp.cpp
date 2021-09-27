@@ -1,28 +1,23 @@
 //--------------------------------------
-// FluidNC application specific classes
+// Application specific classes
 //--------------------------------------
-// TODO: Going to files window while homing (allowed ?!?)
-// permanently mucks up the main window which never notices
-// the mode change.
 
 #include "gApp.h"
-
-#define DEBUG_APP   1
-
-#define MAX_WINDOW_STACK  5
-#define MAX_ACTIVE_FILENAME 80
-
-
 #include "gPrefs.h"
 #include "winMain.h"
 #include "dlgMsg.h"
 #include "dlgMainMenu.h"
-#include <MotionControl.h>     // FluidNC
 
 #ifdef UI_WITH_MESH
     #include <Mesh.h>          // FluidNC_extensions
 #endif
 
+
+#define DEBUG_APP   1
+
+
+#define MAX_WINDOW_STACK  5
+#define MAX_ACTIVE_FILENAME 80
 // IDS OF ANY PARENTS MUST BE GLOBALLY UNIQUE !!
 
 #define ID_APP_BUTTON           (0x0021 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
@@ -40,6 +35,7 @@
 #define ID_GRBL_STATE           (0x0037)
 #define ID_MEMAVAIL             (0x0038)
 #define ID_MEMAVAIL_MIN         (0x0039)
+
 
 gApplication the_app;
 
@@ -226,23 +222,6 @@ void gApplication::doText(const uiElement *ele, const char *text)
 }
 
 
-const char *jobStateName(JobState job_state)
-{
-    switch (job_state)
-    {
-        case JOB_NONE    : return "";
-        case JOB_IDLE    : return "IDLE";
-        case JOB_BUSY    : return "BUSY";
-        case JOB_HOLD    : return "HOLD";
-        case JOB_HOMING  : return "HOMING";
-        case JOB_PROBING : return "PROBING";
-        case JOB_MESHING : return "MESHING";
-        case JOB_ALARM   : return "ALARM";
-    }
-    return "UNKNOWN_JOB_STATE";
-}
-
-
 //--------------------------------
 // frame callbacks
 //--------------------------------
@@ -305,13 +284,11 @@ void gApplication::doAppTitle(const uiElement *ele)
 
 void gApplication::doSDIndicator(const uiElement *ele)
 {
-    grbl_SDState_t sd_state = g_status.getSDState();
-
     if (draw_needed || last.sd_state != sd_state)
     {
         uint8_t ind_state =
-            sd_state == grbl_SDState_t::NotPresent ? IND_STATE_NONE :
-            sd_state == grbl_SDState_t::Idle 	   ? IND_STATE_READY :
+            sd_state == SDState::NotPresent ? IND_STATE_NONE :
+            sd_state == SDState::Idle   	? IND_STATE_READY :
                 IND_STATE_ACTIVE;
         drawText(
             CHAR_SD_SYMBOL,
@@ -379,7 +356,6 @@ void gApplication::doWorkPosition(const uiElement *ele)
 
 void gApplication::doSysState(const uiElement *ele)
 {
-    grbl_State_t sys_state = g_status.getSysState();
     bool changed = draw_needed || (last.sys_state != sys_state);
     if (changed ||
         last.prog_w != prog_w)
@@ -568,47 +544,31 @@ void gApplication::update()
 {
     bool job_finished = false;
 
-    g_status.updateStatus();
-    grbl_State_t sys_state = g_status.getSysState();
-    grbl_SDState_t sd_state = g_status.getSDState();
+    // update the gStatus object
 
-    // set the job_state
+    g_status.updateStatus(
+        #ifdef UI_WITH_MESH
+            the_mesh.inLeveling()
+        #endif
+    );
 
-    #ifdef UI_WITH_MESH
-        if (the_mesh.inLeveling())
-            job_state = JOB_MESHING;
-    #endif
-    #ifdef WITH_FLUID_NC
-        // probeState not abstracted in gStatus
-        else if (probeState == ProbeState::Active)
-            job_state = JOB_PROBING;
-    #endif
-    else if (sys_state == grbl_State_t::Homing)
-        job_state = JOB_HOMING;
-    else if (sys_state == grbl_State_t::Alarm)
-        job_state = JOB_ALARM;
-    else if (sys_state == grbl_State_t::Hold)
-        job_state = JOB_HOLD;
-    else if (sd_state == grbl_SDState_t::Busy)
-        job_state = JOB_BUSY;
-    else
-        job_state = JOB_IDLE;
+    // copy the state into gApplication variables that are
+    // valid for one time through update()
 
-    // there is a weird case going from BUSY to IDLE where
-    // the machine keeps running a Cycle
+    sys_state = g_status.getSysState();
+    sd_state = g_status.getSDState();
+    job_state = g_status.getJobState();
 
-    if (job_state == JOB_IDLE &&
-        sys_state == grbl_State_t::Cycle)
-        job_state = last.job_state;
 
     if (job_state != last.job_state)
     {
         #if DEBUG_APP
-            g_debug("JOB_STATE changing from %d to %d",last.job_state, job_state);
+            g_debug("UI JOB_STATE changing from %d to %d",last.job_state, job_state);
         #endif
 
+        // determine if we need to initProgress() and begin() the window again
+
         bool new_win = false;
-            // determine if we need to initProgress() and begin() the window again
         if (job_state == JOB_ALARM)
             new_win = true;
         else if (job_state == JOB_BUSY && last.job_state != JOB_HOLD)
@@ -730,9 +690,9 @@ void gApplication::update()
     // save state for next time through update()
 
     draw_needed = false;
-    last.job_state = job_state;
-    last.sd_state = sd_state;
     last.sys_state = sys_state;
+    last.sd_state = sd_state;
+    last.job_state = job_state;
     last.pct = job_state == JOB_HOLD || job_state == JOB_BUSY ? g_status.filePct() : 0;
     last.prog_w = prog_w;
     last.prog_color = prog_color;

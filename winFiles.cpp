@@ -319,15 +319,9 @@ uint32_t winFiles::updateBuffer()
     m_num_lines = 0;
 
     // start the SDCard as necessary
+    // winFiles uses g_status directly
 
-    #ifdef WITH_FLUID_NC
-        if (g_status.getSDState(true) != grbl_SDState_t::Idle)
-    #else
-        static bool sd_started = false;
-        if (!sd_started)
-            sd_started = SD.begin(V_SDCARD_CS);
-        if (!sd_started)
-    #endif
+    if (g_status.getSDState(true) != SDState::Idle)
     {
         fileError("Could not get SDCard");
         return gs_buffer_version;
@@ -358,9 +352,8 @@ uint32_t winFiles::updateBuffer()
     if (root)
         root.close();
 
-    #ifdef WITH_FLUID_NC
-        // SD.end();
-    #endif
+
+    // SD.end();
 
     sortFilenames();
 

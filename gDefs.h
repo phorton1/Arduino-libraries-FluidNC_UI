@@ -3,15 +3,10 @@
 #define UI_VERSION       "prh 1.1.0"
 #define UI_VERSION_DATE  "2021-07-15"
 
-// Comment WITH_FLUID_NC out to run the UI without linking to FluidNC.
-// Must be commented out to run _testGrblUI.ino
-// Should be commented in for all practical purposes
-
-#define WITH_FLUID_NC
-
-// UI_WITH_MESH requires WITH_FLUID_NC
-
 #define UI_WITH_MESH
+    // This should match the usage of the FluidNC_extension
+    // Mesh.h as defined in your machine
+
 
 // Only one of these should be defined and the driver
 // must match the one set in TFT_eSPI/prh_Setup.h.
@@ -25,7 +20,8 @@
 // #define TFT_3_POINT_5_INCH_ILI9488
 
 
-//  UI axes definitions
+// UI axes definitions
+// UI only supports a simple 3 axis machine at this time
 
 #define UI_NUM_AXES      3
 #define UI_AXIS_X        0
@@ -52,21 +48,4 @@
 #define UI_MAX_TITLE            30          // maximum length of system title
 #define UI_MAX_BUTTON            7          // maximum length of a mutable button
 
-#define IND_STATE_NONE         0x00
-#define IND_STATE_ENABLED      0x01
-#define IND_STATE_READY        0x02
-#define IND_STATE_ACTIVE       0x04
-#define IND_STATE_ERROR        0x08
-#define IND_STATE_ALL          0x0f
 
-// Denormalized define of vMachine SDCard CS pin.
-// If not linked to Fluid_NC, wherein the vMachine
-// initializes the SD Card at startup, somebody
-// needs to *at least* set the pin HIGH or else
-// the Touch portion of the TFT does not work,
-// presumably due to the SDCard's non-standard
-// use of the CS bus.
-
-#ifndef V_SDCARD_CS
-    #define V_SDCARD_CS   GPIO_NUM_4
-#endif

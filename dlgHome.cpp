@@ -4,12 +4,8 @@
 
 #include "dlgHome.h"
 #include "gApp.h"
+#include <gActions.h>           // FluidNC_extensions
 
-#ifdef WITH_FLUID_NC
-    #include <MotionControl.h>          // FluidNC
-    #include <WebUI/InputBuffer.h>      // FluidNC
-    #include <FluidDebug.h>             // FluidNC_extensions
-#endif
 #ifdef UI_WITH_MESH
     #include <Mesh.h>           // FluidNC_extensions
     #include "dlgMeshSettings.h"
@@ -97,65 +93,43 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
         switch (ele->id_type)
         {
             case ID_HOMEALL :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$H\r");
-                #endif
+                gActions::pushGrblText("$H\r");
                 break;
             case ID_HOMEX :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$HX\r");
-                #endif
+                gActions::pushGrblText("$HX\r");
                 break;
             case ID_HOMEY :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$HY\r");
-                #endif
+                gActions::pushGrblText("$HY\r");
                 break;
             case ID_HOMEZ :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$HZ\r");
-                #endif
+                gActions::pushGrblText("$HZ\r");
                 break;
 
             case ID_PROBE :
-                #ifdef WITH_FLUID_NC
-
-                    g_debug("PROBE STARTED");
-
-                    // clear the global FluidNC probe success flag JIC
-
-                    probe_succeeded = false;
-
-                    // start the probe
-
-                    WebUI::inputBuffer.push("G38.2 F100 Z-50\r");
-
-                    // we set a flag that we started a probe,
-                    // it will be finished in winMain::update()
-
-                    m_doing_probe = true;
-
-                #endif
+                // clear the global FluidNC probe success flag JIC
+                // start the probe, and set a flag that we started a probe,
+                // it will be finished in winMain::update()
+                g_debug("PROBE STARTED");
+                gActions::clearProbeSucceeded();
+                gActions::pushGrblText("G38.2 F100 Z-50\r");
+                m_doing_probe = true;
                 break;
 
             case ID_MESH_CREATE:
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$mesh/do_level\r");
-                #endif
+                gActions::pushGrblText("$mesh/do_level\r");
                 break;
             case ID_MESH_CLEAR:
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("$mesh/clear\r");
-                #endif
-                return;
+                gActions::pushGrblText("$mesh/clear\r");
+                return;     // stay in window
                 break;
             case ID_MESH_SET:
-                #ifdef UI_WITH_MESH
-                    the_app.openWindow(&dlg_mesh_settings);
-                #endif
-                return;
+                the_app.openWindow(&dlg_mesh_settings);
+                return;     // stay in window
                 break;
         }
+
+        // end the window (return to main window) for most cases
+
         the_app.endModal();
     }
 }

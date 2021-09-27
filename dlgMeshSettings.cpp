@@ -25,14 +25,10 @@
 #include "dlgMeshSettings.h"
 
 #ifdef UI_WITH_MESH
-    // implies WITH_FLUID_NC
+    // nothing compiled if !UI_WITH_MESH!!
 
-#include <Mesh.h>                   // FluidNC_extensions
-#include <FluidDebug.h>             // FluidNC_extensions
-#include <Protocol.h>               // FluidNC
-#include <Serial.h>                 // FluidNC
-#include <Settings.h>               // FluidNC
-#include <Machine/MachineConfig.h>  // FluidNC
+#include <Mesh.h>       // FluidNC_extensions
+#include <gActions.h>   // FluidNC_extensions
 
 
 dlgMeshSettings dlg_mesh_settings;
@@ -154,8 +150,8 @@ void dlgMeshSettings::begin()
 
     initValues();
 
-    mesh_max[0] = config->_axes->_axis[X_AXIS]->_maxTravel;
-    mesh_max[1] = config->_axes->_axis[X_AXIS]->_maxTravel;
+    mesh_max[0] = gStatus::getAxisMaxTravel(X_AXIS);
+    mesh_max[1] = gStatus::getAxisMaxTravel(Y_AXIS);
 
     selected_item = -1;
     saved_value = 0;
@@ -190,7 +186,6 @@ void selectItem(int i)
         }
         item_state[selected_item] &= ~(ITEM_STATE_SELECTED | ITEM_STATE_DIRTY);
     }
-
 
     selected_item = i;
     saved_value = mesh_value[i];
@@ -233,20 +228,11 @@ void saveItem(int i)
 
     char buf[40];
     sprintf(buf,"$mesh/%s=%d",params[i].label,mesh_value[i]);
-    g_debug("pushing command %s",buf);
-
-    Error rslt = settings_execute_line(buf,allClients,WebUI::AuthenticationLevel::LEVEL_ADMIN);
-
-    // WebUI::inputBuffer.push(buf);
-
-    if (rslt != Error::Ok)
-    {
-        g_error("Could not set parameter value");
+    if (!gActions::do_setting(buf))
         return;
-    }
 
-    // then reget the values
-    // and reselect it
+    // then re-get the values
+    // and reselect the parameter
 
     initValues();
     selectItem(i);

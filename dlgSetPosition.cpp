@@ -5,9 +5,8 @@
 #include "dlgSetPosition.h"
 #include "gApp.h"
 
-#ifdef WITH_FLUID_NC
-    #include <WebUI/InputBuffer.h>      // FluidNC
-#endif
+#include <gActions.h>   // FluidNC_extensions
+
 #ifdef UI_WITH_MESH
     #include <Mesh.h>   // FluidNC_extensions
 #endif
@@ -65,24 +64,16 @@ void dlgSetPosition::onButton(const uiElement *ele, bool pressed)
         switch (ele->id_type)
         {
             case ID_SET_ALL :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("G10 L20 x0 y0 z0\r");
-                #endif
+                gActions::pushGrblText("G10 L20 x0 y0 z0\r");
                 break;
             case ID_SET_X :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("G10 L20 x0\r");
-                #endif
+                gActions::pushGrblText("G10 L20 x0\r");
                 break;
             case ID_SET_Y :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("G10 L20 y0\r");
-                #endif
+                gActions::pushGrblText("G10 L20 y0\r");
                 break;
             case ID_SET_Z :
-                #ifdef WITH_FLUID_NC
-                    WebUI::inputBuffer.push("G10 L20 z0\r");
-                #endif
+                gActions::pushGrblText("G10 L20 z0\r");
                 break;
         }
     }

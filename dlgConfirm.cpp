@@ -6,19 +6,10 @@
 #include "winFiles.h"
 #include "winMain.h"
 #include "dlgMsg.h"
+#include <gActions.h>   // FluidNC_extensions
 
-
-#ifdef WITH_FLUID_NC
-    #include <SD.h>
-    #include <SDCard.h>                    // FluidNC
-    #include <Report.h>                    // FluidNC
-    #include <MotionControl.h>             // FluidNC
-    #include <Machine/MachineConfig.h>     // FluidNC
-    #include <WebUI/Commands.h>            // FluidNC
-#endif
 
 #define MAX_CONFIRM_LINE 40
-
 
 #define ID_LINE1        (0x0001 | ID_TYPE_TEXT)
 #define ID_LINE2        (0x0002 | ID_TYPE_TEXT)
@@ -27,8 +18,10 @@
 
 #define RU_SURE     "Are you sure you want to"
 
+
 dlgConfirm  dlg_confirm;
 static uint16_t pending_command;
+
 
 //----------------------------------------------------------------------
 // WINDOW DEFINITION
@@ -90,9 +83,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
             {
                 the_app.setTitle("");
                 the_app.clearLastJobState();
-                 #ifdef WITH_FLUID_NC
-                    execute_realtime_command(Cmd::Reset,allClients);
-                #endif
+                gActions::realtime_command(Cmd::Reset);
             }
             else if (pending_command == CONFIRM_COMMAND_REBOOT)
             {
@@ -102,7 +93,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 // ESP.restart() works better after a call to mc_reset()
                 // otherwise steppers don't work after reboot
 
-                mc_reset();
+                gActions::g_reset();
                 ESP.restart();
                 while (1) {}
             }
@@ -123,27 +114,8 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 strcat(filename,fn);
 
                 g_debug("dlgConfirm running %s",filename);
-                #ifdef WITH_FLUID_NC
-
-                    // all access to FluidNC should be encapsulated in gStatus
-
-                    SDCard *sdCard = config->_sdCard;
-                    // g_debug("winMain testing SD Card");
-                    if (sdCard && sdCard->begin(SDCard::State::Idle) == SDCard::State::Idle)
-                    {
-                        if (sdCard->openFile(SD,filename,allClients,WebUI::AuthenticationLevel::LEVEL_ADMIN))
-                        {
-                            // g_debug("winMain running ruler.g");
-                            // sdCard->_client = CLIENT_ALL;
-                            sdCard->_readyNext = true;
-                            the_app.setBaseWindow(&main_win);
-                        }
-                        else
-                            errorMsg("Could not open file");
-                    }
-                    else
-                        errorMsg("Could not get SDCard");
-                #endif
+                if (gActions::startSDJob(filename))
+                	the_app.setBaseWindow(&main_win);
 
             }
         }

@@ -25,17 +25,11 @@
 #include "dlgHome.h"
 #include "dlgSetPosition.h"
 
+#include <gActions.h>    // FluidNC_extensions
+#include <gStatus.h>     // FluidNC_extensions
 
-#ifdef WITH_FLUID_NC
-    #include <MotionControl.h>          // FluidNC
-    #include <Protocol.h>               // FluidNC
-    #include <System.h>                 // FluidNC
-    #include <Serial.h>                 // FluidNC
-    #include <Machine/MachineConfig.h>  // FluidNC
-    #include <WebUI/InputBuffer.h>      // FluidNC
-#endif
 #ifdef UI_WITH_MESH
-    #include <Mesh.h>           // FluidNC_extensions
+    #include <Mesh.h>    // FluidNC_extensions
 #endif
 
 
@@ -222,15 +216,12 @@ void winMain::doJog(const char *axis, int jog_num)
     // G91=relative mode, must provide feed rate
 {
     g_debug("doJog(%s%s F%d)",axis,jog_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
-
-    #ifdef WITH_FLUID_NC
-        char command_buf[20];
-        sprintf(command_buf,"$J=G91 %s%s F%d\r",
-            axis,
-            jog_button_text[jog_num],
-            getIntPref(PREF_JOG_FEED_RATE));
-        WebUI::inputBuffer.push(command_buf);
-    #endif
+    char command_buf[20];
+    sprintf(command_buf,"$J=G91 %s%s F%d\r",
+        axis,
+        jog_button_text[jog_num],
+        getIntPref(PREF_JOG_FEED_RATE));
+    gActions::pushGrblText(command_buf);
 }
 
 
@@ -274,23 +265,18 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                  doJog("Z",ele->id_type - ID_X_MINUS2);
                  break;
             case ID_XY_ZERO :
-                #ifdef WITH_FLUID_NC
-                    // Programmed Zero
-                    WebUI::inputBuffer.push("G0 X0 Y0\r");
-                #endif
+                // Programmed Zero
+                gActions::pushGrblText("G0 X0 Y0\r");
                 break;
             case ID_Z_ZERO :
-                #ifdef WITH_FLUID_NC
-                    // Absolute 0, actually it's minus the z_axis
-                    // pulloff
-                    {
-                        char buf[30];
-                        sprintf(buf,"G0 G53 Z%5.3f\r", - (config->_axes->_axis[Z_AXIS]->_motors[0]->_pulloff) );
-                        g_debug("AZERO(%s)",buf);
-                        WebUI::inputBuffer.push(buf);
-                    }
-                #endif
-                break;
+                {
+                    // Absolute 0, actually it's minus the z_axis pulloff
+                    char buf[30];
+                    sprintf(buf,"G0 G53 Z%5.3f\r", - gStatus::getAxisPulloff(Z_AXIS) );
+                    g_debug("AZERO(%s)",buf);
+                    gActions::pushGrblText(buf);
+                    break;
+                }
 
             // active mode buttons (ID_HOME_BUTTON2 handled above)
 
@@ -308,18 +294,12 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                 if (!strcmp(b_text,"CLEAR"))
                 {
                     the_app.setTitle("");
-                    #ifdef WITH_FLUID_NC
-                        WebUI::inputBuffer.push("$X\r");
-                    #endif
+                    gActions::pushGrblText("$X\r");
                 }
                 else
                 {
-                    #ifdef WITH_FLUID_NC
-                        execute_realtime_command(
-                            !strcmp(b_text,"RESUME") ?
-                                Cmd::CycleStart : Cmd::FeedHold,
-                            allClients);
-                    #endif
+                    gActions::realtime_command(
+                        !strcmp(b_text,"RESUME") ? Cmd::CycleStart : Cmd::FeedHold);
                 }
                 break;
             }
@@ -350,27 +330,24 @@ void winMain::update()
 
             if (m_mode == 0 && dlg_home.m_doing_probe)
             {
-                #ifdef WITH_FLUID_NC
-                    // if a probe (from UI) has been completed,
-                    // set the Z zero position
-                    if (probe_succeeded)
-                    {
-                        dlg_home.m_doing_probe = false;
-                        g_debug("PROBE COMPLETED");
-                        vTaskDelay(500);
-                        WebUI::inputBuffer.push("G10 L20 Z0\r");
-                        vTaskDelay(1000);
-                        WebUI::inputBuffer.push("G0 Z5\r");
-                        vTaskDelay(500);
-                    }
-                    else
-                    {
-                        dlg_home.m_doing_probe = false;
-                        g_debug("PROBE FAILED");
-                    }
-                #endif
+                // if a probe (from UI) has been completed,
+                // set the Z zero position
+                if (gActions::getProbeSucceeded())
+                {
+                    dlg_home.m_doing_probe = false;
+                    g_debug("PROBE COMPLETED");
+                    vTaskDelay(500);
+                    gActions::pushGrblText("G10 L20 Z0\r");
+                    vTaskDelay(1000);
+                    gActions::pushGrblText("G0 Z5\r");
+                    vTaskDelay(500);
+                }
+                else
+                {
+                    dlg_home.m_doing_probe = false;
+                    g_debug("PROBE FAILED");
+                }
             }
-
         }
 
         if (m_mode == MAIN_MODE_ACTIVE)
@@ -387,18 +364,8 @@ void winMain::update()
 
     if (m_mode == MAIN_MODE_ACTIVE)
     {
-        volatile uint8_t alarm = m_last_alarm;
-            // we only grab the alarm when the job state has changed
-
-        if (job_state != the_app.getLastJobState())
-        {
-            #ifdef WITH_FLUID_NC
-                alarm = static_cast<uint8_t>(rtAlarm);
-                #if DEBUG_ALARM
-                    g_debug("grabbed alarm=%d",alarm);
-                #endif
-            #endif
-        }
+        uint8_t alarm = g_status.getLastAlaram();
+            // gStatus only grabs the alarm when the job state has changed
 
         #ifdef UI_WITH_MESH
             static int last_mesh_num_steps = 0;
