@@ -23,6 +23,10 @@
             virtual bool isModal() const override { return true; }
             virtual void onButton(const uiElement *ele, bool pressed) override;
 
+            void initValues();
+            void selectItem(int i);
+            void modifyItem(int i, int inc);
+            void saveItem(int i);
     };
 
 

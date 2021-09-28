@@ -81,10 +81,12 @@ static const uiElement app_elements[] =
     { ID_WORK_X,            10, 222,  55,  16,   V(UI_AXIS_X),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
     { ID_WORK_Y,            75, 222,  55,  16,   V(UI_AXIS_Y),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
     { ID_WORK_Z,           140, 222,  50,  16,   V(UI_AXIS_Z),  COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
-    { ID_GRBL_STATE,       195, 205,  78,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
-    { ID_MEMAVAIL,         277, 205,  42,  15,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
-    { ID_MEMAVAIL_MIN,     277, 222,  42,  15,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
+    { ID_GRBL_STATE,       192, 205,  76,  35,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_NORMAL, JUST_CENTER, },
+    { ID_MEMAVAIL,         270, 205,  49,  15,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
+    { ID_MEMAVAIL_MIN,     270, 222,  49,  15,   0,             COLOR_DARKBLUE, COLOR_WHITE, FONT_MONO,   JUST_RIGHT,  },
 };
+
+#define IDX_STATUSBAR  4
 
 
 //----------------------------
@@ -106,6 +108,7 @@ void gApplication::begin()
     #endif
 
     readPrefs();
+    status_mode = 1;
     draw_needed = true;
     suppress_status = false;
     g_status.initWifiEventHandler();
@@ -161,7 +164,7 @@ void gApplication::setBaseWindow(uiWindow *win)
 
 void gApplication::onButton(const uiElement *ele, bool pressed)
 {
-    if (!pressed)
+    if (!pressed && ele->id_type == ID_APP_BUTTON)
     {
         if (win_stack[win_stack_ptr]->isModal())
             endModal();
@@ -356,11 +359,25 @@ void gApplication::doWorkPosition(const uiElement *ele)
 
 void gApplication::doSysState(const uiElement *ele)
 {
-    bool changed = draw_needed || (last.sys_state != sys_state);
+    bool changed = draw_needed ||
+        (last.sys_state != sys_state) ||
+        (last.status_mode != status_mode) ||
+        (status_mode & last.feed_rate != feed_rate);
+
     if (changed ||
         last.prog_w != prog_w)
     {
-        doTextProgress(ele,sysStateName(sys_state),changed);
+        if (status_mode)
+        {
+            char buf[6];
+            int i_feed_rate = feed_rate;
+            sprintf(buf,"F%-3d",i_feed_rate);
+            doTextProgress(ele,buf,changed);
+        }
+        else
+        {
+            doTextProgress(ele,sysStateName(sys_state),changed);
+        }
     }
 }
 
@@ -368,21 +385,63 @@ void gApplication::doSysState(const uiElement *ele)
 void gApplication::doMemAvail(const uiElement *ele)
 {
     uint16_t id_type = ele->id_type;
-    uint32_t avail = id_type == ID_MEMAVAIL ?
-        xPortGetFreeHeapSize() :
-        xPortGetMinimumEverFreeHeapSize();
-    avail /= 1024;
-    uint32_t *prev = id_type == ID_MEMAVAIL ?
-        &last.mem_avail :
-        &last.min_avail;
-    bool changed = draw_needed || *prev != avail;
-    if (changed ||
-        last.prog_w != prog_w)
+
+    #ifdef UI_WITH_MESH
+        if (status_mode)
+        {
+            static bool was_valid = false;
+
+            bool is_live_z = id_type == ID_MEMAVAIL;
+            bool is_valid  = the_mesh.isValid();
+
+            float z = is_live_z ? live_z : mesh_z ;
+            float prev = is_live_z ? last.live_z : last.mesh_z ;
+
+            bool changed =
+                draw_needed ||
+                prev != z ||
+                was_valid != is_valid ||
+                last.status_mode != status_mode;
+
+            if (changed ||
+                last.prog_w != prog_w)
+            {
+                prev = z;
+                was_valid = the_mesh.isValid();
+
+                if (is_live_z || is_valid)   // don't show mesh if not valid
+                {
+                    char buf[12];
+                    sprintf(buf,"%0.3f",z);
+                    doTextProgress(ele,buf,changed);
+                }
+                else
+                {
+                    doTextProgress(ele,"",changed);
+                }
+            }
+        }
+        else
+    #endif
+
     {
-        *prev = avail;
-        char buf[12];
-        sprintf(buf,"%dK",avail);
-        doTextProgress(ele,buf,changed);
+        uint32_t avail = id_type == ID_MEMAVAIL ?
+            xPortGetFreeHeapSize() :
+            xPortGetMinimumEverFreeHeapSize();
+        avail /= 1024;
+        uint32_t *prev = id_type == ID_MEMAVAIL ?
+            &last.mem_avail :
+            &last.min_avail;
+        bool changed = draw_needed || *prev != avail ||
+            last.status_mode != status_mode;
+        if (changed ||
+            last.prog_w != prog_w)
+        {
+            *prev = avail;
+            char buf[12];
+            sprintf(buf,"%dK",avail);
+            doTextProgress(ele,buf,changed);
+        }
     }
 }
 
@@ -558,7 +617,12 @@ void gApplication::update()
     sys_state = g_status.getSysState();
     sd_state = g_status.getSDState();
     job_state = g_status.getJobState();
+    feed_rate = g_status.getFeedRate();
 
+    #ifdef UI_WITH_MESH
+        live_z = the_mesh.getLiveZ();
+        mesh_z = the_mesh.getLastMeshZ();
+    #endif
 
     if (job_state != last.job_state)
     {
@@ -693,9 +757,17 @@ void gApplication::update()
     last.sys_state = sys_state;
     last.sd_state = sd_state;
     last.job_state = job_state;
+    last.status_mode = status_mode;
+    last.feed_rate = feed_rate;
     last.pct = job_state == JOB_HOLD || job_state == JOB_BUSY ? g_status.filePct() : 0;
     last.prog_w = prog_w;
     last.prog_color = prog_color;
+
+    #ifdef UI_WITH_MESH
+        last.live_z = live_z;
+        last.mesh_z = mesh_z;
+    #endif
+
     strcpy(last.app_title,app_title_buf);
     last.window = win_stack[0];
 
@@ -710,4 +782,28 @@ void gApplication::update()
 const char *gApplication::getActiveFilename()
 {
     return active_filename;
+}
+
+
+
+
+
+bool gApplication::hitTest()
+{
+    if (g_pressed && !g_win_pressed)
+    {
+        if (!suppress_status &&
+             g_press_y > UI_SCREEN_HEIGHT - UI_BOTTOM_MARGIN &&
+             g_press_x < UI_SCREEN_WIDTH - 80 ) // to avoid conflict with z button
+        {
+            status_mode = !status_mode;
+            const uiElement *ele =&m_elements[IDX_STATUSBAR];
+
+            g_win_pressed = ele;
+            g_window_pressed = this;
+            g_debug("gApplication hitTest()");
+            return true;
+        }
+    }
+    return uiWindow::hitTest();
 }

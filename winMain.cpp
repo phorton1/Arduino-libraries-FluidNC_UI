@@ -24,6 +24,8 @@
 #include "dlgConfirm.h"
 #include "dlgHome.h"
 #include "dlgSetPosition.h"
+#include "dlgFeedRates.h"
+
 
 #include <gActions.h>    // FluidNC_extensions
 #include <gStatus.h>     // FluidNC_extensions
@@ -56,7 +58,10 @@ winMain main_win;
 // #define IDX_Z_PLUS1          14
 // #define IDX_Z_PLUS2          15
 // #define IDZ_XY_ZERO          16
-// #define IDZ_Z_AZERO          17
+// #define IDX_Z_AZERO          17
+// #define IDX_F_OVER           18
+// #define IDX_S_OVER           19
+// #define IDX_Z_OVER           20
 
 
 #define ID_HOME_BUTTON1    ( 1 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
@@ -77,16 +82,31 @@ winMain main_win;
 #define ID_Z_MINUS2        (16 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_XY_ZERO         (17 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
 #define ID_Z_ZERO          (18 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
+#define ID_F_OVER          (19 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
+#define ID_S_OVER          (20 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
+#define ID_Z_OVER          (21 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 
 
 #define NUM_JOG_BUTTONS    12
 
+#ifdef UI_WITH_MESH
+    #define NUM_OVER_BUTTONS    3
+#else
+    #define NUM_OVER_BUTTONS    2
+#endif
+
 static char jog_button_text[NUM_JOG_BUTTONS][6];
+static char feed_over_text[8];
+static char spindle_over_text[8];
+#ifdef UI_WITH_MESH
+    static char z_over_text[8];
+#endif
 
 
 #define RC_TO_XY(r,c)      1+c*45 +(c==6?2:0), 35+r*34, 45,  35
     // 7 x 5     idle_buttons are 45 wide by 34 high
 
+// these don't all need to be mutable
 
 static uiMutable idle_buttons[] = {
     {"home",               COLOR_BLUE,           COLOR_WHITE, FONT_NORMAL },
@@ -128,6 +148,11 @@ static const uiElement idle_elements[] = {
     { ID_Z_MINUS2    ,   RC_TO_XY(4,5),     &idle_buttons[15], },
     { ID_XY_ZERO     ,   RC_TO_XY(2,2),     &idle_buttons[16], },
     { ID_Z_ZERO      ,   RC_TO_XY(2,5),     &idle_buttons[17], },
+    { ID_F_OVER      ,   RC_TO_XY(0,6),     &feed_over_text,    COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+    { ID_S_OVER      ,   RC_TO_XY(1,6),     &spindle_over_text, COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+#ifdef UI_WITH_MESH
+    { ID_Z_OVER      ,   RC_TO_XY(4,6),     &z_over_text,       COLOR_BLUE, COLOR_WHITE, FONT_MONO },
+#endif
 };
 
 #define NUM_IDLE_ELEMENTS  (sizeof(idle_elements)/sizeof(uiElement))
@@ -141,6 +166,9 @@ static const uiElement idle_elements[] = {
 #define ID_CPR_BUTTON       (102 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE )
 #define ID_RESET_BUTTON     (103 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 #define ID_REBOOT_BUTTON    (104 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
+#define ID_F_OVER2          (105 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE | ID_TYPE_DONT_DRAW_HIDDEN )
+#define ID_S_OVER2          (106 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE | ID_TYPE_DONT_DRAW_HIDDEN )
+#define ID_Z_OVER2          (107 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE | ID_TYPE_DONT_DRAW_HIDDEN )
 
 static char active_text_buffer[30];
 
@@ -163,12 +191,37 @@ static uiMutable cpr_button = {
     COLOR_WHITE,
     FONT_BIG,
 };
+static uiMutable feed_over_button = {
+    feed_over_text,
+    COLOR_BUTTON_HIDDEN,
+    COLOR_WHITE,
+    FONT_SMALL,
+};
+static uiMutable spindle_over_button = {
+    spindle_over_text,
+    COLOR_BUTTON_HIDDEN,
+    COLOR_WHITE,
+    FONT_SMALL,
+};
+#ifdef UI_WITH_MESH
+    static uiMutable z_over_button = {
+        z_over_text,
+        COLOR_BUTTON_HIDDEN,
+        COLOR_WHITE,
+        FONT_SMALL,
+    };
+#endif
 
 
 static const uiElement active_elements[] =
 {
     { ID_ACTIVE_TEXT,     0,   45, 320,  30,  V(&active_text), },
     { ID_HOME_BUTTON2,    20,  95, 130,  40,  V(&home_button)  },
+    { ID_F_OVER2,         20,  80,  60,  33,  V(&feed_over_button),    },
+    { ID_S_OVER2,         20, 115,  60,  33,  V(&spindle_over_button), },
+#ifdef UI_WITH_MESH
+    { ID_Z_OVER2,         90,  80,  60,  33,  V(&z_over_button),       },
+#endif
     { ID_CPR_BUTTON,     170,  95, 130,  40,  V(&cpr_button)   },
     { ID_RESET_BUTTON,    20, 145, 130,  40,  V("RESET"),      COLOR_ORANGE,  COLOR_BLACK,     FONT_BIG },
     { ID_REBOOT_BUTTON,  170, 145, 130,  40,  V("REBOOT"),     COLOR_DARKRED, COLOR_WHITE,     FONT_BIG },
@@ -209,6 +262,11 @@ void winMain::begin()
 {
     m_draw_needed = 1;
     m_last_job_state = JOB_NONE;
+    m_last_feed_override = 0;
+    m_last_spindle_override  = 0;
+    #ifdef UI_WITH_MESH
+        m_last_live_z = 0;
+    #endif
 }
 
 
@@ -277,6 +335,23 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                     gActions::pushGrblText(buf);
                     break;
                 }
+            case ID_F_OVER2 :
+            case ID_F_OVER :
+                dlg_feed_rates.setSelectedItem(PARAM_IDX_FEED_RATE);
+                the_app.openWindow(&dlg_feed_rates);
+                break;
+            case ID_S_OVER2 :
+            case ID_S_OVER :
+                dlg_feed_rates.setSelectedItem(PARAM_IDX_SPINDLE_RATE);
+                the_app.openWindow(&dlg_feed_rates);
+                break;
+            #ifdef UI_WITH_MESH
+                case ID_Z_OVER2 :
+                case ID_Z_OVER :
+                    dlg_feed_rates.setSelectedItem(PARAM_IDX_LIVE_Z);
+                    the_app.openWindow(&dlg_feed_rates);
+                    break;
+            #endif
 
             // active mode buttons (ID_HOME_BUTTON2 handled above)
 
@@ -306,6 +381,24 @@ void winMain::onButton(const uiElement *ele, bool pressed)
         }
     }
 }
+
+
+void winMain::setLastOverrideText()
+{
+    m_last_feed_override = g_status.getFeedOverride();
+    m_last_spindle_override = g_status.getSpindleOverride();
+    sprintf(feed_over_text,"F%d",m_last_feed_override);
+    sprintf(spindle_over_text,"S%d",m_last_spindle_override);
+    #ifdef UI_WITH_MESH
+        m_last_live_z = the_mesh.getLiveZ();
+        sprintf(z_over_text,"%0.3f",m_last_live_z);
+        int p = 0;
+        if (z_over_text[p] == '-') p++;
+        if (z_over_text[p] == '0')
+            strcpy(&z_over_text[p],&z_over_text[p+2]);
+    #endif
+}
+
 
 void winMain::update()
 {
@@ -374,15 +467,20 @@ void winMain::update()
 
         if (m_draw_needed ||
             m_last_alarm != alarm ||
-            job_state != the_app.getLastJobState()
+            job_state != the_app.getLastJobState() ||
+            m_last_feed_override != g_status.getFeedOverride() ||
+            m_last_spindle_override != g_status.getSpindleOverride()
             #ifdef UI_WITH_MESH
-                || last_mesh_num_steps != the_mesh.getNumSteps() ||
-                   last_mesh_step != the_mesh.getCurStep()
+                || m_last_live_z != the_mesh.getLiveZ()
+                || last_mesh_num_steps != the_mesh.getNumSteps()
+                || last_mesh_step != the_mesh.getCurStep()
             #endif
             )
         {
             m_draw_needed = false;
             m_last_alarm = alarm;
+
+            setLastOverrideText();
 
             #ifdef UI_WITH_MESH
                 last_mesh_num_steps = the_mesh.getNumSteps();
@@ -393,6 +491,9 @@ void winMain::update()
             bool in_job = job_state == JOB_BUSY || job_state == JOB_HOLD;
 
             home_button.bg = is_alarm ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
+            feed_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
+            spindle_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
+            z_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
 
             active_text.text =
                 is_alarm ? alarmText(alarm) :
@@ -422,7 +523,6 @@ void winMain::update()
                 char buf[12];
                 sprintf(buf,"ALARM %d",alarm);
                 the_app.setTitle(buf);
-
                 cpr_button.bg = COLOR_BLUE;
                 cpr_button.text = "CLEAR";
             }
@@ -448,10 +548,18 @@ void winMain::update()
     {
         if (m_draw_needed ||
             m_last_micro_mode != m_micro_mode ||
-            job_state != the_app.getLastJobState())
+            job_state != the_app.getLastJobState() ||
+            m_last_feed_override != g_status.getFeedOverride() ||
+            m_last_spindle_override != g_status.getSpindleOverride()
+            #ifdef UI_WITH_MESH
+                || m_last_live_z != the_mesh.getLiveZ()
+            #endif
+            )
         {
             m_draw_needed = false;
             m_last_micro_mode = m_micro_mode;
+
+            setLastOverrideText();
 
             idle_buttons[IDX_MICRO_BUTTON].bg = m_micro_mode ?
                 COLOR_GREEN :
@@ -468,18 +576,18 @@ void winMain::update()
             const char *z_scale1 = m_micro_mode ? "0.01"  : "1";
             const char *z_scale2 = m_micro_mode ? "0.10"  : "10";
 
-            sprintf(jog_button_text[ 0], "-%s", xy_scale2);        // X_MINUS2
-            sprintf(jog_button_text[ 1], "-%s", xy_scale1);        // X_MINUS1
-            sprintf(jog_button_text[ 2], "%s",  xy_scale1);        // X_PLUS1
-            sprintf(jog_button_text[ 3], "%s",  xy_scale2);        // X_PLUS2
+            sprintf(jog_button_text[ 0], "-%s", xy_scale2);      // X_MINUS2
+            sprintf(jog_button_text[ 1], "-%s", xy_scale1);      // X_MINUS1
+            sprintf(jog_button_text[ 2], "%s",  xy_scale1);      // X_PLUS1
+            sprintf(jog_button_text[ 3], "%s",  xy_scale2);      // X_PLUS2
 
-            sprintf(jog_button_text[ 4], "%s",  xy_scale2);         // Y_PLUS2
-            sprintf(jog_button_text[ 5], "%s",  xy_scale1);         // Y_PLUS1
-            sprintf(jog_button_text[ 6], "-%s", xy_scale1);       // Y_MINUS1
-            sprintf(jog_button_text[ 7], "-%s", xy_scale2);       // Y_MINUS2
+            sprintf(jog_button_text[ 4], "%s",  xy_scale2);      // Y_PLUS2
+            sprintf(jog_button_text[ 5], "%s",  xy_scale1);      // Y_PLUS1
+            sprintf(jog_button_text[ 6], "-%s", xy_scale1);      // Y_MINUS1
+            sprintf(jog_button_text[ 7], "-%s", xy_scale2);      // Y_MINUS2
 
-            sprintf(jog_button_text[ 8], "%s",  z_scale2);         // Z_PLUS2
-            sprintf(jog_button_text[ 9], "%s",  z_scale1);         // Z_PLUS1
+            sprintf(jog_button_text[ 8], "%s",  z_scale2);       // Z_PLUS2
+            sprintf(jog_button_text[ 9], "%s",  z_scale1);       // Z_PLUS1
             sprintf(jog_button_text[10], "-%s", z_scale1);       // Z_MINUS1`
             sprintf(jog_button_text[11], "-%s", z_scale2);       // Z_MINUS2
 
@@ -487,5 +595,5 @@ void winMain::update()
             drawTypedElements();
 
         }   // changed
-    }       // MAIN_MODE_IDLE
+    }   // MAIN_MODE_IDLE
 }   // update()

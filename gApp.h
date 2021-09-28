@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "gDefs.h"
 #include "uiWindow.h"
 #include <gStatus.h>    // FluidNC_extensions
 
@@ -33,6 +34,18 @@ typedef struct appLast_t
     uint16_t       prog_color;
     char           app_title[UI_MAX_TITLE + 1];
     uiWindow      *window;
+
+    uint8_t        status_mode;     // 0 == sys.state/memory  1==Feed Rate/zOffs
+
+    float          feed_rate;
+    float          feed_override;
+    float          rapid_feed_override;
+    float          spindle_override;
+
+    #ifdef UI_WITH_MESH
+        float      live_z;
+        float      mesh_z;
+    #endif
 
 };
 
@@ -90,6 +103,13 @@ class gApplication : public uiWindow
 
         bool draw_needed;
         bool suppress_status;
+        uint8_t status_mode;
+        float feed_rate;
+        #ifdef UI_WITH_MESH
+            float      live_z;
+            float      mesh_z;
+        #endif
+
 
         // progress bar
 
@@ -126,6 +146,10 @@ class gApplication : public uiWindow
         void doSysState(const uiElement *ele);
         void doMemAvail(const uiElement *ele);
         void doJobProgress(const uiElement *ele);
+
+        // override to check for clicking on status bar
+
+        bool hitTest();
 
 };
 

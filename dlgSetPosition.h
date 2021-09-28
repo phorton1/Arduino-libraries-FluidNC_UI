@@ -14,6 +14,8 @@ class dlgSetPosition : public uiWindow
 
     private:
 
+        bool m_mesh_valid;
+
         virtual void begin() override;
         virtual void update() override;
         virtual bool isModal() const override { return true; }

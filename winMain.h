@@ -27,6 +27,12 @@ class winMain : public uiWindow
         int     m_last_mode;
         uint8_t m_last_alarm;
 
+        int m_last_feed_override;
+        int m_last_spindle_override;
+
+        #ifdef UI_WITH_MESH
+            float m_last_live_z;
+        #endif
 
         virtual void begin() override;
         virtual void update() override;
@@ -34,6 +40,7 @@ class winMain : public uiWindow
         virtual const char *getMenuLabel() const override  { return "MAIN"; }
 
         void doJog(const char *axis, int jog_num);
+        void setLastOverrideText();
 
 };
 

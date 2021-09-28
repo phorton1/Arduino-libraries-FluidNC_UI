@@ -181,9 +181,10 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
     if (ele->id_type & ID_TYPE_BUTTON &&
         bg == COLOR_BUTTON_HIDDEN)
     {
-        tft.fillRect(
-            ele->x, ele->y, ele->w, ele->h,
-            bg);
+        if (!(ele->id_type & ID_TYPE_DONT_DRAW_HIDDEN))
+            tft.fillRect(
+                ele->x, ele->y, ele->w, ele->h,
+                bg);
     }
     else
     {
@@ -238,6 +239,10 @@ void uiWindow::drawTypedElement(const uiElement *ele, bool pressed) const
             if (dual->type & ELEMENT_TYPE_FLOAT)
             {
                 sprintf(buf,"%3.1f",*(float *) dual->value);
+            }
+            else if (dual->type & ELEMENT_TYPE_FLOAT3)
+            {
+                sprintf(buf,"%4.3f",*(float *) dual->value);
             }
             else if (dual->type & ELEMENT_TYPE_INT)
             {

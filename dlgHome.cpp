@@ -8,7 +8,6 @@
 
 #ifdef UI_WITH_MESH
     #include <Mesh.h>           // FluidNC_extensions
-    #include "dlgMeshSettings.h"
 #endif
 
 dlgHome dlg_home;
@@ -26,9 +25,9 @@ dlgHome dlg_home;
 #define ID_PROBE           (0x0005 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 #define ID_MESH_CREATE     (0x0006 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 #define ID_MESH_CLEAR      (0x0007 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MESH_SET        (0x0008 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
+#define ID_MESH_SHOW        (0x0008 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 
-uiMutable clear_mesh = {"Clear",  COLOR_DARKGREEN, COLOR_WHITE, FONT_NORMAL };
+static uiMutable clear_mesh = {"Clear",  COLOR_DARKGREEN, COLOR_WHITE, FONT_NORMAL };
 
 static const uiElement home_elements[] =
 {
@@ -40,7 +39,7 @@ static const uiElement home_elements[] =
 #ifdef UI_WITH_MESH
     { ID_MESH_CREATE, 180,  83, 110,  33,  V("Mesh"),     COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
     { ID_MESH_CLEAR,  180, 121, 110,  33,  V(&clear_mesh) },
-    { ID_MESH_SET,    180, 159, 110,  33,  V("Settings"), COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
+    { ID_MESH_SHOW,   180, 159, 110,  33,  V("Show"), COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
 #endif
 };
 
@@ -61,7 +60,9 @@ dlgHome::dlgHome() :
 
 void dlgHome::begin()
 {
-    uiWindow::begin();
+    #ifdef UI_WITH_MESH
+        m_mesh_valid = !the_mesh.isValid();
+    #endif
     the_app.setTitle(
         #ifdef UI_WITH_MESH
             "Home / Mesh"
@@ -69,7 +70,9 @@ void dlgHome::begin()
             "Home"
         #endif
         );
+    uiWindow::begin();
 }
+
 
 void dlgHome::update()
 {
@@ -115,17 +118,19 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
                 m_doing_probe = true;
                 break;
 
-            case ID_MESH_CREATE:
-                gActions::pushGrblText("$mesh/do_level\r");
-                break;
-            case ID_MESH_CLEAR:
-                gActions::pushGrblText("$mesh/clear\r");
-                return;     // stay in window
-                break;
-            case ID_MESH_SET:
-                the_app.openWindow(&dlg_mesh_settings);
-                return;     // stay in window
-                break;
+            #ifdef UI_WITH_MESH
+                case ID_MESH_CREATE:
+                    gActions::pushGrblText("$mesh/do_level\r");
+                    break;
+                case ID_MESH_CLEAR:
+                    gActions::pushGrblText("$mesh/clear\r");
+                    return;     // stay in window
+                    break;
+                case ID_MESH_SHOW:
+                    // the_app.openWindow(&dlg_mesh_settings);
+                    return;     // stay in window
+                    break;
+            #endif
         }
 
         // end the window (return to main window) for most cases

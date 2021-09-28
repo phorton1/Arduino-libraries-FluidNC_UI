@@ -20,11 +20,15 @@ typedef const char *(*constCharStarMethod)();
 
 // uiElement types OR'd into the ID_TYPE
 
-#define ID_TYPE_TEXT        0x0100      // param is const char *
-#define ID_TYPE_BUTTON      0x0200      // button with background
-#define ID_TYPE_MUTABLE     0x1000      // param is pointer to a uiMutable
-#define ID_TYPE_DUAL        0x2000      // param is pointer to a uiDualElement
-#define ID_TYPE_NO_BORDER   0x0400      // suppress outline on buttons
+#define ID_TYPE_TEXT             0x0100  // param is const char *
+#define ID_TYPE_BUTTON           0x0200  // button with background
+#define ID_TYPE_NO_BORDER        0x0400  // suppress outline on buttons
+#define ID_TYPE_DONT_DRAW_HIDDEN 0x0800  // don't draw the black box for hidden buttons
+#define ID_TYPE_MUTABLE          0x1000  // param is pointer to a uiMutable
+#define ID_TYPE_DUAL             0x2000  // param is pointer to a uiDualElement
+#define ID_TYPE_REPEAT           0x4000  // auto repeating button (not implemented yet)
+
+
 #define ID_TYPE_ALL         0xff00      // things that get drawn by the system
 
 #define COLOR_BUTTON_DISABLED     COLOR_DARKGREY
@@ -35,6 +39,7 @@ typedef const char *(*constCharStarMethod)();
 #define ELEMENT_TYPE_STR        0x0000
 #define ELEMENT_TYPE_INT        0x0001
 #define ELEMENT_TYPE_FLOAT      0x0002
+#define ELEMENT_TYPE_FLOAT3     0x0004
 
 
 

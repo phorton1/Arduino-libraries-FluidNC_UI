@@ -114,10 +114,10 @@ static int selected_item = -1;
 #define ITEM_STATE_DIRTY      0x0002
 #define ITEM_STATE_SAVED      0x0004
 
-uint8_t item_state[NUM_PARAMS];
-uint8_t last_item_state[NUM_PARAMS];
-int     last_mesh_value[NUM_PARAMS];
-int     last_button_bg[NUM_BUTTONS];
+static uint8_t item_state[NUM_PARAMS];
+static uint8_t last_item_state[NUM_PARAMS];
+static int     last_mesh_value[NUM_PARAMS];
+static int     last_button_bg[NUM_BUTTONS];
 
 static const bool allows_10[NUM_PARAMS] = {true, true, false, false, false};
 static const int  mesh_min[NUM_PARAMS]  = {10, 10, 2, 2, 1};
@@ -134,7 +134,7 @@ dlgMeshSettings::dlgMeshSettings() :
 }
 
 
-void initValues()
+void dlgMeshSettings::initValues()
 {
     mesh_value[0] = the_mesh.getWidth();
     mesh_value[1] = the_mesh.getHeight();
@@ -159,7 +159,7 @@ void dlgMeshSettings::begin()
     {
         item_state[i] = 0;
         last_item_state[i] = 0;
-        last_mesh_value[NUM_PARAMS] = mesh_value[i];
+        last_mesh_value[i] = mesh_value[i];
     }
     for (int i=0; i<NUM_BUTTONS; i++)
     {
@@ -175,7 +175,7 @@ void dlgMeshSettings::begin()
 
 
 
-void selectItem(int i)
+void dlgMeshSettings::selectItem(int i)
 {
     g_debug("selectItem(%d)",i);
     if (selected_item != -1)
@@ -199,7 +199,7 @@ void selectItem(int i)
 }
 
 
-void modifyItem(int i, int inc)
+void dlgMeshSettings::modifyItem(int i, int inc)
 {
     g_debug("modifyItem(%d,%d)",i,inc);
     mesh_value[i] += inc;
@@ -221,7 +221,7 @@ void modifyItem(int i, int inc)
 }
 
 
-void saveItem(int i)
+void dlgMeshSettings::saveItem(int i)
 {
     item_state[i] &= ~ITEM_STATE_DIRTY;
     item_state[i] |= ITEM_STATE_SAVED;
