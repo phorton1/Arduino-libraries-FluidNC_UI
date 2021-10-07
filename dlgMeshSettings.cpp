@@ -150,8 +150,8 @@ void dlgMeshSettings::begin()
 
     initValues();
 
-    mesh_max[0] = gStatus::getAxisMaxTravel(X_AXIS);
-    mesh_max[1] = gStatus::getAxisMaxTravel(Y_AXIS);
+    mesh_max[0] = gStatus::getAxisMaxTravel(UI_AXIS_X);
+    mesh_max[1] = gStatus::getAxisMaxTravel(UI_AXIS_Y);
 
     selected_item = -1;
     saved_value = 0;

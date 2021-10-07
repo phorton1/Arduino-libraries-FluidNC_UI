@@ -330,7 +330,7 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                 {
                     // Absolute 0, actually it's minus the z_axis pulloff
                     char buf[30];
-                    sprintf(buf,"G0 G53 Z%5.3f\r", - gStatus::getAxisPulloff(Z_AXIS) );
+                    sprintf(buf,"G0 G53 Z%5.3f\r", - gStatus::getAxisPulloff(UI_AXIS_Z) );
                     g_debug("AZERO(%s)",buf);
                     gActions::pushGrblText(buf);
                     break;
@@ -493,7 +493,10 @@ void winMain::update()
             home_button.bg = is_alarm ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
             feed_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
             spindle_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
-            z_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
+
+            #ifdef UI_WITH_MESH
+                z_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
+            #endif
 
             active_text.text =
                 is_alarm ? alarmText(alarm) :
