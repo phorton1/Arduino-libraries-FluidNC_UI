@@ -7,6 +7,8 @@
 #include "winMain.h"
 #include "dlgMsg.h"
 #include "dlgMainMenu.h"
+#include "dlgWifiSettings.h"
+
 
 #ifdef UI_WITH_MESH
     #include <Mesh.h>          // FluidNC_extensions
@@ -21,7 +23,7 @@
 // IDS OF ANY PARENTS MUST BE GLOBALLY UNIQUE !!
 
 #define ID_APP_BUTTON           (0x0021 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_APP_TITLE            (0x0022 | ID_TYPE_TEXT | ID_TYPE_MUTABLE)
+#define ID_APP_TITLE            (0x0022 | ID_TYPE_TEXT | ID_TYPE_MUTABLE | ID_TYPE_NO_BORDER | ID_TYPE_BUTTON)
 #define ID_SD_INDICATOR         (0x0023)
 #define ID_WIFI_INDICATOR       (0x0024)
 
@@ -170,6 +172,13 @@ void gApplication::onButton(const uiElement *ele, bool pressed)
             endModal();
         else
             openWindow(&main_menu);
+    }
+    else if (pressed && ele->id_type == ID_APP_TITLE)
+    {
+        if (win_stack[win_stack_ptr]->isModal())
+            endModal();
+        else
+            openWindow(&dlg_wifi_settings);
     }
 }
 

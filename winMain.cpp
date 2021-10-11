@@ -549,7 +549,9 @@ void winMain::update()
     }       // MAIN_MODE_ACTIVE
     else    // MAIN_MODE_IDLE
     {
+        uint8_t wifi_state = g_status.getWifiState();
         if (m_draw_needed ||
+            m_last_wifi_state != wifi_state ||
             m_last_micro_mode != m_micro_mode ||
             job_state != the_app.getLastJobState() ||
             m_last_feed_override != g_status.getFeedOverride() ||
@@ -561,6 +563,7 @@ void winMain::update()
         {
             m_draw_needed = false;
             m_last_micro_mode = m_micro_mode;
+            m_last_wifi_state = wifi_state;
 
             setLastOverrideText();
 
@@ -596,6 +599,12 @@ void winMain::update()
 
             tft.fillRect(0,UI_TOP_MARGIN,UI_SCREEN_WIDTH,UI_CONTENT_HEIGHT,COLOR_BLACK);
             drawTypedElements();
+
+            if (wifi_state == IND_STATE_READY ||
+                wifi_state == IND_STATE_ACTIVE)
+            {
+                the_app.setTitle(gStatus::getIPAddress());
+            }
 
         }   // changed
     }   // MAIN_MODE_IDLE
