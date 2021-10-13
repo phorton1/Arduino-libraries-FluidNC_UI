@@ -25,6 +25,8 @@
 #include "dlgHome.h"
 #include "dlgSetPosition.h"
 #include "dlgFeedRates.h"
+#include "dlgSystem.h"
+
 
 
 #include <gActions.h>    // FluidNC_extensions
@@ -344,6 +346,9 @@ void winMain::onButton(const uiElement *ele, bool pressed)
             case ID_S_OVER :
                 dlg_feed_rates.setSelectedItem(PARAM_IDX_SPINDLE_RATE);
                 the_app.openWindow(&dlg_feed_rates);
+                break;
+            case ID_SYS_BUTTON :
+                the_app.openWindow(&dlg_system);
                 break;
             #ifdef UI_WITH_MESH
                 case ID_Z_OVER2 :
