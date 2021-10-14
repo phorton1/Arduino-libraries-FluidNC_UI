@@ -13,6 +13,9 @@
     #include "FluidNC_UI.h"
 #endif
 
+#define CALIBRATION_SANITY_VALUE   6000
+	// calibration data should not be zero or larger than this
+
 
 #ifdef TFT_2_POINT_8_INCH_ILI9341
 	uint16_t calibration_data[5] = {252,3404,308,3417,7};
@@ -166,6 +169,15 @@ void calibrate_my_tft()
 
     if (ok)
     {
+		for (int i=0; i<5; i++)     // sanity check
+		{
+			if (t_caldata[i] == 0 || t_caldata[i] > CALIBRATION_SANITY_VALUE)
+			{
+				g_debug("ABORTING calibration due to bogus calibration data");
+				return;
+			}
+		}
+
         for (int i=0; i<5; i++)
             calibration_data[i] = t_caldata[i];
 
@@ -222,9 +234,9 @@ bool getCalibrationData()
 
                 for (int i=0; i<5; i++)     // sanity check
                 {
-                    if (t_caldata[i] == 0 || t_caldata[i] > 5000)
+                    if (t_caldata[i] == 0 || t_caldata[i] > CALIBRATION_SANITY_VALUE)
                     {
-                        g_debug("ABORTING due to bogus calibration data");
+                        g_debug("ABORTING read due to bogus calibration data");
                         return false;
                     }
                 }
