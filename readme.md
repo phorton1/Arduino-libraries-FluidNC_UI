@@ -104,4 +104,7 @@ Other windows include:
 This library is licensed undere the
 [GNU General Public License v3.0](https://github.com/phorton1/Arduino-libraries-FluidNC_UI/tree/master/LICENSE.TXT)
 
-**Credits** to **Bodmer** for the open source **TFT_eSPI** library
+**Credits**
+
+- To **Bodmer** for the open source **TFT_eSPI** library
+- To **bdring** and the **FluidNC Team**
