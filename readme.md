@@ -93,3 +93,15 @@ Other windows include:
 
 **winPrefs** - allows the user to set their preferences for the UI
 **winConfig** - allows the user to modify (select) GCode Parameters
+
+
+
+
+<br>
+
+## Credits and License
+
+This library is licensed undere the
+[GNU General Public License v3.0](https://github.com/phorton1/Arduino-libraries-FluidNC_UI/tree/master/LICENSE.TXT)
+
+**Credits** to **Bodmer** for the open source **TFT_eSPI** library
