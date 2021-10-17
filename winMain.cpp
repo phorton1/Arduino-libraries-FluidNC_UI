@@ -276,7 +276,7 @@ void winMain::doJog(const char *axis, int jog_num)
     // G91=relative mode, must provide feed rate
 {
     g_debug("doJog(%s%s F%d)",axis,jog_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
-    char command_buf[20];
+    char command_buf[40];
     sprintf(command_buf,"$J=G91 %s%s F%d\r\n",
         axis,
         jog_button_text[jog_num],
