@@ -96,16 +96,16 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
         switch (ele->id_type)
         {
             case ID_HOMEALL :
-                gActions::pushGrblText("$H\r");
+                gActions::pushGrblText("$H\r\n");
                 break;
             case ID_HOMEX :
-                gActions::pushGrblText("$HX\r");
+                gActions::pushGrblText("$HX\r\n");
                 break;
             case ID_HOMEY :
-                gActions::pushGrblText("$HY\r");
+                gActions::pushGrblText("$HY\r\n");
                 break;
             case ID_HOMEZ :
-                gActions::pushGrblText("$HZ\r");
+                gActions::pushGrblText("$HZ\r\n");
                 break;
 
             case ID_PROBE :
@@ -114,16 +114,16 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
                 // it will be finished in winMain::update()
                 g_debug("PROBE STARTED");
                 gActions::clearProbeSucceeded();
-                gActions::pushGrblText("G38.2 F100 Z-50\r");
+                gActions::pushGrblText("G38.2 F100 Z-50\r\n");
                 m_doing_probe = true;
                 break;
 
             #ifdef UI_WITH_MESH
                 case ID_MESH_CREATE:
-                    gActions::pushGrblText("$mesh/do_level\r");
+                    gActions::pushGrblText("$mesh/do_level\r\n");
                     break;
                 case ID_MESH_CLEAR:
-                    gActions::pushGrblText("$mesh/clear\r");
+                    gActions::pushGrblText("$mesh/clear\r\n");
                     return;     // stay in window
                     break;
                 case ID_MESH_SHOW:

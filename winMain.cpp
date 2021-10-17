@@ -277,7 +277,7 @@ void winMain::doJog(const char *axis, int jog_num)
 {
     g_debug("doJog(%s%s F%d)",axis,jog_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
     char command_buf[20];
-    sprintf(command_buf,"$J=G91 %s%s F%d\r",
+    sprintf(command_buf,"$J=G91 %s%s F%d\r\n",
         axis,
         jog_button_text[jog_num],
         getIntPref(PREF_JOG_FEED_RATE));
@@ -326,13 +326,13 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                  break;
             case ID_XY_ZERO :
                 // Programmed Zero
-                gActions::pushGrblText("G0 X0 Y0\r");
+                gActions::pushGrblText("G0 X0 Y0\r\n");
                 break;
             case ID_Z_ZERO :
                 {
                     // Absolute 0, actually it's minus the z_axis pulloff
                     char buf[30];
-                    sprintf(buf,"G0 G53 Z%5.3f\r", - gStatus::getAxisPulloff(UI_AXIS_Z) );
+                    sprintf(buf,"G0 G53 Z%5.3f\r\n", - gStatus::getAxisPulloff(UI_AXIS_Z) );
                     g_debug("AZERO(%s)",buf);
                     gActions::pushGrblText(buf);
                     break;
@@ -374,7 +374,7 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                 if (!strcmp(b_text,"CLEAR"))
                 {
                     the_app.setTitle("");
-                    gActions::pushGrblText("$X\r");
+                    gActions::pushGrblText("$X\r\n");
                 }
                 else
                 {
@@ -435,9 +435,9 @@ void winMain::update()
                     dlg_home.m_doing_probe = false;
                     g_debug("PROBE COMPLETED");
                     vTaskDelay(500);
-                    gActions::pushGrblText("G10 L20 Z0\r");
+                    gActions::pushGrblText("G10 L20 Z0\r\n");
                     vTaskDelay(1000);
-                    gActions::pushGrblText("G0 Z5\r");
+                    gActions::pushGrblText("G0 Z5\r\n");
                     vTaskDelay(500);
                 }
                 else

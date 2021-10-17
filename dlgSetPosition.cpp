@@ -87,23 +87,23 @@ void dlgSetPosition::onButton(const uiElement *ele, bool pressed)
         switch (ele->id_type)
         {
             case ID_SET_ALL :
-                gActions::pushGrblText("G10 L20 x0 y0 z0\r");
+                gActions::pushGrblText("G10 L20 x0 y0 z0\r\n");
                 break;
             case ID_SET_X :
-                gActions::pushGrblText("G10 L20 x0\r");
+                gActions::pushGrblText("G10 L20 x0\r\n");
                 break;
             case ID_SET_Y :
-                gActions::pushGrblText("G10 L20 y0\r");
+                gActions::pushGrblText("G10 L20 y0\r\n");
                 break;
             case ID_SET_Z :
-                gActions::pushGrblText("G10 L20 z0\r");
+                gActions::pushGrblText("G10 L20 z0\r\n");
                 break;
             #ifdef UI_WITH_MESH
                 case ID_SET_MESH:
                     the_app.openWindow(&dlg_mesh_settings);
                     break;
                 case ID_MESH_CLEAR:
-                    gActions::pushGrblText("$mesh/clear\r");
+                    gActions::pushGrblText("$mesh/clear\r\n");
                     break;
                 case ID_MESH_SHOW:
                     // the_app.openWindow(&dlg_mesh_settings);
