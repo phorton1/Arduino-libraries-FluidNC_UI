@@ -608,8 +608,14 @@ void gApplication::setDefaultWindow(uiWindow *win)
 }
 
 
+extern volatile bool in_screen_grab;
+
+
 void gApplication::update()
 {
+    if (in_screen_grab)
+        return;
+
     bool job_finished = false;
 
     // update the gStatus object

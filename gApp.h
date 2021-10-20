@@ -8,6 +8,9 @@
 #include "uiWindow.h"
 #include <gStatus.h>    // FluidNC_extensions
 
+#define CMD_UI_SCREEN_GRAB  0x10    // ctrl-P
+    // here for agreement between apps
+
 
 typedef struct appLast_t
     // A structure that holds previous state of
@@ -94,6 +97,9 @@ class gApplication : public uiWindow
         }
 
         void suppressStatus()  { suppress_status = true; }
+
+        static void doScreenGrab();
+
 
     private:
 
