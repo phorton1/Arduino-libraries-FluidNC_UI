@@ -74,8 +74,6 @@ class gApplication : public uiWindow
             // UI Windows besides the application should NOT
             // use g_status directly.
 
-        const char *getAppButtonText();
-
         void redrawAll()
             // needed layer violation so that uiWindow can
             // do the TFT calibration

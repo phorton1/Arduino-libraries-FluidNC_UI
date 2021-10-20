@@ -26,7 +26,6 @@ class winMain : public uiWindow
         JobState m_last_job_state;
         indicatorState_t m_last_wifi_state;
 
-
         int     m_last_mode;
         uint8_t m_last_alarm;
 

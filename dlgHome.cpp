@@ -8,6 +8,7 @@
 
 #ifdef UI_WITH_MESH
     #include <Mesh.h>           // FluidNC_extensions
+    #include <dlgMeshSettings.h>
 #endif
 
 dlgHome dlg_home;
@@ -25,7 +26,7 @@ dlgHome dlg_home;
 #define ID_PROBE           (0x0005 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 #define ID_MESH_CREATE     (0x0006 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 #define ID_MESH_CLEAR      (0x0007 | ID_TYPE_TEXT | ID_TYPE_BUTTON | ID_TYPE_MUTABLE)
-#define ID_MESH_SHOW        (0x0008 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
+#define ID_MESH_SET        (0x0008 | ID_TYPE_TEXT | ID_TYPE_BUTTON)
 
 static uiMutable clear_mesh = {"Clear",  COLOR_DARKGREEN, COLOR_WHITE, FONT_NORMAL };
 
@@ -39,7 +40,7 @@ static const uiElement home_elements[] =
 #ifdef UI_WITH_MESH
     { ID_MESH_CREATE, 180,  83, 110,  33,  V("Mesh"),     COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
     { ID_MESH_CLEAR,  180, 121, 110,  33,  V(&clear_mesh) },
-    { ID_MESH_SHOW,   180, 159, 110,  33,  V("Show"), COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
+    { ID_MESH_SET,    180, 159, 110,  33,  V("Settings"), COLOR_DARKGREEN, COLOR_WHITE,  FONT_NORMAL, JUST_CENTER},
 #endif
 };
 
@@ -126,8 +127,8 @@ void dlgHome::onButton(const uiElement *ele, bool pressed)
                     gActions::pushGrblText("$mesh/clear\r\n");
                     return;     // stay in window
                     break;
-                case ID_MESH_SHOW:
-                    // the_app.openWindow(&dlg_mesh_settings);
+                case ID_MESH_SET:
+                    the_app.openWindow(&dlg_mesh_settings);
                     return;     // stay in window
                     break;
             #endif

@@ -5,8 +5,9 @@
 #include "gApp.h"
 #include "gPrefs.h"
 #include "winMain.h"
+#include "winFiles.h"
 #include "dlgMsg.h"
-#include "dlgMainMenu.h"
+// #include "dlgMainMenu.h"
 #include "dlgWifiSettings.h"
 
 
@@ -170,10 +171,12 @@ void gApplication::onButton(const uiElement *ele, bool pressed)
     {
         if (win_stack[win_stack_ptr]->isModal())
             endModal();
+        else if (win_stack[0] == &main_win)
+            setBaseWindow(&files_win);
         else
-            openWindow(&main_menu);
+            setBaseWindow(&main_win);
     }
-    else if (pressed && ele->id_type == ID_APP_TITLE)
+    else if (!pressed && ele->id_type == ID_APP_TITLE)
     {
         if (win_stack[win_stack_ptr]->isModal())
             endModal();
@@ -183,13 +186,34 @@ void gApplication::onButton(const uiElement *ele, bool pressed)
 }
 
 
+bool gApplication::hitTest()
+{
+    if (g_pressed && !g_win_pressed)
+    {
+        if (!suppress_status &&
+             g_press_y > UI_SCREEN_HEIGHT - UI_BOTTOM_MARGIN &&
+             g_press_x < UI_SCREEN_WIDTH - 80 ) // to avoid conflict with z button
+        {
+            status_mode = !status_mode;
+            const uiElement *ele =&m_elements[IDX_STATUSBAR];
+
+            g_win_pressed = ele;
+            g_window_pressed = this;
+            g_debug("gApplication hitTest()");
+            return true;
+        }
+    }
+    return uiWindow::hitTest();
+}
+
+
 //------------------------
 // utilities
 //------------------------
 
-const char *gApplication::getAppButtonText()
+const char *gApplication::getActiveFilename()
 {
-    return app_button_buf;
+    return active_filename;
 }
 
 
@@ -240,8 +264,10 @@ void gApplication::doText(const uiElement *ele, const char *text)
 
 void gApplication::doAppButton(const uiElement *ele)
 {
-    uiWindow *win = win_stack[0];
-    bool is_main_win = win == ((uiWindow *)&main_win);
+    uiWindow *bottom_win = win_stack[0];
+    uiWindow *win = win_stack[win_stack_ptr];
+
+    bool is_main_win = bottom_win == ((uiWindow *)&main_win);
 
     float pct = g_status.filePct();
     bool busy_or_hold =
@@ -259,8 +285,12 @@ void gApplication::doAppButton(const uiElement *ele)
     {
         if (is_main_win && busy_or_hold)
             sprintf(app_button_buf,"%2.1f%%",pct);
-        else // if (!busy_or_hold)
-            strcpy(app_button_buf,win->getMenuLabel());
+        else if (win_stack_ptr)
+            strcpy(app_button_buf,"BACK");
+        else if (win_stack[0] == &main_win)
+            strcpy(app_button_buf,"FILES");
+        else
+            strcpy(app_button_buf,"MAIN");
 
         app_button.fg =
             job_state == JOB_HOLD ? COLOR_CYAN :
@@ -533,7 +563,7 @@ void gApplication::doTextProgress(const uiElement *ele, const char *text, bool c
         normal_w = win_e - prog_e;
     }
 
-    // Change bsrt back to x,w format and
+    // Change se notation back to x,w format and
     // draw the bar and normal bg portions, if any.
 
     int16_t bar_w = prog_e - prog_s + 1;
@@ -613,10 +643,10 @@ extern volatile bool in_screen_grab;
 
 void gApplication::update()
 {
+    // screen grabs "freeze" the state of the UI
+
     if (in_screen_grab)
         return;
-
-    bool job_finished = false;
 
     // update the gStatus object
 
@@ -639,6 +669,7 @@ void gApplication::update()
         mesh_z = the_mesh.getLastMeshZ();
     #endif
 
+    bool job_finished = false;
     if (job_state != last.job_state)
     {
         #if DEBUG_APP
@@ -694,7 +725,7 @@ void gApplication::update()
         }
     }
 
-    // hmmm ... do hit testing before checking draw_needed
+    // do hit testing before checking draw_needed
     // as tft_calibration may set it ..
 
     uiWindow::updateTouch();
@@ -707,33 +738,16 @@ void gApplication::update()
         tft.fillRect(0,0,UI_SCREEN_WIDTH,UI_SCREEN_HEIGHT,COLOR_BLACK);
         tft.fillRect(0,0,UI_SCREEN_WIDTH,UI_TOP_MARGIN,COLOR_DARKBLUE);
         drawTypedElements();
-        // openWindow();
         win_stack[win_stack_ptr]->begin();
     }
-
-    // but do the hitTests after the window is drawn?
-
 
     // dispatch to child window if any
 
     if (win_stack[win_stack_ptr])
     {
         win_stack[win_stack_ptr]->hitTest();
-
-        // press outside of main menu closes it
-
-        if (g_pressed &&
-            !g_win_pressed &&
-            win_stack[win_stack_ptr] == &main_menu)
-        {
-            endModal();
-        }
-        else
-        {
-            win_stack[win_stack_ptr]->update();
-        }
+        win_stack[win_stack_ptr]->update();
     }
-
 
     // dispatch to frame elements
 
@@ -784,41 +798,11 @@ void gApplication::update()
     #endif
 
     strcpy(last.app_title,app_title_buf);
-    last.window = win_stack[0];
+    last.window = win_stack[win_stack_ptr];
 
     if (job_finished)
     {
         doToast(COLOR_GREEN,"finished printing",active_filename);
         setTitle("");
     }
-}
-
-
-const char *gApplication::getActiveFilename()
-{
-    return active_filename;
-}
-
-
-
-
-
-bool gApplication::hitTest()
-{
-    if (g_pressed && !g_win_pressed)
-    {
-        if (!suppress_status &&
-             g_press_y > UI_SCREEN_HEIGHT - UI_BOTTOM_MARGIN &&
-             g_press_x < UI_SCREEN_WIDTH - 80 ) // to avoid conflict with z button
-        {
-            status_mode = !status_mode;
-            const uiElement *ele =&m_elements[IDX_STATUSBAR];
-
-            g_win_pressed = ele;
-            g_window_pressed = this;
-            g_debug("gApplication hitTest()");
-            return true;
-        }
-    }
-    return uiWindow::hitTest();
 }

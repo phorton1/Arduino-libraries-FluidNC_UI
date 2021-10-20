@@ -1,8 +1,14 @@
 //--------------------------------------
 // A generic global static buffer
 //--------------------------------------
-// for use by the currently active window only
-// which re-initializes it on begin()
+// This general purpose large buffer can be used
+// by any window.  It is re-initialized as neessary
+// when changing windows from the window's begin()
+// method. Clients should bump the version number
+// so that other windows may know the contents have
+// been changed.
+//
+// Currently only used by uiScrollable->winFiles.
 
 #include "gBuffer.h"
 
