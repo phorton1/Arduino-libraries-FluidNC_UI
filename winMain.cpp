@@ -462,7 +462,7 @@ void winMain::update()
 
     if (m_mode == MAIN_MODE_ACTIVE)
     {
-        uint8_t alarm = g_status.getLastAlaram();
+        uint8_t alarm = g_status.getLastAlarm();
             // gStatus only grabs the alarm when the job state has changed
 
         #ifdef UI_WITH_MESH

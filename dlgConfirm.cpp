@@ -6,6 +6,7 @@
 #include "winFiles.h"
 #include "winMain.h"
 #include "dlgMsg.h"
+#include <gStatus.h>    // FluidNC_extensions
 #include <gActions.h>   // FluidNC_extensions
 
 
@@ -84,6 +85,24 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 the_app.setTitle("");
                 the_app.clearLastJobState();
                 gActions::realtime_command(Cmd::Reset);
+
+                // The UI version of "RESET" goes one step further,
+                // and if we are in an alarm, ALSO issues the $X command
+                // after a short delay to clear the alarm as well
+
+                if (g_status.getLastAlarm())
+                {
+                    the_app.setTitle("");
+                    delay(500);
+                    gActions::pushGrblText("$X\r\n");
+                }
+
+                // end this window, so underlying modal will also be ended
+                // endModal() will do nothing if the current window is not
+                // modal, so it's alright to call this two times even if
+                // there's only one modal window on the stack.
+
+                the_app.endModal();
             }
             else if (pending_command == CONFIRM_COMMAND_REBOOT)
             {
@@ -112,6 +131,9 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 if (strcmp(filename,"/"))
                     strcat(filename,"/");
                 strcat(filename,fn);
+
+                // the application will end the files window
+                // and return to the main window on the job_state change
 
                 g_debug("dlgConfirm running %s",filename);
                 if (gActions::startSDJob(filename))
