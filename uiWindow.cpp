@@ -122,14 +122,20 @@ void uiWindow::updateTouch()
                 }
                 else
                 {
-                    calibrate_count++;
-                    if (calibrate_count >= 5)
-                    {
-                        calibrate_my_tft();
-                        calibrate_timeout = 0;
-                        calibrate_count = 0;
-                        the_app.redrawAll();
-                    }
+                    #if 0   // def WITH_SCREEN_GRAB
+                        // temporary compile to do a screen grab
+                        // if area other than a button pressed
+                        do_next_screen_grab = 1;
+                    #else
+                        calibrate_count++;
+                        if (calibrate_count >= 5)
+                        {
+                            calibrate_my_tft();
+                            calibrate_timeout = 0;
+                            calibrate_count = 0;
+                            the_app.redrawAll();
+                        }
+                    #endif
                 }
             }
         }

@@ -7,14 +7,17 @@
 // So sending it to my console.pm program
 // instead. No checksum. Lotsa holes.
 
-#define AS_TASK   1
-    // run the screen grab as a one-shot task
-
-
 #include "gApp.h"
+
+#ifdef WITH_SCREEN_GRAB
+    // empty compilation if not defined
+
 #include "myTFT.h"
 #include <Uart.h>
 
+
+#define AS_TASK   1
+    // run the screen grab as a one-shot task
 
 volatile bool in_screen_grab = 0;
     // we may need to prevent the application from using SPI
@@ -22,6 +25,12 @@ volatile bool in_screen_grab = 0;
     // from polling the touch screen or writing to the TFT.
     // The FluidNC SDCard is not protected.
 volatile bool screen_grab_pending = 0;
+    // do a screen grab on the next button press
+    // triggered by ctrl-O and clicking on a button from
+    // serial terminal
+volatile bool do_next_screen_grab = 0;
+    // do a screen grab at the end of the next UI draw cycle
+    // triggered from clicking on a non-button area in uiWindow.cpp
 
 
 
@@ -110,4 +119,8 @@ volatile bool screen_grab_pending = 0;
                 0);					// core 1=main FluidNC thread/task, 0=my UI and other tasks
         }
     }
-#endif
+#endif  // AS_TASK
+
+
+
+#endif  // WITH_SCREEN_GRAB

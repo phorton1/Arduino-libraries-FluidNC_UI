@@ -8,9 +8,15 @@
 #include "uiWindow.h"
 #include <gStatus.h>    // FluidNC_extensions
 
-#define CMD_UI_SCREEN_GRAB          0x10    // ctrl-P
-#define CMD_UI_SCREEN_GRAB_PENDING  0x0F    // ctrl-O
-    // here for agreement between apps
+#define WITH_SCREEN_GRAB
+    // comment in for development verioon of
+    // TFT screen grabbing
+
+#ifdef WITH_SCREEN_GRAB
+    #define CMD_UI_SCREEN_GRAB          0x10    // ctrl-P
+    #define CMD_UI_SCREEN_GRAB_PENDING  0x0F    // ctrl-O
+        // here for agreement between apps
+#endif
 
 
 typedef struct appLast_t
@@ -97,11 +103,13 @@ class gApplication : public uiWindow
 
         void suppressStatus()  { suppress_status = true; }
 
-        static void doScreenGrab(bool pending=false);
-            // if "pending" is passed as true, the
-            // grab will be "pending" the next button
-            // press, and will take place with the
-            // button highlighted.
+    #ifdef WITH_SCREEN_GRAB
+            static void doScreenGrab(bool pending=false);
+                // if "pending" is passed as true, the
+                // grab will be "pending" the next button
+                // press, and will take place with the
+                // button highlighted.
+    #endif
 
 
     private:
@@ -163,3 +171,11 @@ class gApplication : public uiWindow
 };
 
 extern gApplication the_app;
+
+#ifdef WITH_SCREEN_GRAB
+    // in gScreenGrab.cpp
+    extern volatile bool in_screen_grab;
+    extern volatile bool screen_grab_pending;
+    extern volatile bool do_next_screen_grab;
+#endif
+

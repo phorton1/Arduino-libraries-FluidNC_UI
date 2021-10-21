@@ -50,6 +50,7 @@ static char app_title_buf[UI_MAX_TITLE + 1] = "";
 static char active_filename[MAX_ACTIVE_FILENAME + 1] = "";
 
 
+
 //----------------------------------------------------------------------
 // FRAME DEFINITION
 //----------------------------------------------------------------------
@@ -638,16 +639,15 @@ void gApplication::setDefaultWindow(uiWindow *win)
 }
 
 
-extern volatile bool in_screen_grab;
-extern volatile bool screen_grab_pending;
 
 
 void gApplication::update()
 {
     // screen grabs "freeze" the state of the UI
-
-    if (in_screen_grab)
-        return;
+    #ifdef WITH_SCREEN_GRAB
+        if (in_screen_grab)
+            return;
+    #endif
 
     // update the gStatus object
 
@@ -807,9 +807,12 @@ void gApplication::update()
         setTitle("");
     }
 
-    if (screen_grab_pending && g_win_pressed)
-    {
-        screen_grab_pending = 0;
-        doScreenGrab(false);
-    }
+    #ifdef WITH_SCREEN_GRAB
+        if (do_next_screen_grab || (screen_grab_pending && g_win_pressed))
+        {
+            do_next_screen_grab = 0;
+            screen_grab_pending = 0;
+            doScreenGrab(false);
+        }
+    #endif
 }
