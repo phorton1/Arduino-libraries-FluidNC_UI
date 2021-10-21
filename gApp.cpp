@@ -639,6 +639,7 @@ void gApplication::setDefaultWindow(uiWindow *win)
 
 
 extern volatile bool in_screen_grab;
+extern volatile bool screen_grab_pending;
 
 
 void gApplication::update()
@@ -804,5 +805,11 @@ void gApplication::update()
     {
         doToast(COLOR_GREEN,"finished printing",active_filename);
         setTitle("");
+    }
+
+    if (screen_grab_pending && g_win_pressed)
+    {
+        screen_grab_pending = 0;
+        doScreenGrab(false);
     }
 }

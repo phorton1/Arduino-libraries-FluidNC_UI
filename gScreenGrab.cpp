@@ -21,15 +21,25 @@ volatile bool in_screen_grab = 0;
     // while doing a screen grab ... so I at least stop it
     // from polling the touch screen or writing to the TFT.
     // The FluidNC SDCard is not protected.
+volatile bool screen_grab_pending = 0;
+
+
 
 #if AS_TASK
     void screenGrabTask(void *params)
 #else
-    void  gApplication::doScreenGrab()
+    void  gApplication::doScreenGrab(bool pending)
 #endif
 {
     if (in_screen_grab)     // one screen grab at a time, please!
         return;
+    #if !AS_TASK
+        if (pending)
+        {
+            screen_grab_pending = 1;
+            return;
+        }
+    #endif
 
     in_screen_grab = 1;
 
@@ -82,9 +92,14 @@ volatile bool in_screen_grab = 0;
 
 
 #if AS_TASK
-    void  gApplication::doScreenGrab()
+    void  gApplication::doScreenGrab(bool pending)
     {
-        if (!in_screen_grab)
+        if (pending)
+        {
+            screen_grab_pending = true;
+        }
+        else if (!in_screen_grab)
+        {
             xTaskCreatePinnedToCore(
                 screenGrabTask,		// method
                 "screenGrabTask",		// name
@@ -93,5 +108,6 @@ volatile bool in_screen_grab = 0;
                 1,  				// priority
                 NULL,				// returned handle
                 0);					// core 1=main FluidNC thread/task, 0=my UI and other tasks
+        }
     }
 #endif

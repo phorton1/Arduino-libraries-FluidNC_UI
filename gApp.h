@@ -8,7 +8,8 @@
 #include "uiWindow.h"
 #include <gStatus.h>    // FluidNC_extensions
 
-#define CMD_UI_SCREEN_GRAB  0x10    // ctrl-P
+#define CMD_UI_SCREEN_GRAB          0x10    // ctrl-P
+#define CMD_UI_SCREEN_GRAB_PENDING  0x0F    // ctrl-O
     // here for agreement between apps
 
 
@@ -96,7 +97,11 @@ class gApplication : public uiWindow
 
         void suppressStatus()  { suppress_status = true; }
 
-        static void doScreenGrab();
+        static void doScreenGrab(bool pending=false);
+            // if "pending" is passed as true, the
+            // grab will be "pending" the next button
+            // press, and will take place with the
+            // button highlighted.
 
 
     private:

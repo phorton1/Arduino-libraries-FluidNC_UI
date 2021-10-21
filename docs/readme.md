@@ -84,8 +84,8 @@ job, the **Reset** button to stop the job in progress, but otherwise
 leave the machine unchanged, or the **Reboot** button to stop everything
 and entirely reboot the ESP32 FluidNC controller.
 
-There are also buttons to allow you to adjust the **Feed Rate** (F000),
-**Spindle Speed** (S000) and **Live Z Offset** (000) in realtime,
+There are also buttons to allow you to adjust the **Feed Rate** (F100),
+**Spindle Speed** (S100) and **Live Z Offset** (000) in realtime,
 *while the job is running*.
 
 ### The Homing/Probing/Meshing Window
