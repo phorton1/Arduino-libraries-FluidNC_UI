@@ -17,7 +17,6 @@
 // buttons.
 
 
-
 #include "gPrefs.h"
 #include "winMain.h"
 #include "dlgMsg.h"
@@ -494,8 +493,15 @@ void winMain::update()
 
             bool is_alarm = job_state == JOB_ALARM;
             bool in_job = job_state == JOB_BUSY || job_state == JOB_HOLD;
+            bool is_critical_alarm = alarm==1 || alarm==2;
+                // Exec Alarms 1 and 2 are considered "critical errors"
+                //     HardLimit          = 1,
+                //     SoftLimit          = 2,
+                // And require a RESET or REBOOT of the machine
 
-            home_button.bg = is_alarm ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
+            home_button.bg =
+                is_critical_alarm ? COLOR_BUTTON_HIDDEN :
+                is_alarm ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
             feed_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
             spindle_over_button.bg = in_job ? COLOR_BLUE : COLOR_BUTTON_HIDDEN;
 
@@ -531,7 +537,7 @@ void winMain::update()
                 char buf[12];
                 sprintf(buf,"ALARM %d",alarm);
                 the_app.setTitle(buf);
-                cpr_button.bg = COLOR_BLUE;
+                cpr_button.bg = is_critical_alarm ? COLOR_BUTTON_HIDDEN : COLOR_BLUE;
                 cpr_button.text = "CLEAR";
             }
             else if (job_state == JOB_BUSY ||
