@@ -106,6 +106,9 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
             }
             else if (pending_command == CONFIRM_COMMAND_REBOOT)
             {
+                tft.fillScreen(TFT_BLACK);
+                drawText("REBOOTING",JUST_CENTER,FONT_BIG,
+                    0,70,320,30,COLOR_RED,COLOR_BLACK);
                 g_debug("gApplication estarting the ESP32!!");
                 delay(500);
 
