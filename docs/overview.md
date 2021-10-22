@@ -201,6 +201,21 @@ to get to the SPIFF file system.
 
 ### 2d. The Alarm Window
 
+The **Alarm Window** will be presented when the system enters an *alarm state*,
+for example due to a *homing fail*, or a *limit switch*, or because
+**$start/must_home** is set to *true* in the *config.yaml* file.
+
+![critical_alarm_window.png](images/critical_alarm_window.png)
+
+*Limit switches* are considered **critical** alarms, and when encountered,
+the window only contains two buttons, **Reset** and **Reboot**.
+
+![alarm_window.png](images/alarm_window.png)
+
+In other alarm situations you also have the option of **Clearing** the
+alarm and continuing at your own risk, and/or **Homing** the machine.
+
+
 
 
 <br>
@@ -246,17 +261,82 @@ you will receive an error message.
 
 ## 4. Other Windows (Dialogs) in the system
 
-### Homing Dialog
+The **Homing**, **Set Positions**, **System**, and
+**Confirmation** dialog windows have been touched on
+briefly elsewhere in this document.  Besides those
+dialog windows there are two others that may merit
+a bit of further discussion.
 
-### Set Positions Dialog
 
-### System (reboot, reset) Dialog
+### 4a. Feed Rates Dialog
 
-### Feed Rates Dialog
+You get to the **Feed Rates** dialog by pressing one of the
+*feed rate buttons* in the *Main* or *Busy* windows.  Pressing
+the button will put you on the correct line in the dialog,
+so for example, pressing the **S100** button will put you
+on the *Spindle Rate* line:
 
-### Mesh Settings Dialog
+![spindle_rate_button.png](images/spindle_rate_button.png)
 
-### Confirmation Dialog(s)
+From there you can press the **plus or minus buttons** to
+change the rate by 10 percent, 1 percent, or return it to
+it's default value of 100:
+
+![spindle_rate.gif](images/spindle_rate.gif)
+
+In the Main window, you can see the current rate has been
+modified to 130 in the below image by the title of the button:
+
+![spindle_button_result.png](images/spindle_button_result.png)
+
+If the machine implements the *FluidNC_extensions* **mesh** feature,
+You can change the **live Z offset** in increments of
+**0.02 or 0.002 mm** at a time.
+
+![live_z_offset.gif](images/live_z_offset.gif)
+
+Note that the live Z offset only *takes effect on the
+next line of GCode executed* ... it does not happen
+immediately!
+
+Also note that you can use the **ctrl-QWERTY**
+*realtime commands*
+in the serial terminal to adjust the live Z offset:
+
+- **ctrl-Q** = +0.020
+- **ctrl-W** = +0.002
+- **ctrl-R** = 0
+- **ctrl-T** = -0.002
+- **ctrl-Y** = -0.020
+
+If the machine does not implement the *FluidNC_extensions*
+**mesh** feature, the *live Z offset* is not available.
+
+
+### 4b. Mesh Settings Dialog
+
+You acess the **Mesh Settings Dialog** via the **Settings**
+button in the *Homing Dialog* window.
+If the machine does not implement the *FluidNC_extensions*
+**mesh** feature, the *Settings button is not available*.
+
+The **Mesh Settings Dialog** allows you to adjust the
+**height and width** of the mesh (in mm), the number
+of **steps** in each direction, and the **number of
+probes** done at each step.   **Upto 4 probes** can
+performed at each point and the results will be averaged
+together.  *The selected item is shown in **cyan***.
+
+
+![mesh_settings.gif](images/mesh_settings.gif)
+
+When you change a mesh setting, it turns **red** to indicate
+it has changed and the **SAVE** button is enabled (turns *blue*).
+In order for the change to take effect you must **SAVE** the setting
+before changing to another line.  Settings changed in this
+dialog are shown in **green** when we change to another line.
+
+
 
 
 <br>
@@ -264,4 +344,3 @@ you will receive an error message.
 <div style="text-align: right">
 <a href='software.md'>NEXT</a><i> - Software Architecture and Details ...</i>
 </div>
-
