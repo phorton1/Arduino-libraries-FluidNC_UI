@@ -25,7 +25,7 @@ to allow a timeout during TFT calibration, but otherwise, all the "changes" are 
 in my **prhSettings.h** file in that project, that is included in the library as per the
 author's instructions.
 
-Plase see my [**TFT_eSPI**](https://github.com/phorton1/Arduino-libraries-TFT_eSPI) library
+Please see my [**TFT_eSPI**](https://github.com/phorton1/Arduino-libraries-TFT_eSPI) library
 readme for more details.
 
 

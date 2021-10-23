@@ -43,7 +43,7 @@ Please also see the following repositories and their readme files for more infor
 
 ## Credits and License
 
-This library is licensed undere the
+This library is licensed under the
 [GNU General Public License v3.0](https://github.com/phorton1/Arduino-libraries-FluidNC_UI/tree/master/LICENSE.TXT)
 
 **Credits**

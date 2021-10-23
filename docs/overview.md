@@ -22,7 +22,7 @@ You can *click on the title bar* to see details about the **WiFi configuration**
 There is a **status bar** at the bottom of the screen that
 shows the **machine and work coordinates** in two rows of three columns
 for the X,Y, and Z axes, respectively.  By default, the rest of the status bar shows the
-current **instantenous feed rate**,  the live **z-offset**, and if engaged, the
+current **instantaneous feed rate**,  the live **z-offset**, and if engaged, the
 **mesh z offset** at the given coordinate.
 
 ![toggle_status_bar.gif](images/toggle_status_bar.gif)
@@ -76,7 +76,7 @@ windows under certain circumstances.  In these cases you can no-longer
 access the *jog buttons*:
 
 - when the machine is **running a job** from the SDCard
-- when the machine is in the proccess of **Homing**, **Probing**, or **Meshing**
+- when the machine is in the process of **Homing**, **Probing**, or **Meshing**
 - when the machine is in an **alarm state** due to a limit switch or other problem.
 
 While the machine is in one of these states, you are presented with specific
@@ -123,7 +123,7 @@ CNC controller (*FluidNC* state machine), or to (c) entirely
 **reboot** the ESP32.
 
 **Homing** issues the standard **$H**, **$HX**, **$HZ**,
-ir **$HZ** commands to the *FluidNC* GRBL gcode interpreter.
+or **$HZ** commands to the *FluidNC* GRBL gcode interpreter.
 
 **Probing** issues the standard **G38.2**,
 gcode command to the *FluidNC* GRBL gcode interpreter,
@@ -150,7 +150,7 @@ To use the mesh, you configure the *height and width* of the mesh, and the
 number of "steps" in the x and y directions with the **Mesh Settings**
 dialog (as shown in the "Other Windows" section of this readme, below).
 
-Then, once you you select **Mesh** from the "Homing
+Then, once you select **Mesh** from the "Homing
 Dialog* the "meshing" process begins. Since creating the mesh can take a
 substantial amount of time, the "meshing" window shows the progress
 of the process as it proceeds:
@@ -315,7 +315,7 @@ If the machine does not implement the *FluidNC_extensions*
 
 ### 4b. Mesh Settings Dialog
 
-You acess the **Mesh Settings Dialog** via the **Settings**
+You access the **Mesh Settings Dialog** via the **Settings**
 button in the *Homing Dialog* window.
 If the machine does not implement the *FluidNC_extensions*
 **mesh** feature, the *Settings button is not available*.
@@ -323,7 +323,7 @@ If the machine does not implement the *FluidNC_extensions*
 The **Mesh Settings Dialog** allows you to adjust the
 **height and width** of the mesh (in mm), the number
 of **steps** in each direction, and the **number of
-probes** done at each step.   **Upto 4 probes** can
+probes** done at each step.   **Up to 4 probes** can
 performed at each point and the results will be averaged
 together.  *The selected item is shown in **cyan***.
 
