@@ -3,7 +3,7 @@
 #define UI_VERSION       "prh 1.1.0"
 #define UI_VERSION_DATE  "2021-07-15"
 
-#define UI_WITH_MESH
+// #define UI_WITH_MESH
     // This should match the usage of the FluidNC_extension
     // Mesh.h as defined in your machine
 
