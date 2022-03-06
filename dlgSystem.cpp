@@ -5,12 +5,15 @@
 #include "dlgSystem.h"
 #include "gApp.h"
 #include "dlgConfirm.h"
+#include "dlgConfig.h"
 
+#define ID_CONFIG_BUTTON    (102 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 #define ID_RESET_BUTTON     (103 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 #define ID_REBOOT_BUTTON    (104 | ID_TYPE_TEXT | ID_TYPE_BUTTON )
 
 static const uiElement system_elements[] =
 {
+    { ID_CONFIG_BUTTON,  170,  95, 130,  40,  V("CONFIG"),   COLOR_BLUE,    COLOR_WHITE,    FONT_BIG },
     { ID_RESET_BUTTON,    20, 145, 130,  40,  V("RESET"),    COLOR_ORANGE,  COLOR_BLACK,    FONT_BIG },
     { ID_REBOOT_BUTTON,  170, 145, 130,  40,  V("REBOOT"),   COLOR_DARKRED, COLOR_WHITE,    FONT_BIG },
 };
@@ -42,6 +45,9 @@ void dlgSystem::onButton(const uiElement *ele, bool pressed)
     {
         switch (ele->id_type)
         {
+            case ID_CONFIG_BUTTON :
+                the_app.openWindow(&dlg_config);
+                break;
             case ID_RESET_BUTTON :
                 // the_app.endModal();
                 dlg_confirm.setConfirm(CONFIRM_COMMAND_RESET);

@@ -6,6 +6,7 @@
 #include "winFiles.h"
 #include "winMain.h"
 #include "dlgMsg.h"
+#include "dlgConfig.h"
 #include <gStatus.h>    // FluidNC_extensions
 #include <gActions.h>   // FluidNC_extensions
 
@@ -68,6 +69,16 @@ void dlgConfirm::setConfirm(uint16_t command)
         strncpy(line2,fn,len);
         line2[len] = 0;
     }
+	else if (command >= CONFIRM_COMMAND_SET_CONFIG)
+	{
+		strcpy(line1,"Change the config to");
+		const char *fn = dlg_config.getConfigFilename(command - CONFIRM_COMMAND_SET_CONFIG);
+        int len = strlen(fn);
+        if (len > MAX_CONFIRM_LINE - 2)
+            len = MAX_CONFIRM_LINE - 2;
+        strncpy(line2,fn,len);
+        line2[len] = 0;
+	}
     strcat(line2," ?");
     pending_command = command;
 }
@@ -109,7 +120,7 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 tft.fillScreen(TFT_BLACK);
                 drawText("REBOOTING",JUST_CENTER,FONT_BIG,
                     0,70,320,30,COLOR_RED,COLOR_BLACK);
-                g_debug("gApplication estarting the ESP32!!");
+                g_debug("gApplication restarting the ESP32!!");
                 delay(500);
 
                 // ESP.restart() works better after a call to mc_reset()
@@ -141,9 +152,22 @@ void dlgConfirm::onButton(const uiElement *ele, bool pressed)
                 g_debug("dlgConfirm running %s",filename);
                 if (gActions::startSDJob(filename))
                 	the_app.setBaseWindow(&main_win);
-
             }
-        }
+			else if (pending_command >= CONFIRM_COMMAND_SET_CONFIG)
+			{
+                tft.fillScreen(TFT_BLACK);
+                drawText("setting config to",JUST_CENTER,FONT_NORMAL,
+                    0,50,320,30,COLOR_RED,COLOR_BLACK);
+                drawText(dlg_config.getConfigFilename(pending_command - CONFIRM_COMMAND_SET_CONFIG),JUST_CENTER,FONT_NORMAL,
+                    0,100,320,30,COLOR_RED,COLOR_BLACK);
+                drawText("and REBOOTING !!!",JUST_CENTER,FONT_NORMAL,
+                    0,150,320,30,COLOR_RED,COLOR_BLACK);
+                delay(500);
+				g_debug("dlgConfirm setting config %d",pending_command - CONFIRM_COMMAND_SET_CONFIG);
+				dlg_config.setConfigFilename(pending_command - CONFIRM_COMMAND_SET_CONFIG);
+			}
+
+        }	// YES button
         the_app.endModal();
     }
 }
