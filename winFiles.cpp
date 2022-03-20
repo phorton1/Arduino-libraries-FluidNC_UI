@@ -96,10 +96,12 @@ bool isGcodeFile(const char *new_path)
         !strcmp(new_path,"g") ||
         !strcmp(new_path,"gc") ||
         !strcmp(new_path,"gcode") ||
-        !strcmp(new_path,"ngc");
+        !strcmp(new_path,"nc") ||
+        !strcmp(new_path,"ngc") ||
         !strcmp(new_path,"G") ||
         !strcmp(new_path,"GC") ||
         !strcmp(new_path,"GCODE") ||
+        !strcmp(new_path,"NC") ||
         !strcmp(new_path,"NGC");
 }
 
