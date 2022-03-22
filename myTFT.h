@@ -4,7 +4,12 @@
 
 #pragma once
 
-#include "TFT_eSPI.h"
+#include "fakeTFT.h"
+
+#ifndef USE_FAKE_TFT
+    #include "TFT_eSPI.h"
+#endif
+
 
 // Colors denormalized and some renamed from TFT_eSPI.h
 
