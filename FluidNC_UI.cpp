@@ -35,6 +35,8 @@
 
 void gDisplayTask(void* pvParameters)
 {
+	g_debug("gDisplayTask started on core %d",xPortGetCoreID());
+
 	the_app.begin();
 
 	while (true)
