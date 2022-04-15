@@ -7,19 +7,6 @@
     // This should match the usage of the FluidNC_extension
     // Mesh.h as defined in your machine
 
-
-// Only one of these should be defined and the driver
-// must match the one set in TFT_eSPI/prh_Setup.h.
-// For the time being the only difference is the default
-// calibration data used if SPIFFS tft_data.txt is not found.
-// Remember, you can press 5 times on any unused portion of the
-// screen to invoke TFT calibration.
-
-// #define TFT_2_POINT_8_INCH_ILI9341
-#define TFT_3_POINT_2_INCH_ILI9341
-// #define TFT_3_POINT_5_INCH_ILI9488
-
-
 // UI axes definitions
 // UI only supports a simple 3 axis machine at this time
 
@@ -29,8 +16,9 @@
 #define UI_AXIS_Z        2
 
 // definitions common to FluidNC_UI
+// This needs to be rethought for 480x320 screens
 
-#ifdef TFT_3_POINT_5_INCH_ILI9488
+#if 0
     #define UI_SCREEN_WIDTH         480
     #define UI_SCREEN_HEIGHT        320
 #else

@@ -89,9 +89,15 @@ void gDisplayTask(void* pvParameters)
 }
 
 
-void FluidNC_UI_init()
+void FluidNC_UI_init(
+    const char *driver,
+    int rotation)
 {
-	g_debug("FluidNC_UI_init() started %d/%dK",xPortGetFreeHeapSize()/1024,xPortGetMinimumEverFreeHeapSize()/1024);
+	g_debug("FluidNC_UI_init(%s,%d) started %d/%dK",
+			driver,
+			rotation,
+			xPortGetFreeHeapSize()/1024,
+			xPortGetMinimumEverFreeHeapSize()/1024);
 
 	// set FluidNC sys.state to "Sleep" so that we can tell when it goes to Idle
 	// There should be a "None" state during startup.  And there should
@@ -101,7 +107,7 @@ void FluidNC_UI_init()
 
 	// start the TFT
 
-	init_my_tft();
+	init_my_tft(driver,rotation);
 
 	// splash screen
 

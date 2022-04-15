@@ -83,5 +83,7 @@ extern void drawText(           // draw clipped and justified text
 
 extern TFT_eSPI tft;
 
-extern void init_my_tft();
+extern void init_my_tft(
+    const char *driver,
+    int rotation);
 extern void calibrate_my_tft();

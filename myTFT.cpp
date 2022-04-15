@@ -6,7 +6,7 @@
 
 
 #define DEBUG_CALIBRATION
-#define CALIBRATION_DATA_FILE    "/tft_data.txt"
+
 
 #include <SPIFFS.h>
 
@@ -17,12 +17,17 @@
 #define CALIBRATION_SANITY_VALUE   6000
 	// calibration data should not be zero or larger than this
 
+const char *my_tft_driver = "ILI9431_32";
+int my_tft_rotation   = 3;
 
-#ifdef TFT_2_POINT_8_INCH_ILI9341
-	uint16_t calibration_data[5] = {252,3404,308,3417,7};
-#else   // TFT_3_POINT_2_INCH_ILI9341
-	uint16_t calibration_data[5] = {449,3431,374,3437,1};
-#endif
+const uint16_t calibration_data_28_1[5] = {252,3404,308,3417,7};
+	// ILI9341 2.8" 320x280 in rotation(1?)
+const uint16_t calibration_data_32_3[5] = {449,3431,374,3437,1};
+	// ILI9341 3.2" 320x280 in rotation(3)
+const uint16_t calibration_data_32_1[5] = {487,3385,300,3437,7};
+	// TODO:  ILI9341 3.2" 320x280 in rotation(1)
+uint16_t calibration_data[5];
+
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -33,6 +38,16 @@ TFT_eSPI tft = TFT_eSPI();
 #include "fonts/FreeMonoBold8pt7b.h" // "fonts/Roboto_Mono_Bold_14.h"
 #include "fonts/mySymbolFont.h"
 
+
+String getCalibrationFilename()
+{
+	String retval = "/tft_";
+	retval += my_tft_driver;
+	retval += "_";
+	retval += my_tft_rotation;
+	retval += "_data.txt";
+	return retval;
+}
 
 
 
@@ -190,7 +205,9 @@ void calibrate_my_tft()
                 calibration_data[3],
                 calibration_data[4]);
         #endif
-        File f = SPIFFS.open(CALIBRATION_DATA_FILE, "w");
+
+		String filename = getCalibrationFilename();
+        File f = SPIFFS.open(filename.c_str(), "w");
         if (f)
         {
             f.write((const unsigned char *)calibration_data, 14);
@@ -199,7 +216,7 @@ void calibrate_my_tft()
         else
         {
             #ifdef DEBUG_CALIBRATION
-                g_debug("WARNING: Could not open %s for writing. Using default calibration data",CALIBRATION_DATA_FILE);
+                g_debug("WARNING: Could not open %s for writing. Using default calibration data",filename.c_str());
             #endif
         }
     }
@@ -216,9 +233,10 @@ void calibrate_my_tft()
 bool getCalibrationData()
 {
     bool ok = false;
-    if (SPIFFS.exists(CALIBRATION_DATA_FILE))
+	String filename = getCalibrationFilename();
+    if (SPIFFS.exists(filename.c_str()))
     {
-        File f = SPIFFS.open(CALIBRATION_DATA_FILE, "r");
+        File f = SPIFFS.open(filename.c_str(), "r");
         if (f)
         {
             uint16_t t_caldata[5];
@@ -258,10 +276,34 @@ bool getCalibrationData()
 
 
 
-void init_my_tft()
+void init_my_tft(
+	const char *driver,
+    int rotation )
 {
+	my_tft_driver = driver;
+	my_tft_rotation = rotation;
+
     tft.init();
-    tft.setRotation(3);
+    tft.setRotation(my_tft_rotation);
+
+	if (!strcmp(my_tft_driver,"ILI9431_28") && my_tft_rotation == 2)
+	{
+		memcpy(calibration_data,calibration_data_28_1,5 * sizeof(int));
+	}
+	else if (!strcmp(my_tft_driver,"ILI9431_32") && my_tft_rotation == 3)
+	{
+		memcpy(calibration_data,calibration_data_32_3,5 * sizeof(int));
+	}
+	else if (!strcmp(my_tft_driver,"ILI9431_32") && my_tft_rotation == 1)
+	{
+		memcpy(calibration_data,calibration_data_32_1,5 * sizeof(int));
+	}
+	else
+	{
+		g_error("FluidNC_UI/myTFT.cpp - UNKNOWN DRIVER(%s) ROTATION(%d) combination",my_tft_driver,my_tft_rotation);
+		memcpy(calibration_data,calibration_data_32_3,5 * sizeof(int));
+	}
+
     if (!getCalibrationData())
         calibrate_my_tft();
     tft.setTouch(calibration_data);
