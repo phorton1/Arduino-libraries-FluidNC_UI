@@ -33,10 +33,10 @@
 #define TOUCHSCREEN_UPDATE_MS   33
 
 
+
 void gDisplayTask(void* pvParameters)
 {
 	g_debug("gDisplayTask started on core %d",xPortGetCoreID());
-
 	the_app.begin();
 
 	while (true)
@@ -83,7 +83,17 @@ void gDisplayTask(void* pvParameters)
 
 		{
 			vTaskDelay(TOUCHSCREEN_UPDATE_MS / portTICK_PERIOD_MS);
-			the_app.update();
+
+			// Protect SPI (sdcard) against calls by the display by
+			// calling SDCard.cpp::getSPISemaphore(). Could possibly
+			// get rid of KLUDGE_FIX_SD_UPLOAD by implementing more
+			// granular use of this semaphore in the sdcard mess.
+
+			if (getSPISemaphore())
+			{
+				the_app.update();
+				releaseSPISemaphore();
+			}
 		}
 	}
 }
