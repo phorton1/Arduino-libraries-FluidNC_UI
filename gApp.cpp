@@ -711,17 +711,24 @@ void gApplication::update()
             job_state == JOB_HOLD)
         {
             const char *filename = g_status.getActiveFilename();
-            const char *p = filename;
-            while (*p)
+            if (filename && *filename)
             {
-                if (*p++ == '/')
-                filename = p;
-            }
+                const char *p = filename;
+                while (*p)
+                {
+                    if (*p++ == '/')
+                    filename = p;
+                }
 
-            int len = strlen(filename);
-            if (len > MAX_ACTIVE_FILENAME) len = MAX_ACTIVE_FILENAME;
-            memcpy(active_filename,filename,len);
-            active_filename[len] = 0;
+                int len = strlen(filename);
+                if (len > MAX_ACTIVE_FILENAME) len = MAX_ACTIVE_FILENAME;
+                memcpy(active_filename,filename,len);
+                active_filename[len] = 0;
+            }
+            else    // fix bug using UGS that assumed hold was only from SD Card jobs
+            {
+                active_filename[0] = 0;
+            }
             setTitle(active_filename);
         }
     }
