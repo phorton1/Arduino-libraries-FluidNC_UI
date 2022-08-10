@@ -822,4 +822,17 @@ void gApplication::update()
             doScreenGrab(false);
         }
     #endif
+
+    // debugging to show Axes::debug_steppers_disabled
+    // requires #define DEBUG_STEPPERS_DISABLED in FluidNC::Machine:Axes.cpp
+
+    #if 0
+        extern volatile bool debug_steppers_disabled;
+        static bool last_steppers_disabled = 0;
+        if (last_steppers_disabled != debug_steppers_disabled)
+        {
+            last_steppers_disabled = debug_steppers_disabled;
+            tft.fillRect(0,0,20,20,last_steppers_disabled?COLOR_RED:COLOR_GREEN);
+        }
+    #endif
 }
