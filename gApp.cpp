@@ -16,7 +16,7 @@
 #endif
 
 
-#define DEBUG_APP   1
+#define DEBUG_APP   0
 
 
 #define MAX_WINDOW_STACK  5
@@ -106,10 +106,8 @@ gApplication::gApplication() :
 
 void gApplication::begin()
 {
-    #if DEBUG_APP
-        delay(400);  // more attempt to stop garbling output
-        g_debug("gApplication::begin() started ...");
-    #endif
+    delay(400);  // more attempt to stop garbling output
+    g_info("gApplication::begin() started ...");
 
     readPrefs();
     status_mode = 1;
@@ -118,9 +116,7 @@ void gApplication::begin()
     g_status.initWifiEventHandler();
     setDefaultWindow((uiWindow *)&main_win);
 
-    #if DEBUG_APP
-        g_debug("gApplication::begin() finished.");
-    #endif
+    g_info("gApplication::begin() finished.");
 }
 
 
@@ -130,7 +126,9 @@ void gApplication::openWindow(uiWindow *win)
     if (win->isModal())
     {
         win_stack_ptr++;
-        g_debug("openWindow(modal) stack=%d",win_stack_ptr);
+        #if DEBUG_APP
+            g_debug("openWindow(modal) stack=%d",win_stack_ptr);
+        #endif
         if (win_stack_ptr>1)
         {
             strcpy(app_button_buf,"back");
@@ -146,9 +144,11 @@ void gApplication::endModal()
 {
     if (win_stack[win_stack_ptr]->isModal())
     {
-        g_debug("endModal stack=%d",win_stack_ptr);
-        setTitle("");
+        #if DEBUG_APP
+            g_debug("endModal stack=%d",win_stack_ptr);
+        #endif
 
+        setTitle("");
         draw_needed = true;
         win_stack_ptr--;
         suppress_status = false;
@@ -200,7 +200,9 @@ bool gApplication::hitTest()
 
             g_win_pressed = ele;
             g_window_pressed = this;
-            g_debug("gApplication hitTest()");
+            #if DEBUG_APP
+                g_debug("gApplication hitTest()");
+            #endif
             return true;
         }
     }

@@ -26,6 +26,7 @@
 #include "dlgFeedRates.h"
 #include "dlgSystem.h"
 
+#define DEBUG_MAIN  0
 
 
 #include <gActions.h>    // FluidNC_extensions
@@ -274,7 +275,10 @@ void winMain::begin()
 void winMain::doJog(const char *axis, int jog_num)
     // G91=relative mode, must provide feed rate
 {
-    g_debug("doJog(%s%s F%d)",axis,jog_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
+    #if DEBUG_MAIN
+        g_debug("doJog(%s%s F%d)",axis,jog_button_text[jog_num],getIntPref(PREF_JOG_FEED_RATE));
+    #endif
+
     char command_buf[40];
     sprintf(command_buf,"$J=G91 %s%s F%d\r\n",
         axis,
@@ -332,7 +336,9 @@ void winMain::onButton(const uiElement *ele, bool pressed)
                     // Absolute 0, actually it's minus the z_axis pulloff
                     char buf[30];
                     sprintf(buf,"G0 G53 Z%5.3f\r\n", - gStatus::getAxisPulloff(UI_AXIS_Z) );
-                    g_debug("AZERO(%s)",buf);
+                    #if DEBUG_MAIN
+                        g_debug("AZERO(%s)",buf);
+                    #endif
                     gActions::pushGrblText(buf);
                     break;
                 }
@@ -414,7 +420,9 @@ void winMain::update()
         m_last_job_state = job_state;
         m_mode = job_state == JOB_IDLE ? MAIN_MODE_IDLE : MAIN_MODE_ACTIVE;
 
-        g_debug("winMain setting m_mode to %d",m_mode);
+        #if DEBUG_MAIN
+            g_debug("winMain setting m_mode to %d",m_mode);
+        #endif
 
         if (m_last_mode != m_mode)
         {
@@ -432,7 +440,7 @@ void winMain::update()
                 if (gActions::getProbeSucceeded())
                 {
                     dlg_home.m_doing_probe = false;
-                    g_debug("PROBE COMPLETED");
+                    g_info("PROBE COMPLETED");
                     vTaskDelay(500);
                     gActions::pushGrblText("G10 L20 Z0\r\n");
                     vTaskDelay(1000);
@@ -442,7 +450,7 @@ void winMain::update()
                 else
                 {
                     dlg_home.m_doing_probe = false;
-                    g_debug("PROBE FAILED");
+                    g_info("PROBE FAILED");
                 }
             }
         }

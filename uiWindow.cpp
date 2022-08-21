@@ -8,6 +8,8 @@
 #include "uiWindow.h"
 #include "gApp.h"   // solely for redrawAll() after tft calibration
 
+#define DEBUG_WINDOW  0
+
 
 // pressing 5 times in a row without hitting a button in less
 // than 8 seconds or so will bring up the tft calibration window
@@ -53,7 +55,9 @@ bool uiWindow::hitTest()
                 {
                     g_win_pressed = ele;
                     g_window_pressed = this;
-                    g_debug("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
+                    #if DEBUG_WINDOW
+                        g_debug("hitTest(%08x)  onButton(true) %04x at (%d,%d,%d,%)",this,g_win_pressed->id_type,g_win_pressed->x,g_win_pressed->y,g_win_pressed->w,g_win_pressed->h);
+                    #endif
                     onButton(g_win_pressed,true);
                     drawTypedElement(g_win_pressed,true);
 
@@ -118,7 +122,7 @@ void uiWindow::updateTouch()
                 {
                     calibrate_count = 0;
                     calibrate_timeout = 0;
-                    g_debug("tft_calibration_timeout aborted");
+                    g_info("tft_calibration_timeout aborted");
                 }
                 else
                 {
