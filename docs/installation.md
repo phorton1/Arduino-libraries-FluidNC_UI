@@ -13,7 +13,7 @@ It has dependencies on three libraries that must also be installed:
 - Of course, you must install **FluidNC** itself!  The version that is compatible
   with this library is available at [**my fork**](https://github.com/phorton1/Arduino-libraries-FluidNC)
   of the **bdring/FluidNC** project.
-- [**FluidNC_extensions**](https://github.com/phorton1/Arduino-libraries-FluidNC_extensions) -
+- [**FluidNC_Extensions**](https://github.com/phorton1/Arduino-libraries-FluidNC_Extensions) -
   a library that contains a number of *extensions* to FluidNC and which is used by the FluidNC_UI.
 - The [**TFT_eSPI**](https://github.com/phorton1/Arduino-libraries-TFT_eSPI) library
 

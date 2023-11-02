@@ -140,7 +140,7 @@ TODO: disable probe UI if no probe pin defined in the yaml file.
 ### 2c. The "Meshing" busy window
 
 The FluidNC_UI supports **mesh bed levelling** as implemented in the
-[**FluidNC_extensions**](https://github.com/phorton1/Arduino-libraries-FluidNC_extensions)
+[**FluidNC_Extensions**](https://github.com/phorton1/Arduino-libraries-FluidNC_Extensions)
 library.
 
 *Mesh bed levelling* may be useful when a high accuracy in the z-axis is required,
@@ -178,7 +178,7 @@ this case corresponds to work coordinates X=-80 and Y=-10.
 Note that meshing **requires a board/machine that supports
 a probe input** and that this library is compiled with the
 **WITH_MESH** definition in *gDefs.h*, and that the machine
-itself implements the *FluidNC_extensions* mesh feature.
+itself implements the *FluidNC_Extensions* mesh feature.
 
 Once a mesh is created *it remains in effect until it
 is **cleared**, including through **reboots** and **resets**
@@ -289,7 +289,7 @@ modified to 130 in the below image by the title of the button:
 
 ![spindle_button_result.png](images/spindle_button_result.png)
 
-If the machine implements the *FluidNC_extensions* **mesh** feature,
+If the machine implements the *FluidNC_Extensions* **mesh** feature,
 You can change the **live Z offset** in increments of
 **0.02 or 0.002 mm** at a time.
 
@@ -309,7 +309,7 @@ in the serial terminal to adjust the live Z offset:
 - **ctrl-T** = -0.002
 - **ctrl-Y** = -0.020
 
-If the machine does not implement the *FluidNC_extensions*
+If the machine does not implement the *FluidNC_Extensions*
 **mesh** feature, the *live Z offset* is not available.
 
 
@@ -317,7 +317,7 @@ If the machine does not implement the *FluidNC_extensions*
 
 You access the **Mesh Settings Dialog** via the **Settings**
 button in the *Homing Dialog* window.
-If the machine does not implement the *FluidNC_extensions*
+If the machine does not implement the *FluidNC_Extensions*
 **mesh** feature, the *Settings button is not available*.
 
 The **Mesh Settings Dialog** allows you to adjust the

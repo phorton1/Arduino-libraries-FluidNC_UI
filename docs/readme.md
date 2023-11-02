@@ -36,7 +36,7 @@ Please also see the following repositories and their readme files for more infor
 
 - [**my fork**](https://github.com/phorton1/Arduino-libraries-TFT_eSPI) of the **Bodmer/TFT_eSPI** library
 - [**my fork**](https://github.com/phorton1/Arduino-libraries-FluidNC) of the **bdring/FluidNC** library.
-- [**FluidNC_extensions**](https://github.com/phorton1/Arduino-libraries-FluidNC_extensions) - a number of *extensions* to FluidNC; some used by this library.
+- [**FluidNC_Extensions**](https://github.com/phorton1/Arduino-libraries-FluidNC_Extensions) - a number of *extensions* to FluidNC; some used by this library.
 - [**esp32_cnc301832**](https://github.com/phorton1/Arduino-esp32_cnc3018) - an implementation of an inexpensive 3-axis **3018** cnc machine using this code.
 - the [**vMachine**](https://github.com/phorton1/Arduino-_vMachine) - a *Maslow-like* **vPlotter** cnc machine using this code.
 
